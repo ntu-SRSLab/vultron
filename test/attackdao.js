@@ -1,25 +1,27 @@
+const { getWeb3, getContractInstance } = require("./helpers")
+const web3 = getWeb3()
+const getInstance = getContractInstance(web3)
+
 var AttackDAO = artifacts.require("AttackDAO");
 
 contract('AttackDAO', function(accounts) {
-  it("should send 1 eth", function() {
-    var dao;
 
+  it("Enable SimpleDAO attack", function() {
+    var att;
     var account_one = accounts[0];
     var account_two = accounts[1];
     
     return AttackDAO.deployed().then(function(instance) {
-      dao = instance;
-      return dao.transfer(100000, {from: account_one, value: 10});
-    }).then(function() {
-      return dao.queryCredit.call(account_one);
+      att = instance;
+      return web3.eth.getBalance(att.address);
     }).then(function(balance) {
-      assert.equal(balance.toNumber(), 10);
+      assert.equal(balance, '2000000000000000000');
     }).then(function() {
-      return dao.withdraw.call(2);
+      att.attack();
     }).then(function() {
-      return dao.queryCredit.call(account_one);
+      return web3.eth.getBalance(att.address);
     }).then(function(balance) {
-      assert.equal(balance.toNumber(), 8);
+      assert.equal(balance, '5000000000000000000');
     });
   });
 });
