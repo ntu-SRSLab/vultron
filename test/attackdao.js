@@ -7,10 +7,7 @@ var AttackDAO = artifacts.require("AttackDAO");
 contract('AttackDAO', function(accounts) {
 
   it("Enable SimpleDAO attack", function() {
-    var att;
-    var account_one = accounts[0];
-    var account_two = accounts[1];
-    
+    var att;    
     return AttackDAO.deployed().then(function(instance) {
       att = instance;
       return web3.eth.getBalance(att.address);
