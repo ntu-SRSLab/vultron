@@ -25,6 +25,12 @@ module.exports = {
 						host: "127.0.0.1",
 						port: 7545,
 				    network_id: "5777"
+				},
+				SCFuzzer: {
+			    	host: "127.0.0.1",
+			    	port: 8546,
+			    	network_id: "*",
 				}
+ 			
     }
 };
