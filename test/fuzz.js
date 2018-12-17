@@ -23,7 +23,7 @@ contract('SimpleDAO', function(accounts) {
     let sequence = [payload1, payload2];
     
     while (sequence.length > 0) {
-      let payload = seeds.shift();
+      let payload = sequence.shift();
       await web3.eth.sendTransaction({ to: att.address,
 				     from: accounts[0],
 				     data: payload,
