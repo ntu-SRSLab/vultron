@@ -6,51 +6,60 @@ var SimpleDAO = artifacts.require("SimpleDAO");
 var AttackDAO = artifacts.require("AttackDAO");
 
 contract('SimpleDAO', function(accounts) {
-  var dao;
-  var att;
+  var dao, att;
   
   SimpleDAO.deployed().then(function(ins) { dao = ins; });
   AttackDAO.deployed().then(function(ins) { att = ins; });
   
   it("Fuzz SimpleDAO contract", async () => {
     //let att_con = new web3.eth.Contract(att.abi, att.address);
-    let balance = await web3.eth.getBalance(att.address);
-    let balance_before = balance;
-
-    // Generate call sequence
-    //let payload1 = web3.eth.abi.encodeFunctionCall(att.abi[3], [att.address,
-		//						web3.utils.toWei('1', 'ether')]);
-    //let payload2 = web3.eth.abi.encodeFunctionCall(att.abi[4], [web3.utils.toWei('1', 'ether')]);
-    let sequence = await generateCallSequence(att.abi);
     
-    // Execute call sequence
-    while (sequence.length > 0) {
-      let payload = sequence.shift();
-      await web3.eth.sendTransaction({ to: att.address,
-				     from: accounts[0],
-				     data: payload,
-				     gas: '1000000',
-     				   }, function(error, hash) {
-     				     if (!error)
-     				       console.log("Transaction " + hash + " is successful!");
-				     else
-				       console.log(error);
-     				   });
+    let iteration = 1;
+    while (iteration-- > 0) {
+      // Initial contract balance
+      let initial_bal = await web3.eth.getBalance(att.address);
+      
+      // Generate call sequence
+      let sequence = await generateCallSequence(att.abi);
+      
+      // Execute call sequence
+      await executeCallSequence(sequence, '1000000');
+      
+      // Assert oracles
+      let final_bal = await web3.eth.getBalance(att.address);
+
+      assert.equal(initial_bal, "2000000000000000000", "Initial balance");
+      assert.equal(final_bal, "5000000000000000000", "Final balance");
     }
-    
-    balance = await web3.eth.getBalance(att.address);
-    let balance_after = balance;
-
-    // Assert oracles
-    assert.equal(balance_before, "2000000000000000000", "Initial balance");
-    assert.equal(balance_after, "5000000000000000000", "Final balance");
   });
 
-  function generateFunctionInputs(abi) {
+  async function executeCallSequence(sequence, gasLimitPerCall) {
+    while (sequence.length > 0) {
+      let payload = await sequence.shift();
+
+      let dao_bal_bf = await web3.eth.getBalance(dao.address);
+      
+      await web3.eth.sendTransaction({ to: att.address,
+				       from: accounts[0],
+				       data: payload,
+				       gas: gasLimitPerCall,
+     				     }, function(error, hash) {
+     				       if (!error)
+     					 console.log("Transaction " + hash + " is successful!");
+				       else
+					 console.log(error);
+     				     });
+
+      let dao_bal_af = await web3.eth.getBalance(dao.address);
+    }
+    return;
+  }
+  
+  async function generateFunctionInputs(abi) {
     if (abi.constant) return;
     if (abi.type != 'function') return;
     
-    var parameters = [];
+    let parameters = [];
     abi.inputs.forEach(function(param) {
       if (param.type == 'address') {
         parameters.push(att.address);
@@ -65,8 +74,8 @@ contract('SimpleDAO', function(accounts) {
     return web3.eth.abi.encodeFunctionCall(abi, parameters);
   }
   
-  function generateCallSequence(abis) {
-    var calls = [];
+  async function generateCallSequence(abis) {
+    let calls = [];
     
     abis.forEach(function(abi) {
       if (abi.constant || abi.type != 'function')
