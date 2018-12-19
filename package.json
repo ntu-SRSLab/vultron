@@ -1,11 +1,8 @@
 {
   "name": "vultron",
   "version": "1.0.0",
-  "description": "",
-  "main": "helper.js",
-  "directories": {
-    "test": "test"
-  },
+  "description": "The ultimate smart contract vulnerability discovery platform.",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,13 +11,16 @@
     "url": "git+https://github.com/liyistc/vultron.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Yi Li, Haijun Wang",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/liyistc/vultron/issues"
   },
   "homepage": "https://github.com/liyistc/vultron#readme",
   "dependencies": {
-    "web3": "^1.0.0-beta.37"
+    "web3": "^1.0.0-beta.37",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "truffle-contract": "^1.1.11"
   }
 }
