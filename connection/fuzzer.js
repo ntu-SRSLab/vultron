@@ -27,14 +27,17 @@ module.exports = {
         );
       };
     }
-
+    
     var target, attack;
-    target = await TargetContract.deployed();
-    attack = await AttackContract.deployed();
+
+    try {
+      target = await TargetContract.deployed();
+      attack = await AttackContract.deployed();
+    } catch (e) {
+      callback("Error 400");
+      return;
+    }
 
     callback("Target: " + target.address + "\n" + "Attack: " + attack.address);
-
-    
   }
-
 }
