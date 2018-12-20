@@ -18,18 +18,20 @@ app.get('/', (req, res) => {
   console.log("**** GET / ****");
   res.render('index.ejs');
 });
-	
+  
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
   truffle_connect.load('../build/contracts/SimpleDAO.json',
                        '../build/contracts/AttackDAO.json',
                        function (answer) {
                          res.render('contracts.ejs', {
-			                     accounts: answer.accs,
-			                     target: answer.target,
-			                     attack: answer.attack
-			                   });
-                       })
+                           accounts: answer.accs,
+                           target: answer.target,
+                           attack: answer.attack,
+                           tarabi: JSON.stringify(answer.target_abi),
+                           attabi: JSON.stringify(answer.attack_abi)
+                         });
+                       });
 });
 
 app.get('/seed', (req, res) => {

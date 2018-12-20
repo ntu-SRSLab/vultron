@@ -21,7 +21,7 @@
   
   <div class="container">
     <div class="list-group">
-      Accounts:
+      <h4>Accounts:</h4>
       <%
 	accounts.forEach(function(account) { %>
       <p class="list-group-item-text">
@@ -30,8 +30,10 @@
       <% });
          %>
     </div>
-    <div>Target Contract: <%= target %></div>
-    <div>Attack Contract: <%= attack %></div>
+    <h4>Target Contract: <%= target %></h4>
+    <p><%= tarabi %></p>
+    <h4>Attack Contract: <%= attack %></h4>
+    <p><%= attabi %></p>
   </div>
 
   <hr>

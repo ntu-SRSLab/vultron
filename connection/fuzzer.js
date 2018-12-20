@@ -20,31 +20,31 @@ module.exports = {
     var self = this;
     web3 = self.web3;
     
-    const target_artifact = require(targetPath);
-    TargetContract = contract(target_artifact);
-    TargetContract.setProvider(self.web3.currentProvider);
-    const attack_artifact = require(attackPath);
-    AttackContract = contract(attack_artifact);
-    AttackContract.setProvider(self.web3.currentProvider);
-
-    // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
-    if (typeof TargetContract.currentProvider.sendAsync !== "function") {
-      TargetContract.currentProvider.sendAsync = function() {
-        return TargetContract.currentProvider.send.apply(
-          TargetContract.currentProvider, arguments
-        );
-      };
-    }
-    
-    if (typeof AttackContract.currentProvider.sendAsync !== "function") {
-      AttackContract.currentProvider.sendAsync = function() {
-        return AttackContract.currentProvider.send.apply(
-          AttackContract.currentProvider, arguments
-        );
-      };
-    }
-
     try {
+      const target_artifact = require(targetPath);
+      TargetContract = contract(target_artifact);
+      TargetContract.setProvider(self.web3.currentProvider);
+      const attack_artifact = require(attackPath);
+      AttackContract = contract(attack_artifact);
+      AttackContract.setProvider(self.web3.currentProvider);
+      
+      // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
+      if (typeof TargetContract.currentProvider.sendAsync !== "function") {
+        TargetContract.currentProvider.sendAsync = function() {
+          return TargetContract.currentProvider.send.apply(
+            TargetContract.currentProvider, arguments
+          );
+        };
+      }
+      
+      if (typeof AttackContract.currentProvider.sendAsync !== "function") {
+        AttackContract.currentProvider.sendAsync = function() {
+          return AttackContract.currentProvider.send.apply(
+            AttackContract.currentProvider, arguments
+          );
+        };
+      }
+      
       target = await TargetContract.deployed();
       attack = await AttackContract.deployed();
       target_con = await new web3.eth.Contract(target.abi, target.address);
@@ -52,27 +52,27 @@ module.exports = {
 
       target_map = await tracer.buildInsMap(
         target_artifact.sourcePath,
-				target_artifact.deployedBytecode,
-				target_artifact.deployedSourceMap,
-				target_artifact.source);
+        target_artifact.deployedBytecode,
+        target_artifact.deployedSourceMap,
+        target_artifact.source);
+
       attack_map = await tracer.buildInsMap(
         attack_artifact.sourcePath,
-				attack_artifact.deployedBytecode,
-				attack_artifact.deployedSourceMap,
-				attack_artifact.source);
-      
-      console.log(tracer.buildInsMap);
-      console.log(target_map);
+        attack_artifact.deployedBytecode,
+        attack_artifact.deployedSourceMap,
+        attack_artifact.source);
     } catch (e) {
       console.log(e);
       callback(e.message);
       return;
     }
-
+    
     callback({
       accs: accounts,
       target: target.address,
-      attack: attack.address
+      attack: attack.address,
+      target_abi: target.abi,
+      attack_abi: attack.abi
     });
   },
 
@@ -137,15 +137,15 @@ async function executeCallSequence(sequence) {
       console.log("Balance account before: " + att_bal_acc_bf);
       
       await web3.eth.sendTransaction({ to: s.to,
-				       from: s.from,
-				       data: s.encode,
-				       gas: s.gas,
-     				     }, function(error, hash) {
-     				       if (!error)
-     					 console.log("Transaction " + hash + " is successful!");
-				       else
-					 console.log(error);
-     				     });
+                                       from: s.from,
+                                       data: s.encode,
+                                       gas: s.gas,
+                                     }, function(error, hash) {
+                                       if (!error)
+                                         console.log("Transaction " + hash + " is successful!");
+                                       else
+                                         console.log(error);
+                                     });
       
       let dao_bal_af = await web3.eth.getBalance(target.address);
       let dao_bal_sum_af = await getBalanceSum();
@@ -157,12 +157,12 @@ async function executeCallSequence(sequence) {
       // Asserting oracles
       // Balance Invariant
       assert.equal(dao_bal_bf - dao_bal_sum_bf,
-		   dao_bal_af - dao_bal_sum_af,
-		   "Balance invariant should always hold.");
+                   dao_bal_af - dao_bal_sum_af,
+                   "Balance invariant should always hold.");
       // Transaction Invariant
       assert.equal(att_bal_af - att_bal_bf,
-		   att_bal_acc_bf - att_bal_acc_af,
-		   "Transaction invariant should always hold.");
+                   att_bal_acc_bf - att_bal_acc_af,
+                   "Transaction invariant should always hold.");
     } catch(e) {
       console.log(e);
       return e.message;
@@ -208,7 +208,7 @@ async function generateCallSequence(abis) {
 
     if (abi.name == 'donate' || abi.name == 'withdraw') {
       generateFunctionInputs(abi).then(function(call) {
-	calls.push(call);
+        calls.push(call);
       })
     }
   });
