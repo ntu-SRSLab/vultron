@@ -11,6 +11,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+// set the view engine to ejs
+app.set('view engine', 'ejs');
+
 app.get('/', (req, res) => {
   res.send("<b>Welcome to Vultron fuzzer!</b>");
 });
@@ -20,14 +23,21 @@ app.get('/load', (req, res) => {
   truffle_connect.load('../build/contracts/SimpleDAO.json',
                        '../build/contracts/AttackDAO.json',
                        function (answer) {
-                         res.send(answer);
+                         res.render('contracts.ejs', {
+			   accounts: answer.accs,
+			   target: answer.target,
+			   attack: answer.attack
+			 });
                        })
 });
 
-app.get('/explore', (req, res) => {
-  console.log("**** GET /explore ****");
-  truffle_connect.explore(function (answer) {
-    res.send(answer);
+app.get('/seed', (req, res) => {
+  console.log("**** GET /seed ****");
+  truffle_connect.seed(function (answer) {
+    res.render('seeds.ejs', {
+      calls : answer.calls,
+      status: answer.status
+    });
   })
 });
 

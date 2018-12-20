@@ -64,14 +64,14 @@ module.exports = {
       return;
     }
 
-    callback("Accounts: " + accounts +
-	     "\n<br>Target: " + target.address +
-	     "\n<br>Source: " + target_artifact.source +
-	     "\n<br>Attack: " + attack.address +
-	     "\n<br>Source: " + attack_artifact.source);
+    callback({
+      accs: accounts,
+      target: target.address,
+      attack: attack.address
+    });
   },
 
-  explore: async function(callback) {
+  seed: async function(callback) {
     if (target === undefined || target_con === undefined) {
       callback("Target contract is not loaded!");
       return;
@@ -87,11 +87,10 @@ module.exports = {
     // Execute call sequence
     let result = await executeCallSequence(sequence);
 
-    var seq = [];
-    sequence.forEach(function(s) {
-      seq += s.func + "(" + s.param + ") @ " + '1000000<br>';
-    });    
-    callback("Calls:<br>" + seq + result);
+    callback({
+      calls: sequence,
+      status: result
+    });
   },
 
   fuzz: async function(trace, callback) {
@@ -106,8 +105,8 @@ module.exports = {
     }
 
     // TODO
-    tracer.buildTraceMap(trace, attack_map, target_map);
-    callback(trace);
+    let mapped_trace = tracer.buildTraceMap(trace, attack_map, target_map);
+    callback(mapped_trace);
   }
 }
 
