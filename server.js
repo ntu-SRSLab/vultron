@@ -11,13 +11,31 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/contract', (req, res) => {
-  console.log("**** GET /contract ****");
-  truffle_connect.start('../build/contracts/SimpleDAO.json',
-                        '../build/contracts/AttackDAO.json',
-                        function (answer) {
-                          res.send(answer);
-                        })
+app.get('/', (req, res) => {
+  res.send("Welcome to Vultron fuzzer!");
+});
+	
+app.get('/load', (req, res) => {
+  console.log("**** GET /load ****");
+  truffle_connect.load('../build/contracts/SimpleDAO.json',
+                       '../build/contracts/AttackDAO.json',
+                       function (answer) {
+                         res.send(answer);
+                       })
+});
+
+app.get('/explore', (req, res) => {
+  console.log("**** GET /explore ****");
+  truffle_connect.explore(function (answer) {
+    res.send(answer);
+  })
+});
+
+app.post('/fuzz', (req, res) => {
+  console.log("**** POST /fuzz ****");
+  truffle_connect.fuzz(function (answer) {
+    res.send(answer);
+  }) 
 });
 
 app.listen(port, () => {
