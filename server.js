@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
-  res.send("Welcome to Vultron fuzzer!");
+  res.send("<b>Welcome to Vultron fuzzer!</b>");
 });
 	
 app.get('/load', (req, res) => {
@@ -31,9 +31,11 @@ app.get('/explore', (req, res) => {
   })
 });
 
-app.post('/fuzz', (req, res) => {
+app.post('/fuzz', bodyParser.json(), (req, res) => {
   console.log("**** POST /fuzz ****");
-  truffle_connect.fuzz(function (answer) {
+  var trace = req.body.trace;
+  
+  truffle_connect.fuzz(trace, function (answer) {
     res.send(answer);
   }) 
 });

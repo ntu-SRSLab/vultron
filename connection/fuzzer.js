@@ -11,6 +11,7 @@ var target_con;
 var accounts;
 
 module.exports = {
+
   load: async function(targetPath, attackPath, callback) {
     var self = this;
     web3 = self.web3;
@@ -52,7 +53,9 @@ module.exports = {
 
     callback("Accounts: " + accounts +
 	     "\n<br>Target: " + target.address +
-	     "\n<br>Attack: " + attack.address);
+	     "\n<br>Source: " + target_artifact.source +
+	     "\n<br>Attack: " + attack.address +
+	     "\n<br>Source: " + attack_artifact.source);
   },
 
   explore: async function(callback) {
@@ -68,14 +71,17 @@ module.exports = {
 
     // Generate call sequence
     let sequence = await generateCallSequence(attack.abi);
-
     // Execute call sequence
-    let result = await executeCallSequence(sequence, '1000000');
-    
-    callback(result);
+    let result = await executeCallSequence(sequence);
+
+    var seq = [];
+    sequence.forEach(function(s) {
+      seq += s.func + "(" + s.param + ") @ " + '1000000<br>';
+    });    
+    callback("Calls:<br>" + seq + result);
   },
 
-  fuzz: async function(callback) {
+  fuzz: async function(trace, callback) {
     if (target === undefined || target_con === undefined) {
       callback("Target contract is not loaded!");
       return;
@@ -87,6 +93,7 @@ module.exports = {
     }
 
     // TODO
+    callback(trace);
   }
 }
 
@@ -100,10 +107,9 @@ async function getBalanceAccount() {
   return bal;
 }
 
-async function executeCallSequence(sequence, gasLimitPerCall) {
-  while (sequence.length > 0) {
-    let payload = await sequence.shift();
+async function executeCallSequence(sequence) {
 
+  for (const s of sequence) {
     try {
       let dao_bal_bf = await web3.eth.getBalance(target.address);
       let dao_bal_sum_bf = await getBalanceSum();
@@ -112,17 +118,17 @@ async function executeCallSequence(sequence, gasLimitPerCall) {
       let att_bal_acc_bf = await getBalanceAccount();
       console.log("Balance account before: " + att_bal_acc_bf);
       
-      await web3.eth.sendTransaction({ to: attack.address,
-				       from: accounts[0],
-				       data: payload,
-				       gas: gasLimitPerCall,
+      await web3.eth.sendTransaction({ to: s.to,
+				       from: s.from,
+				       data: s.encode,
+				       gas: s.gas,
      				     }, function(error, hash) {
      				       if (!error)
      					 console.log("Transaction " + hash + " is successful!");
 				       else
 					 console.log(error);
      				     });
-
+      
       let dao_bal_af = await web3.eth.getBalance(target.address);
       let dao_bal_sum_af = await getBalanceSum();
       console.log("Balance sum after: " + dao_bal_sum_af);
@@ -151,8 +157,8 @@ async function executeCallSequence(sequence, gasLimitPerCall) {
 async function generateFunctionInputs(abi) {
   if (abi.constant) return;
   if (abi.type != 'function') return;
-  
-  let parameters = [];
+
+  let parameters = [];  
   abi.inputs.forEach(function(param) {
     if (param.type == 'address') {
       parameters.push(attack.address);
@@ -163,8 +169,16 @@ async function generateFunctionInputs(abi) {
       parameters.push(0);
     }
   });
-  
-  return web3.eth.abi.encodeFunctionCall(abi, parameters);
+
+  let call = {
+    from: accounts[0],
+    to: attack.address,
+    gas: '1000000',
+    func: abi.name,
+    param: parameters,
+    encode: web3.eth.abi.encodeFunctionCall(abi, parameters)
+  }
+  return call;
 }
 
 async function generateCallSequence(abis) {
@@ -174,8 +188,11 @@ async function generateCallSequence(abis) {
     if (abi.constant || abi.type != 'function')
       return;
 
-    if (abi.name == 'donate' || abi.name == 'withdraw')
-      calls.push(generateFunctionInputs(abi));
+    if (abi.name == 'donate' || abi.name == 'withdraw') {
+      generateFunctionInputs(abi).then(function(call) {
+	calls.push(call);
+      })
+    }
   });
   
   return calls;
