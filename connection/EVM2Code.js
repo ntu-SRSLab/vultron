@@ -480,5 +480,20 @@ module.exports = {
     trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
     return trace_list;
   }
+  
+  buildStaticDep: function(fileName){
+  	var data;
+  	var exec = require('child_process').exec; 
+  	var cmdStr = "python3 buildDepen.py " + fileName;
+	exec(cmdStr, function(err, stdout, stderr){
+    if(err) {
+        console.log('get cmd error:' + stderr);
+    }
+    else {
+        data = JSON.parse(stdout);
+    }
+	});
+	return data;
+  }
 }
 
