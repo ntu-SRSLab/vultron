@@ -76,6 +76,17 @@ module.exports = {
   },
 
   fuzz: async function(callback) {
+    if (target === undefined || target_con === undefined) {
+      callback("Target contract is not loaded!");
+      return;
+    }
+
+    if (attack === undefined) {
+      callback("Attack contract is not loaded!");
+      return;
+    }
+
+    // TODO
   }
 }
 
@@ -85,7 +96,7 @@ async function getBalanceSum() {
 }
 
 async function getBalanceAccount() {
-  var bal = await target_con.methods.vultron_bal_account(attack.address).call();
+  let bal = await target_con.methods.vultron_bal_account(attack.address).call();
   return bal;
 }
 
@@ -97,11 +108,11 @@ async function executeCallSequence(sequence, gasLimitPerCall) {
       let dao_bal_bf = await web3.eth.getBalance(target.address);
       let dao_bal_sum_bf = await getBalanceSum();
       console.log("Balance sum before: " + dao_bal_sum_bf);
-      let att_bal_bf = await web3.eth.getBalance(target.address);
+      let att_bal_bf = await web3.eth.getBalance(attack.address);
       let att_bal_acc_bf = await getBalanceAccount();
       console.log("Balance account before: " + att_bal_acc_bf);
       
-      await web3.eth.sendTransaction({ to: target.address,
+      await web3.eth.sendTransaction({ to: attack.address,
 				       from: accounts[0],
 				       data: payload,
 				       gas: gasLimitPerCall,
