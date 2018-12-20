@@ -465,6 +465,7 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
     }
   }
 
+  return trace_list;
 }
 
 module.exports = {
