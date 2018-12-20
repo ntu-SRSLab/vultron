@@ -1,5 +1,6 @@
 const contract = require('truffle-contract');
 const assert = require('assert');
+const tracer = require('./EVM2Code');
 
 // truffle-contract abstractions
 var TargetContract;
@@ -9,6 +10,9 @@ var web3;
 var target, attack;
 var target_con;
 var accounts;
+// tracer abstractions
+var target_map;
+var attack_map;
 
 module.exports = {
 
@@ -45,6 +49,15 @@ module.exports = {
       attack = await AttackContract.deployed();
       target_con = await new web3.eth.Contract(target.abi, target.address);
       accounts = await web3.eth.getAccounts();
+
+      target_map = await tracer.buildInsMap(target_artifact.sourcePath,
+					    target_artifact.deployedBytecode,
+					    target_artifact.deployedSourceMap,
+					    target_artifact.source);
+      attack_map = await tracer.buildInsMap(attack_artifact.sourcePath,
+					    attack_artifact.deployedBytecode,
+					    attack_artifact.deployedSourceMap,
+					    attack_artifact.source);
     } catch (e) {
       console.log(e);
       callback(e.message);
@@ -93,6 +106,7 @@ module.exports = {
     }
 
     // TODO
+    tracer.buildTraceMap(trace, attack_map, target_map);
     callback(trace);
   }
 }

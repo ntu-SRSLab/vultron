@@ -21,6 +21,7 @@
     "web3": "^1.0.0-beta.37",
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
-    "truffle-contract": "^1.1.11"
+    "truffle-contract": "^1.1.11",
+    "get-line-from-pos": "^1.0.0"
   }
 }
