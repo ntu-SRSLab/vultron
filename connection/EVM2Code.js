@@ -364,7 +364,8 @@ const instructionLength = inst => (isPush(inst) ? 1 + pushDataLength(inst) : 1);
 /// each byte to the source code
 const byteToInstIndex = (src_num, binary) => {
   const byteToSrc = [];
-  let byteIndex = 0;
+  /// it is start with "0x"
+  let byteIndex = 1;
   let instIndex = 0;
   /// for the binary code 
   const binmap = Buffer.from(binary, "hex");
