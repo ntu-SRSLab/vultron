@@ -24,10 +24,10 @@ app.get('/load', (req, res) => {
                        '../build/contracts/AttackDAO.json',
                        function (answer) {
                          res.render('contracts.ejs', {
-			   accounts: answer.accs,
-			   target: answer.target,
-			   attack: answer.attack
-			 });
+			                     accounts: answer.accs,
+			                     target: answer.target,
+			                     attack: answer.attack
+			                   });
                        })
 });
 

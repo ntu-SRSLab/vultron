@@ -333,27 +333,27 @@ opCodeToString[SWAP] ="SWAP";
 const json_parse = (fileName, srcmap, srccode) =>{
   /// the first "" is set undefined (map ([s, l, f, j])), l,f,j does not exist.
   const src_number = srcmap
-	.split(";")
-	.map(l => l.split(":"))
-	.map(([s, l, f, j]) => ({ s: s === "" ? undefined : s, l, f, j }))
-	.reduce(
-	  ([last, ...list], {s, l, f, j }) => [
-	    {
+	      .split(";")
+	      .map(l => l.split(":"))
+	      .map(([s, l, f, j]) => ({ s: s === "" ? undefined : s, l, f, j }))
+	      .reduce(
+	        ([last, ...list], {s, l, f, j }) => [
+	          {
               s: parseInt(s || last.s, 10),
               l: parseInt(l || last.l, 10),
               f: parseInt(f || last.f, 10),
               j: j || last.j
-	    },
-	    last,
-	    ...list
-	  ],
-	  [{}]
-	)
-	.reverse()
-	.slice(1)
-	.map(
-	  ({ s, l, f, j }) => `${fileName}:${getLineFromPos(srccode, s)}`
-	);
+	          },
+	          last,
+	          ...list
+	        ],
+	        [{}]
+	      )
+	      .reverse()
+	      .slice(1)
+	      .map(
+	        ({ s, l, f, j }) => `${fileName}:${getLineFromPos(srccode, s)}`
+	      );
   return src_number;
 }
 
@@ -379,7 +379,6 @@ const byteToInstIndex = (src_num, binary) => {
   }
   return byteToSrc;
 };
-
 
 const filtString = str => {
   for(var i =0; i < str.length; i++){
@@ -408,30 +407,30 @@ const mulbytesToSrcCode = byteToSrc => {
     if(curEle[1] === lastEle[1]){
       /// may be the same statement is divided into multiple sections, e.g., function selection
       if (curValue === "")
-	if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-	  curValue += curEle[1];
+	      if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
+	        curValue += curEle[1];
     }
     else{
       if(curValue === ""){
-	if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-	  curValue += curEle[1];
+	      if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
+	        curValue += curEle[1];
       }
       else{
-	if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-	  curValue = curValue + "#" + curEle[1];
+	      if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
+	        curValue = curValue + "#" + curEle[1];
       }
     }
     curKey += curEle[0];
     var filt_curEle = filtString(curEle[0]);
     if (separator_set.has(filt_curEle)){
       if(mulToSrc.has(curKey)){
-	var curValue_set = mulToSrc.get(curKey);
-	curValue_set.add(curValue); 
+	      var curValue_set = mulToSrc.get(curKey);
+	      curValue_set.add(curValue); 
       }
       else{
-	var curValue_set = new Set();
-	curValue_set.add(curValue);
-	mulToSrc.set(curKey, curValue_set);
+	      var curValue_set = new Set();
+	      curValue_set.add(curValue);
+	      mulToSrc.set(curKey, curValue_set);
       }
       /// for next key
       curKey = "";
@@ -442,7 +441,6 @@ const mulbytesToSrcCode = byteToSrc => {
   return mulToSrc;
 }
 
-
 const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
   var trace_list = [];
   var insStr = "";
@@ -451,15 +449,15 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
     var filt_insEle = filtString(ins_ele);
     if(separator_set.has(filt_insEle)){
       if(mulToSrc_attack.has(insStr)){
-    	var traceEle = mulToSrc_attack.get(insStr);	 
-    	trace_list.push(traceEle);
+    	  var traceEle = mulToSrc_attack.get(insStr);	 
+    	  trace_list.push(traceEle);
       }
       else if(mulToSrc_victim.has(insStr)){
-    	var traceEle = mulToSrc_victim.get(insStr);
-    	trace_list.push(traceEle);
+    	  var traceEle = mulToSrc_victim.get(insStr);
+    	  trace_list.push(traceEle);
       }
       else{
-    	console.log("evm to code error!\n");
+    	  console.log("evm to code error!\n");
       }
       insStr = "";
     }
@@ -470,30 +468,30 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
 
 module.exports = {
   buildInsMap: function(fileName, binary, srcmap, srccode) {
-    src_number = json_parse(fileName, srcmap, srccode);
-    byteToSrc = byteToInstIndex(src_number, binary);
-    mulToSrc = mulbytesToSrcCode(byteToSrc)
+    var src_number = json_parse(fileName, srcmap, srccode);
+    var byteToSrc = byteToInstIndex(src_number, binary);
+    var mulToSrc = mulbytesToSrcCode(byteToSrc);
     return mulToSrc; 
   },
 
   buildTraceMap: function(ins_list, mulToSrc_attack, mulToSrc_victim) {
-    trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
+    var trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
     return trace_list;
-  }
+  },
   
   buildStaticDep: function(fileName){
   	var data;
   	var exec = require('child_process').exec; 
   	var cmdStr = "python3 buildDepen.py " + fileName;
-	exec(cmdStr, function(err, stdout, stderr){
-    if(err) {
+	  exec(cmdStr, function(err, stdout, stderr){
+      if(err) {
         console.log('get cmd error:' + stderr);
-    }
-    else {
+      }
+      else {
         data = JSON.parse(stdout);
-    }
-	});
-	return data;
+      }
+	  });
+	  return data;
   }
 }
 

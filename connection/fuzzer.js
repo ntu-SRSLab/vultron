@@ -50,14 +50,19 @@ module.exports = {
       target_con = await new web3.eth.Contract(target.abi, target.address);
       accounts = await web3.eth.getAccounts();
 
-      target_map = await tracer.buildInsMap(target_artifact.sourcePath,
-					    target_artifact.deployedBytecode,
-					    target_artifact.deployedSourceMap,
-					    target_artifact.source);
-      attack_map = await tracer.buildInsMap(attack_artifact.sourcePath,
-					    attack_artifact.deployedBytecode,
-					    attack_artifact.deployedSourceMap,
-					    attack_artifact.source);
+      target_map = await tracer.buildInsMap(
+        target_artifact.sourcePath,
+				target_artifact.deployedBytecode,
+				target_artifact.deployedSourceMap,
+				target_artifact.source);
+      attack_map = await tracer.buildInsMap(
+        attack_artifact.sourcePath,
+				attack_artifact.deployedBytecode,
+				attack_artifact.deployedSourceMap,
+				attack_artifact.source);
+      
+      console.log(tracer.buildInsMap);
+      console.log(target_map);
     } catch (e) {
       console.log(e);
       callback(e.message);
