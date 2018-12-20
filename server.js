@@ -15,7 +15,8 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  res.send("<b>Welcome to Vultron fuzzer!</b>");
+  console.log("**** GET / ****");
+  res.render('index.ejs');
 });
 	
 app.get('/load', (req, res) => {

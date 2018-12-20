@@ -471,6 +471,7 @@ module.exports = {
   buildInsMap: function(fileName, binary, srcmap, srccode) {
     var src_number = json_parse(fileName, srcmap, srccode);
     var byteToSrc = byteToInstIndex(src_number, binary);
+    console.log("BYTE: " + byteToSrc);
     var mulToSrc = mulbytesToSrcCode(byteToSrc);
     return mulToSrc; 
   },
