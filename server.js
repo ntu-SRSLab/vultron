@@ -22,35 +22,53 @@ app.get('/', (req, res) => {
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
   truffle_connect.load('../build/contracts/SimpleDAO.json',
-                       '../build/contracts/AttackDAO.json',
-                       function (answer) {
-                         res.render('contracts.ejs', {
-                           accounts: answer.accs,
-                           target: answer.target,
-                           attack: answer.attack,
-                           tarabi: JSON.stringify(answer.target_abi),
-                           attabi: JSON.stringify(answer.attack_abi)
-                         });
-                       });
+                       '../build/contracts/AttackDAO.json')
+    .then((answer) => {
+      if (typeof answer.accs === 'undefined')
+        throw "Error loading contracts";
+      
+      res.render('contracts.ejs', {
+        accounts: answer.accs,
+        target: answer.target,
+        attack: answer.attack,
+        tarabi: JSON.stringify(answer.target_abi),
+        attabi: JSON.stringify(answer.attack_abi)
+      });
+    }).catch((e) => {
+      res.render('error.ejs', {
+        message: e
+      });
+    });
 });
 
 app.get('/seed', (req, res) => {
   console.log("**** GET /seed ****");
-  truffle_connect.seed(function (answer) {
-    res.render('seeds.ejs', {
-      calls : answer.calls,
-      status: answer.status
+  truffle_connect.seed()
+    .then((answer) => {
+      if (typeof answer.calls === 'undefined')
+        throw "Error running seed";
+      
+      res.render('seeds.ejs', {
+        calls : answer.calls,
+        status: answer.status
+      });
+    }).catch((e) => {
+      res.render('error.ejs', {
+        message: e
+      });
     });
-  })
 });
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
   console.log("**** POST /fuzz ****");
   var trace = req.body.trace;
   
-  truffle_connect.fuzz(trace, function (answer) {
-    res.send(answer);
-  }) 
+  truffle_connect.fuzz(trace)
+    .then((answer) => {
+      res.send(answer);
+    }).catch((e) => {
+      res.send(e);
+    });
 });
 
 app.listen(port, () => {

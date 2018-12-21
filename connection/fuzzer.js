@@ -16,7 +16,7 @@ var attack_map;
 
 module.exports = {
 
-  load: async function(targetPath, attackPath, callback) {
+  load: async function(targetPath, attackPath) {
     var self = this;
     web3 = self.web3;
     
@@ -63,28 +63,25 @@ module.exports = {
         attack_artifact.source);
     } catch (e) {
       console.log(e);
-      callback(e.message);
-      return;
+      return e.message;
     }
     
-    callback({
+    return {
       accs: accounts,
       target: target.address,
       attack: attack.address,
       target_abi: target.abi,
       attack_abi: attack.abi
-    });
+    };
   },
 
-  seed: async function(callback) {
+  seed: async function() {
     if (target === undefined || target_con === undefined) {
-      callback("Target contract is not loaded!");
-      return;
+      throw "Target contract is not loaded!";
     }
 
     if (attack === undefined) {
-      callback("Attack contract is not loaded!");
-      return;
+      throw "Attack contract is not loaded!";
     }
 
     // Generate call sequence
@@ -92,26 +89,24 @@ module.exports = {
     // Execute call sequence
     let result = await executeCallSequence(sequence);
 
-    callback({
+    return {
       calls: sequence,
       status: result
-    });
+    };
   },
 
-  fuzz: async function(trace, callback) {
+  fuzz: async function(trace) {
     if (target === undefined || target_con === undefined) {
-      callback("Target contract is not loaded!");
-      return;
+      throw "Target contract is not loaded!";
     }
 
     if (attack === undefined) {
-      callback("Attack contract is not loaded!");
-      return;
+      throw "Attack contract is not loaded!";
     }
 
     // TODO
     let mapped_trace = tracer.buildTraceMap(trace, attack_map, target_map);
-    callback(mapped_trace);
+    return mapped_trace;
   }
 }
 
@@ -128,45 +123,40 @@ async function getBalanceAccount() {
 async function executeCallSequence(sequence) {
 
   for (const s of sequence) {
-    try {
-      let dao_bal_bf = await web3.eth.getBalance(target.address);
-      let dao_bal_sum_bf = await getBalanceSum();
-      console.log("Balance sum before: " + dao_bal_sum_bf);
-      let att_bal_bf = await web3.eth.getBalance(attack.address);
-      let att_bal_acc_bf = await getBalanceAccount();
-      console.log("Balance account before: " + att_bal_acc_bf);
-      
-      await web3.eth.sendTransaction({ to: s.to,
-                                       from: s.from,
-                                       data: s.encode,
-                                       gas: s.gas,
-                                     }, function(error, hash) {
-                                       if (!error)
-                                         console.log("Transaction " + hash + " is successful!");
-                                       else
-                                         console.log(error);
-                                     });
-      
-      let dao_bal_af = await web3.eth.getBalance(target.address);
-      let dao_bal_sum_af = await getBalanceSum();
-      console.log("Balance sum after: " + dao_bal_sum_af);
-      let att_bal_af = await web3.eth.getBalance(attack.address);
-      let att_bal_acc_af = await getBalanceAccount();
-      console.log("Balance account after: " + att_bal_acc_af);
-      
-      // Asserting oracles
-      // Balance Invariant
-      assert.equal(dao_bal_bf - dao_bal_sum_bf,
-                   dao_bal_af - dao_bal_sum_af,
-                   "Balance invariant should always hold.");
-      // Transaction Invariant
-      assert.equal(att_bal_af - att_bal_bf,
-                   att_bal_acc_bf - att_bal_acc_af,
-                   "Transaction invariant should always hold.");
-    } catch(e) {
-      console.log(e);
-      return e.message;
-    }
+    let dao_bal_bf = await web3.eth.getBalance(target.address);
+    let dao_bal_sum_bf = await getBalanceSum();
+    console.log("Balance sum before: " + dao_bal_sum_bf);
+    let att_bal_bf = await web3.eth.getBalance(attack.address);
+    let att_bal_acc_bf = await getBalanceAccount();
+    console.log("Balance account before: " + att_bal_acc_bf);
+    
+    await web3.eth.sendTransaction({ to: s.to,
+                                     from: s.from,
+                                     data: s.encode,
+                                     gas: s.gas,
+                                   }, function(error, hash) {
+                                     if (!error)
+                                       console.log("Transaction " + hash + " is successful!");
+                                     else
+                                       console.log(error);
+                                   });
+    
+    let dao_bal_af = await web3.eth.getBalance(target.address);
+    let dao_bal_sum_af = await getBalanceSum();
+    console.log("Balance sum after: " + dao_bal_sum_af);
+    let att_bal_af = await web3.eth.getBalance(attack.address);
+    let att_bal_acc_af = await getBalanceAccount();
+    console.log("Balance account after: " + att_bal_acc_af);
+    
+    // Asserting oracles
+    // Balance Invariant
+    assert.equal(dao_bal_bf - dao_bal_sum_bf,
+                 dao_bal_af - dao_bal_sum_af,
+                 "Balance invariant should always hold.");
+    // Transaction Invariant
+    assert.equal(att_bal_af - att_bal_bf,
+                 att_bal_acc_bf - att_bal_acc_af,
+                 "Transaction invariant should always hold.");
   }
   
   return "Test succeeded!";
