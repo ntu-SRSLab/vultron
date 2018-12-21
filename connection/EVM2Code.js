@@ -451,11 +451,22 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
     if(separator_set.has(filt_insEle)){
       if(mulToSrc_attack.has(insStr)){
         var traceEle = mulToSrc_attack.get(insStr);  
-        trace_list.push(traceEle);
+        for(var step_list in traceEle){
+          var step_item = step_list.split("#");
+          for(var step in step_item){
+            trace_list.push(step);
+          }
+        }
+        
       }
       else if(mulToSrc_victim.has(insStr)){
         var traceEle = mulToSrc_victim.get(insStr);
-        trace_list.push(traceEle);
+        for(var step_list in traceEle){
+          var step_item = step_list.split("#");
+          for(var step in step_item){
+            trace_list.push(step);
+          }
+        }
       }
       else{
         console.log("evm to code error!\n");
