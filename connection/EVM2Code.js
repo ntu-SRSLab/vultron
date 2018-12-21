@@ -467,6 +467,45 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
   return trace_list;
 }
 
+
+const buildDynamicDep = (trace, staticDep) => {
+  var dynamicDep = [];
+  var dyn_varLine_map = map();
+  var sta_write_map = staticDep.get("Write");
+  var sta_read_map = staticDep.get("Read");
+  var sta_cd_map = staticDep.get("CDepen");
+  var trace_index = 0;
+  while (trace_index < trace.length){
+    var step = trace[trace_index];
+    if(sta_write_map.has(step)){
+      var write_var_list = sta_write_map.get(step);
+      for(var write_var of write_var_list){
+        dyn_varLine_map[write_var] = step
+      }
+    }
+
+    if(sta_read_map.has(step)){
+      var read_var_list = sta_read_map.get(step);
+      for(var read_var of read_var_list){
+        if(dyn_varLine_map.has(read_var)){
+          var write_line = dyn_varLine_map.get(read_var);
+          dynamicDep.push([write_line, step])
+        }
+      }
+    }
+
+    if(sta_cd_map.has(step)){
+      if((trace_index +1) < trace.length){
+        var next_step = trace[trace_index +1];
+        dynamicDep.push([step, next_step]);
+      }
+    }
+    trace_index += 1; 
+  }
+  return dynamicDep;
+}
+
+
 module.exports = {
   buildInsMap: function(fileName, binary, srcmap, srccode) {
     var src_number = json_parse(fileName, srcmap, srccode);
@@ -493,6 +532,11 @@ module.exports = {
       }
     });
     return data;
+  },
+
+  buildDynDep: function(trace, staticDep){
+    var dynamicDep = buildDynamicDep(trace, staticDep);
+    return dynamicDep;
   }
 }
 
