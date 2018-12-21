@@ -392,7 +392,6 @@ const filtString = str => {
 
 const mulbytesToSrcCode = byteToSrc => {
   const mulToSrc = new Map();
-  const functionSet = new Set();
   let byteIndex = 0;
   var curKey = "";
   var curValue = "";
@@ -423,6 +422,7 @@ const mulbytesToSrcCode = byteToSrc => {
     }
     curKey += curEle[0];
     var filt_curEle = filtString(curEle[0]);
+
     if (separator_set.has(filt_curEle)){
       if(mulToSrc.has(curKey)){
         var curValue_set = mulToSrc.get(curKey);
@@ -463,7 +463,6 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
       insStr = "";
     }
   }
-
   return trace_list;
 }
 
@@ -516,6 +515,7 @@ module.exports = {
 
   buildTraceMap: function(ins_list, mulToSrc_attack, mulToSrc_victim) {
     var trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
+    // console.log(trace_list);
     return trace_list;
   },
   
