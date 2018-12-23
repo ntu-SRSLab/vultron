@@ -27,7 +27,7 @@ module.exports = {
 	    network_id: "5777"
 	},
 	SCFuzzer: {
-	    host: "127.0.0.1",
+	    host: "172.21.176.77",
 	    port: 8546,
 	    network_id: "*",
 	}
