@@ -65,6 +65,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   
   truffle_connect.fuzz(trace)
     .then((answer) => {
+      console.log(answer);
       res.send(answer);
     }).catch((e) => {
       res.send(e);
@@ -73,7 +74,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
 
 app.listen(port, () => {
   truffle_connect.web3 =
-    new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
+    new Web3(new Web3.providers.HttpProvider("http://localhost:8546"));
   
   console.log("Express Listening at http://localhost:" + port);
 });

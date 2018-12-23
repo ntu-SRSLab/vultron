@@ -105,7 +105,8 @@ module.exports = {
     }
 
     // TODO
-    let mapped_trace = tracer.buildTraceMap(trace, attack_map, target_map);
+    //console.log(trace);
+    let mapped_trace = await tracer.buildTraceMap(trace, attack_map, target_map);
     return mapped_trace;
   }
 }
