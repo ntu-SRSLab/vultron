@@ -22,7 +22,9 @@ app.get('/', (req, res) => {
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
   truffle_connect.load('../build/contracts/SimpleDAO.json',
-                       '../build/contracts/AttackDAO.json')
+                       '../build/contracts/AttackDAO.json',
+                       './contracts/SimpleDAO.sol',
+                       './contracts/Attack.sol')
     .then((answer) => {
       if (typeof answer.accs === 'undefined')
         throw "Error loading contracts";
@@ -65,7 +67,6 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   
   truffle_connect.fuzz(trace)
     .then((answer) => {
-      console.log(answer);
       res.send(answer);
     }).catch((e) => {
       res.send(e);

@@ -1,6 +1,7 @@
 const contract = require('truffle-contract');
 const assert = require('assert');
 const tracer = require('./EVM2Code');
+const fs = require('fs');
 
 // truffle-contract abstractions
 var TargetContract;
@@ -16,7 +17,7 @@ var attack_map;
 
 module.exports = {
 
-  load: async function(targetPath, attackPath) {
+  load: async function(targetPath, attackPath, targetSolPath, attackSolPath) {
     var self = this;
     web3 = self.web3;
     
@@ -61,6 +62,10 @@ module.exports = {
         attack_artifact.deployedBytecode,
         attack_artifact.deployedSourceMap,
         attack_artifact.source);
+      tracer.buildStaticDep(targetSolPath);
+      const target_depen = JSON.parse(fs.readFileSync("./staticDep.json"));
+      console.log(target_depen);
+      // attack_depn = await tracer.buildStaticDep(attackSolPath);
     } catch (e) {
       console.log(e);
       return e.message;
@@ -88,7 +93,6 @@ module.exports = {
     let sequence = await generateCallSequence(attack.abi);
     // Execute call sequence
     let result = await executeCallSequence(sequence);
-
     return {
       calls: sequence,
       status: result
@@ -105,7 +109,6 @@ module.exports = {
     }
 
     // TODO
-    //console.log(trace);
     let mapped_trace = await tracer.buildTraceMap(trace, attack_map, target_map);
     return mapped_trace;
   }

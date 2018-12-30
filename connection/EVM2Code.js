@@ -1,5 +1,4 @@
 var fs = require('fs');
-var readline = require('readline');
 var getLineFromPos = require('get-line-from-pos');
 
 var separator_set = new Set();
@@ -519,11 +518,14 @@ const buildDynamicDep = (trace, staticDep) => {
 module.exports = {
   buildInsMap: function(fileName, binary, srcmap, srccode) {
     var src_number = json_parse(fileName, srcmap, srccode);
+    /// compute each instruction to its line number
     var byteToSrc = byteToInstIndex(src_number, binary);
+    /// compute multiple instructions to their line number
     var mulToSrc = mulbytesToSrcCode(byteToSrc);
     return mulToSrc; 
   },
 
+  /// mulToSrc_* is the mapping from multiple instructions to their line number
   buildTraceMap: function(ins_list, mulToSrc_attack, mulToSrc_victim) {
     var trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
     // console.log(trace_list);
@@ -531,7 +533,6 @@ module.exports = {
   },
   
   buildStaticDep: function(fileName){
-    var data;
     var exec = require('child_process').exec; 
     var cmdStr = "python3 buildDepen.py " + fileName;
     exec(cmdStr, function(err, stdout, stderr){
@@ -539,10 +540,16 @@ module.exports = {
         console.log('get cmd error:' + stderr);
       }
       else {
-        data = JSON.parse(stdout);
+        var data = JSON.parse(stdout);
+        fs.writeFile("./staticDep.json", JSON.stringify(data), (err) => {
+          if (err) {
+            console.error(err);
+            return;
+          };
+        });
       }
-    });
-    return data;
+    });  
+    // return staticDep;
   },
 
   buildDynDep: function(trace, staticDep){
