@@ -64,8 +64,8 @@ module.exports = {
         attack_artifact.source);
       tracer.buildStaticDep(targetSolPath);
       const target_depen = JSON.parse(fs.readFileSync("./staticDep.json"));
-      console.log(target_depen);
-      // attack_depn = await tracer.buildStaticDep(attackSolPath);
+      tracer.buildStaticDep(attackSolPath);
+      const attack_depen = JSON.parse(fs.readFileSync("./staticDep.json"));
     } catch (e) {
       console.log(e);
       return e.message;
@@ -109,6 +109,8 @@ module.exports = {
     }
 
     // TODO
+    /// trace is the instrcution trace
+    /// mapped_trace is the line nunmber trace
     let mapped_trace = await tracer.buildTraceMap(trace, attack_map, target_map);
     return mapped_trace;
   }

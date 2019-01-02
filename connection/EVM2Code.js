@@ -477,36 +477,111 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
 }
 
 
-const buildDynamicDep = (trace, staticDep) => {
+const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
   var dynamicDep = [];
-  var dyn_varLine_map = map();
-  var sta_write_map = staticDep.get("Write");
-  var sta_read_map = staticDep.get("Read");
-  var sta_cd_map = staticDep.get("CDepen");
+  var var_attack_map = map();
+  var var_target_map = map();
+  var con_attack_set = set();
+  var con_target_set = set();
+  var write_attack_map = staticDep_attack.get("Write");
+  var write_target_map = staticDep_target.get("Write");
+  var read_attack_map = staticDep_attack.get("Read");
+  var read_target_map = staticDep_target.get("Read");
+  var cd_attack_map = staticDep_attack.get("CDepen");
+  var cd_target_map = staticDep_target.get("CDepen");
+
+  /// it is reverse, first is the following statement, second is the conditional statement
+  var cd_attack_reverse_map = map();
+  var cd_target_reverse_map = map();
+  for(var attack_key in cd_attack_map){
+    var attack_value_list = cd_attack_map.get(attack_key);
+    for(var attack_value of attack_value_list){
+      if(cd_attack_reverse_map.has(attack_value)){
+        attack_key_list = cd_attack_reverse_map.get(attack_value);
+        attack_key_list.push(attack_key);
+      }
+      else{
+        var attack_key_list = [];
+        attack_key_list.push(attack_key);
+        cd_attack_reverse_map.set(attack_value, attack_key_list);
+      }
+    }
+  }
+  for(var target_key in cd_target_map){
+    var target_value_list = cd_target_map.get(target_key);
+    for(var target_value of target_value_list){
+      if(cd_target_reverse_map.has(target_value)){
+        target_key_list = cd_target_reverse_map.get(target_value);
+        target_key_list.push(target_key);
+      }
+      else{
+        var target_key_list = [];
+        target_key_list.push(target_key);
+        cd_target_reverse_map.set(target_value, target_key_list);
+      }
+    }
+  }
+
   var trace_index = 0;
   while (trace_index < trace.length){
     var step = trace[trace_index];
-    if(sta_write_map.has(step)){
-      var write_var_list = sta_write_map.get(step);
-      for(var write_var of write_var_list){
-        dyn_varLine_map[write_var] = step
+    if(write_attack_map.has(step)){
+      var write_var_attack_list = write_attack_map.get(step);
+      for(var write_var_attack of write_var_attack_list){
+        var_attack_map.set(write_var_attack, step);
+      }
+    }
+    else if(write_target_map.has(step)){
+      var write_var_target_list = write_target_map.get(step);
+      for(var write_var_target of write_var_target_list){
+        var_target_map.set(write_var_target, step);
       }
     }
 
-    if(sta_read_map.has(step)){
-      var read_var_list = sta_read_map.get(step);
-      for(var read_var of read_var_list){
-        if(dyn_varLine_map.has(read_var)){
-          var write_line = dyn_varLine_map.get(read_var);
+    if(read_attack_map.has(step)){
+      var read_var_attack_list = read_attack_map.get(step);
+      for(var read_var_attack of read_var_attack_list){
+        if(var_attack_map.has(read_var_attack)){
+          var write_line = var_attack_map.get(read_var_attack);
+          dynamicDep.push([write_line, step])
+        }
+      }
+    }
+    else if(read_target_map.has(step)){
+      var read_var_target_list = read_tareget_map.get(step);
+      for(var read_var_target of read_var_target_list){
+        if(var_target_map.has(read_var_target)){
+          var write_line = var_target_map.get(read_var_target);
           dynamicDep.push([write_line, step])
         }
       }
     }
 
-    if(sta_cd_map.has(step)){
-      if((trace_index +1) < trace.length){
-        var next_step = trace[trace_index +1];
-        dynamicDep.push([step, next_step]);
+    if(cd_attack_map.has(step)){
+      con_attack_set.add(step);
+    }
+    else if(cd_target_map.has(step)){
+      con_target_set.add(step);
+    }
+
+    if(cd_attack_reverse_map.has(step)){
+      attack_con_list = cd_attack_reverse_map.get(step);
+      for(var attack_con of attack_con_list){
+        if(con_attack_set.has(attack_con)){
+          dynamicDep.push([attack_con, step]);
+          attack_con.delete(attack_con);
+          break;
+        }
+      }
+    }
+    else if(cd_target_reverse_map.has(step)){
+      target_con_list = cd_target_reverse_map.get(step);
+      for(var target_con of target_con_list){
+        if(con_target_set.has(target_con)){
+          dynamicDep.push([target_con, step]);
+          attack_con.delete(target_con);
+          break;
+        }
       }
     }
     trace_index += 1; 
@@ -552,8 +627,8 @@ module.exports = {
     // return staticDep;
   },
 
-  buildDynDep: function(trace, staticDep){
-    var dynamicDep = buildDynamicDep(trace, staticDep);
+  buildDynDep: function(trace, staticDep_attack, staticDep_target){
+    var dynamicDep = buildDynamicDep(trace, staticDep_attack, staticDep_target);
     return dynamicDep;
   }
 }

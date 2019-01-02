@@ -52,7 +52,7 @@ for key, value_set in cd_map.items():
 				# at most two branch, the third is following the whole conditional statement
 				if len(value_list) == 2:
 					break
-		# find the sec branch
+		# find the sec branch, the first must be found in above section
 		if len(value_list) < 2:
 			value_worklist = []
 			value_workset = set()
@@ -79,7 +79,16 @@ for key, value_set in cd_map.items():
 				if sec_found:
 					break
 		cdepen_map = depen_map["CDepen"]
-		cdepen_map[key_str] = value_list	
+		cdepen_map[key_str] = value_list
+		# # it is reverse, first is the following statement, second is the conditional statement
+		# for value in value_list:
+		# 	if value in cdepen_map:
+		# 		key_str_list = cdepen_map[value]
+		# 		key_str_list.append(key_str)
+		# 	else:
+		# 		key_str_list = []
+		# 		key_str_list.append(key_str_list)
+		# 		cdepen_map[value] = key_str_list
 
 jStr = json.dumps(depen_map)
 print(jStr)
