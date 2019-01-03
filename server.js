@@ -26,7 +26,7 @@ app.get('/load', (req, res) => {
                        './contracts/SimpleDAO.sol',
                        './contracts/Attack.sol')
     .then((answer) => {
-      if (typeof answer.accs === 'undefined')
+      if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
       
       res.render('contracts.ejs', {

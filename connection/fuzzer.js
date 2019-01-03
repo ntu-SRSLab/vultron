@@ -18,11 +18,11 @@ var attackIns_map;
 var staticDep_target;
 var staticDep_attack;
 
-var sequence_maxLen = 100; 
-var gas_min = 21000;
-var gas_max = 8000000;
-var dyn_array_min = 1;
-var dyn_array_max = 10;
+const sequence_maxLen = 100; 
+const gas_min = 21000;
+const gas_max = 8000000;
+const dyn_array_min = 1;
+const dyn_array_max = 10;
 
 module.exports = {
 
@@ -96,9 +96,11 @@ module.exports = {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
-    let callFun_list = await seed_callSequence(attack_abs.abi);
+    let callFun_list = await simple_callSequence(attack_abs.abi);
+    console.log(callFun_list);
     // Execute call sequence
-    let execResult_list = await executeCallSequence(callFun_list);
+    let execResult_list = await exec_callSequence(callFun_list);
+    console.log(execResult_list);
     return {
       callFuns: callFun_list,
       execResults: execResult_list
@@ -123,7 +125,7 @@ module.exports = {
 }
 
 /// min <= r < max
-async function randomNum(min, max){
+function randomNum(min, max){
   var range = max - min;
   var rand = Math.random();
   var num = min + Math.floor(rand * range);
@@ -131,15 +133,31 @@ async function randomNum(min, max){
 }
 
 async function getBalanceSum() {
-  let sum = await target_con.methods.vultron_bal_sum().call();
+  var sum = 0;
+  for (var account of account_list) { 
+    sum += await getBalance(account);
+  }
+  sum += await getBalance(attack_abs.address);
+
   return sum;
 }
 
 async function getBalanceAccount() {
-  let bal = await target_con.methods.vultron_bal_account(target_abs.address).call();
+  let bal = await getBalance(attack_abs.address);
   return bal;
 }
 
+async function getBalance(acc_address) {
+  let bal = 0;
+  await target_con.methods.credit(acc_address).call(
+    function(err, result){
+      if(!err){
+        bal = result;
+      }
+    });
+  return bal;
+}
+    
 async function exec_callSequence(callSequence) {
   for (var call of callSequence) {
     let dao_bal_bf = await web3.eth.getBalance(target_abs.address);
@@ -149,10 +167,10 @@ async function exec_callSequence(callSequence) {
     let att_bal_acc_bf = await getBalanceAccount();
     console.log("Balance account before: " + att_bal_acc_bf);
     
-    await web3.eth.sendTransaction({ to: s.to,
-                                     from: s.from,
-                                     data: s.encode,
-                                     gas: s.gas,
+    await web3.eth.sendTransaction({ to: call.to,
+                                     from: call.from,
+                                     data: call.encode,
+                                     gas: call.gas,
                                    }, function(error, hash) {
                                      if (!error)
                                        console.log("Transaction " + hash + " is successful!");
@@ -186,7 +204,7 @@ async function gen_address(adds_type){
   if(adds_type.indexOf('[') == -1){
     /// primitive type
     /// TODO: use the default account
-    return accounts[0];
+    return account_list[0];
   } else if(adds_type.indexOf('[]') != -1){
     /// dynamic array
     var adds_list = [];
@@ -311,59 +329,59 @@ async function seed_callSequence(abis) {
     if (abi.type === 'function' && abi.constant == false)
       cand_sequence.push(abi);
   });
+  
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
   while (sequence_index < sequence_len){
     var call_index = randomNum(0, cand_sequence.length);
     var abi = cand_sequence[call_index];
-    gen_callFun(abi).then(function(callFun) {
-      call_sequence.push(callFun);
-    });
+    let callfun = await gen_callFun(abi);
+    console.log(callfun);
+    call_sequence.push(callFun);
     sequence_index += 1;
-  }  
+  }
   return call_sequence;
 }
 
-// async function generateFunctionInputs(abi) {
-//   if (abi.constant) return;
-//   if (abi.type != 'function') return;
+async function generateFunctionInputs(abi) {
+  if (abi.constant) return;
+  if (abi.type != 'function') return;
 
-//   let parameters = [];  
-//   abi.inputs.forEach(function(param) {
-//     if (param.type == 'address') {
-//       parameters.push(attack.address);
-//     } else if (param.type == 'uint256') {
-//       parameters.push(web3.utils.toWei('1', 'ether'));
-//     } else {
-//       // default parameter
-//       parameters.push(0);
-//     }
-//   });
+  let parameters = [];  
+  abi.inputs.forEach(function(param) {
+    if (param.type == 'address') {
+      parameters.push(attack_abs.address);
+    } else if (param.type == 'uint256') {
+      parameters.push(web3.utils.toWei('1', 'ether'));
+    } else {
+      // default parameter
+      parameters.push(0);
+    }
+  });
 
-//   let call = {
-//     from: accounts[0],
-//     to: attack.address,
-//     gas: '1000000',
-//     func: abi.name,
-//     param: parameters,
-//     encode: web3.eth.abi.encodeFunctionCall(abi, parameters)
-//   }
-//   return call;
-// }
+  let call = {
+    from: account_list[0],
+    to: attack_abs.address,
+    gas: '1000000',
+    func: abi.name,
+    param: parameters,
+    encode: web3.eth.abi.encodeFunctionCall(abi, parameters)
+  }
+  return call;
+}
 
-// async function generateCallSequence(abis) {
-//   console.log(abis);
-//   let calls = [];
-//   abis.forEach(function(abi) {
-//     if (abi.constant || abi.type != 'function')
-//       return;
+async function simple_callSequence(abis) {
+  let calls = [];
+  abis.forEach(function(abi) {
+    if (abi.constant || abi.type != 'function')
+      return;
 
-//     if (abi.name == 'donate' || abi.name == 'withdraw') {
-//       generateFunctionInputs(abi).then(function(call) {
-//         calls.push(call);
-//       })
-//     }
-//   });
+    if (abi.name == 'donate' || abi.name == 'withdraw') {
+      generateFunctionInputs(abi).then(function(call) {
+        calls.push(call);
+      })
+    }
+  });
   
-//   return calls;
-// }
+  return calls;
+}
