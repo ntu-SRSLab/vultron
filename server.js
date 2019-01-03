@@ -30,11 +30,11 @@ app.get('/load', (req, res) => {
         throw "Error loading contracts";
       
       res.render('contracts.ejs', {
-        accounts: answer.accs,
-        target: answer.target,
-        attack: answer.attack,
-        tarabi: JSON.stringify(answer.target_abi),
-        attabi: JSON.stringify(answer.attack_abi)
+        accounts: answer.accounts,
+        target_adds: answer.target_adds,
+        attack_adds: answer.attack_adds,
+        target_abi: JSON.stringify(answer.target_abi),
+        attack_abi: JSON.stringify(answer.attack_abi)
       });
     }).catch((e) => {
       res.render('error.ejs', {

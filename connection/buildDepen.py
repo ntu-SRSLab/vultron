@@ -15,13 +15,15 @@ for contract in slither.contracts:
 		for node in function.nodes:
 			if len(node.state_variables_read) != 0:
 				# some source line is in the form of fileName#line-line
-				lineStr = node.source_mapping_str.split("-")[0]
-				read_var = '{}'.format([svr.name for svr in node.state_variables_read])
+				lineStr = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+				lineStr = lineStr.split("-")[0]
+				read_var = [svr.name for svr in node.state_variables_read]
 				read_map = depen_map["Read"]
 				read_map[lineStr] = read_var
 			if len(node.state_variables_written) != 0:
-				lineStr = node.source_mapping_str.split("-")[0]
-				write_var = '{}'.format([svw.name for svw in node.state_variables_written])
+				lineStr = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+				lineStr = lineStr.split("-")[0]
+				write_var = [svw.name for svw in node.state_variables_written]
 				write_map = depen_map["Write"]
 				write_map[lineStr] = write_var
 					
@@ -30,17 +32,20 @@ cd_map = {}
 for contract in slither.contracts:  
 	for function in contract.functions:
 		for node in function.nodes:
+			node_str = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
 			if len(node.sons) >= 2:
 				# the conditional statement
-				cond_set.add(node.source_mapping_str)
+				cond_set.add(node_str)
 			for son in node.sons:
-				if node.source_mapping_str not in cd_map:
-					cd_list = []
-					cd_list.append(son.source_mapping_str)
-					cd_map[node.source_mapping_str] = cd_list;
+				if node_str in cd_map:
+					cd_list = cd_map[node_str]
+					son_str = son.source_mapping_str[son.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+					cd_list.append(son_str)
 				else:
-					cd_list = cd_map[node.source_mapping_str]
-					cd_list.append(son.source_mapping_str)
+					cd_list = []
+					son_str = son.source_mapping_str[son.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+					cd_list.append(son_str)
+					cd_map[node_str] = cd_list;
 
 for key, value_set in cd_map.items():
 	if key in cond_set:
@@ -68,7 +73,7 @@ for key, value_set in cd_map.items():
 					valuemap_list = cd_map[key]
 					for value in valuemap_list:
 						value_item = value.split("-")
-						value_min = value_item[0].split("#")[1]
+						value_min = value_item[0].split(":")[1]
 						if int(value_min) > int(key_max):
 							value_list.append(value_item[0])
 							sec_found = True
@@ -80,15 +85,6 @@ for key, value_set in cd_map.items():
 					break
 		cdepen_map = depen_map["CDepen"]
 		cdepen_map[key_str] = value_list
-		# # it is reverse, first is the following statement, second is the conditional statement
-		# for value in value_list:
-		# 	if value in cdepen_map:
-		# 		key_str_list = cdepen_map[value]
-		# 		key_str_list.append(key_str)
-		# 	else:
-		# 		key_str_list = []
-		# 		key_str_list.append(key_str_list)
-		# 		cdepen_map[value] = key_str_list
 
 jStr = json.dumps(depen_map)
 print(jStr)

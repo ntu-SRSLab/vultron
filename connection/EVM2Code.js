@@ -330,6 +330,8 @@ opCodeToString[DUP] = "DUP";
 opCodeToString[SWAP] ="SWAP";
 
 const json_parse = (fileName, srcmap, srccode) =>{
+  /// truncate the prefix of the path
+  fileName = fileName.slice(fileName.lastIndexOf('/') +1);
   /// the first "" is set undefined (map ([s, l, f, j])), l,f,j does not exist.
   const src_number = srcmap
         .split(";")
@@ -354,6 +356,7 @@ const json_parse = (fileName, srcmap, srccode) =>{
           ({ s, l, f, j }) => `${fileName}:${getLineFromPos(srccode, s)}`
         );
   return src_number;
+
 }
 
 const isPush = inst => inst >= 0x60 && inst < 0x7f;
@@ -479,22 +482,23 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
 
 const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
   var dynamicDep = [];
-  var var_attack_map = map();
-  var var_target_map = map();
-  var con_attack_set = set();
-  var con_target_set = set();
-  var write_attack_map = staticDep_attack.get("Write");
-  var write_target_map = staticDep_target.get("Write");
-  var read_attack_map = staticDep_attack.get("Read");
-  var read_target_map = staticDep_target.get("Read");
-  var cd_attack_map = staticDep_attack.get("CDepen");
-  var cd_target_map = staticDep_target.get("CDepen");
+  var var_attack_map = new Map();
+  var var_target_map = new Map();
+  var con_attack_set = new Set();
+  var con_target_set = new Set();
+  /// it is the format of json, not use get() function
+  var write_attack_map = staticDep_attack["Write"];
+  var write_target_map = staticDep_target["Write"];
+  var read_attack_map = staticDep_attack["Read"];
+  var read_target_map = staticDep_target["Read"];
+  var cd_attack_map = staticDep_attack["CDepen"];
+  var cd_target_map = staticDep_target["CDepen"];
 
   /// it is reverse, first is the following statement, second is the conditional statement
-  var cd_attack_reverse_map = map();
-  var cd_target_reverse_map = map();
+  var cd_attack_reverse_map = new Map();
+  var cd_target_reverse_map = new Map();
   for(var attack_key in cd_attack_map){
-    var attack_value_list = cd_attack_map.get(attack_key);
+    var attack_value_list = cd_attack_map[attack_key];
     for(var attack_value of attack_value_list){
       if(cd_attack_reverse_map.has(attack_value)){
         attack_key_list = cd_attack_reverse_map.get(attack_value);
@@ -508,7 +512,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
     }
   }
   for(var target_key in cd_target_map){
-    var target_value_list = cd_target_map.get(target_key);
+    var target_value_list = cd_target_map[target_key];
     for(var target_value of target_value_list){
       if(cd_target_reverse_map.has(target_value)){
         target_key_list = cd_target_reverse_map.get(target_value);
@@ -525,21 +529,10 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
   var trace_index = 0;
   while (trace_index < trace.length){
     var step = trace[trace_index];
-    if(write_attack_map.has(step)){
-      var write_var_attack_list = write_attack_map.get(step);
-      for(var write_var_attack of write_var_attack_list){
-        var_attack_map.set(write_var_attack, step);
-      }
-    }
-    else if(write_target_map.has(step)){
-      var write_var_target_list = write_target_map.get(step);
-      for(var write_var_target of write_var_target_list){
-        var_target_map.set(write_var_target, step);
-      }
-    }
-
-    if(read_attack_map.has(step)){
-      var read_var_attack_list = read_attack_map.get(step);
+    /// we first consider the variable read, then write
+    /// to aviod the statement depends on itself, e.g., credit[to] += msg.value;
+    if(read_attack_map.hasOwnProperty(step)){
+      var read_var_attack_list = read_attack_map[step];
       for(var read_var_attack of read_var_attack_list){
         if(var_attack_map.has(read_var_attack)){
           var write_line = var_attack_map.get(read_var_attack);
@@ -547,8 +540,8 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
         }
       }
     }
-    else if(read_target_map.has(step)){
-      var read_var_target_list = read_tareget_map.get(step);
+    else if(read_target_map.hasOwnProperty(step)){
+      var read_var_target_list = read_tareget_map[step];
       for(var read_var_target of read_var_target_list){
         if(var_target_map.has(read_var_target)){
           var write_line = var_target_map.get(read_var_target);
@@ -557,10 +550,23 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       }
     }
 
-    if(cd_attack_map.has(step)){
+    if(write_attack_map.hasOwnProperty(step)){
+      var write_var_attack_list = write_attack_map[step];
+      for(var write_var_attack of write_var_attack_list){
+        var_attack_map.set(write_var_attack, step);
+      }
+    }
+    else if(write_target_map.hasOwnProperty(step)){
+      var write_var_target_list = write_target_map[step];
+      for(var write_var_target of write_var_target_list){
+        var_target_map.set(write_var_target, step);
+      }
+    }
+
+    if(cd_attack_map.hasOwnProperty(step)){
       con_attack_set.add(step);
     }
-    else if(cd_target_map.has(step)){
+    else if(cd_target_map.hasOwnProperty(step)){
       con_target_set.add(step);
     }
 
@@ -569,6 +575,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var attack_con of attack_con_list){
         if(con_attack_set.has(attack_con)){
           dynamicDep.push([attack_con, step]);
+          /// the conditional statement has found its following statement
           attack_con.delete(attack_con);
           break;
         }
@@ -579,6 +586,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var target_con of target_con_list){
         if(con_target_set.has(target_con)){
           dynamicDep.push([target_con, step]);
+          /// the conditional statement has found its following statement
           attack_con.delete(target_con);
           break;
         }
@@ -586,6 +594,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
     }
     trace_index += 1; 
   }
+  console.log(dynamicDep);
   return dynamicDep;
 }
 
@@ -608,23 +617,11 @@ module.exports = {
   },
   
   buildStaticDep: function(fileName){
-    var exec = require('child_process').exec; 
-    var cmdStr = "python3 buildDepen.py " + fileName;
-    exec(cmdStr, function(err, stdout, stderr){
-      if(err) {
-        console.log('get cmd error:' + stderr);
-      }
-      else {
-        var data = JSON.parse(stdout);
-        fs.writeFile("./staticDep.json", JSON.stringify(data), (err) => {
-          if (err) {
-            console.error(err);
-            return;
-          };
-        });
-      }
-    });  
-    // return staticDep;
+    var execSync = require('child_process').execSync;
+    var cmdStr = "python3 ./connection/buildDepen.py " + fileName;
+    var output = execSync(cmdStr);
+    var staticDep = JSON.parse(output);
+    return staticDep;
   },
 
   buildDynDep: function(trace, staticDep_attack, staticDep_target){
