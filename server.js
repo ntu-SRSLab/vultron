@@ -47,12 +47,12 @@ app.get('/seed', (req, res) => {
   console.log("**** GET /seed ****");
   truffle_connect.seed()
     .then((answer) => {
-      if (typeof answer.calls === 'undefined')
+      if (typeof answer.callFun_list === 'undefined')
         throw "Error running seed";
       
       res.render('seeds.ejs', {
-        calls : answer.calls,
-        status: answer.status
+        calls : answer.callFun_list,
+        status : answer.execResult_list
       });
     }).catch((e) => {
       res.render('error.ejs', {

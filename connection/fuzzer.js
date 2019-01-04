@@ -5,11 +5,14 @@ const tracer = require('./EVM2Code');
 // truffle-contract abstractions
 var targetContract;
 var attackContract;
+
 // web3 abstractions
 var web3;
 var target_abs, attack_abs;
 var target_con;
 var account_list;
+var bookKeepingAbi;
+
 // tracer abstractions at instruction level
 var targetIns_map;
 var attackIns_map;
@@ -60,6 +63,9 @@ module.exports = {
       attack_abs = await attackContract.deployed();
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
 
+      // find bookkeeping var
+      bookKeepingAbi = findBookKeepingAbi(target_abs.abi);
+      
       targetIns_map = await tracer.buildInsMap(
         target_artifact.sourcePath,
         target_artifact.deployedBytecode,
@@ -97,10 +103,8 @@ module.exports = {
     }
     // Generate call sequence
     let callFun_list = await simple_callSequence(attack_abs.abi);
-    console.log(callFun_list);
     // Execute call sequence
     let execResult_list = await exec_callSequence(callFun_list);
-    console.log(execResult_list);
     return {
       callFuns: callFun_list,
       execResults: execResult_list
@@ -117,8 +121,12 @@ module.exports = {
 
     /// ins_trace is the instrcution trace
     /// stmt_trace is the line nunmber trace
-    let stmt_trace = await tracer.buildTraceMap(ins_trace, attackIns_map, targetIns_map);
-    let dynDep = await tracer.buildDynDep(stmt_trace, staticDep_attack, staticDep_target);
+    let stmt_trace = await tracer.buildTraceMap(ins_trace,
+						attackIns_map,
+						targetIns_map);
+    let dynDep = await tracer.buildDynDep(stmt_trace,
+					  staticDep_attack,
+					  staticDep_target);
     // console.log(dynDep);
     return stmt_trace;
   }
@@ -130,6 +138,18 @@ function randomNum(min, max){
   var rand = Math.random();
   var num = min + Math.floor(rand * range);
   return num;
+}
+
+function findBookKeepingAbi(abis) {
+  for (var abi of abis) {
+    if (abi.type === 'function' && abi.constant &&
+	abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
+	abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
+      return abi;
+    }
+  }
+  throw "Cannot find bookkeeping variable!";
+  return;
 }
 
 async function getBalanceSum() {
@@ -149,15 +169,21 @@ async function getBalanceAccount() {
 
 async function getBalance(acc_address) {
   let bal = 0;
-  await target_con.methods.credit(acc_address).call(
-    function(err, result){
-      if(!err){
-        bal = result;
+  let encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
+
+  await web3.eth.call({
+    to: target_abs.address,
+    data: encode}, function(err, result) {
+      if (!err) {
+	// console.log(result);
+	if (web3.utils.isHex(result))
+	  bal = web3.utils.toBN(result);
       }
     });
+
   return bal;
 }
-    
+
 async function exec_callSequence(callSequence) {
   for (var call of callSequence) {
     let dao_bal_bf = await web3.eth.getBalance(target_abs.address);
