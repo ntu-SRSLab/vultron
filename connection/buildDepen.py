@@ -15,13 +15,13 @@ for contract in slither.contracts:
 		for node in function.nodes:
 			if len(node.state_variables_read) != 0:
 				# some source line is in the form of fileName#line-line
-				lineStr = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+				lineStr = node.source_mapping_str[node.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 				lineStr = lineStr.split("-")[0]
 				read_var = [svr.name for svr in node.state_variables_read]
 				read_map = depen_map["Read"]
 				read_map[lineStr] = read_var
 			if len(node.state_variables_written) != 0:
-				lineStr = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+				lineStr = node.source_mapping_str[node.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 				lineStr = lineStr.split("-")[0]
 				write_var = [svw.name for svw in node.state_variables_written]
 				write_map = depen_map["Write"]
@@ -32,18 +32,18 @@ cd_map = {}
 for contract in slither.contracts:  
 	for function in contract.functions:
 		for node in function.nodes:
-			node_str = node.source_mapping_str[node.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+			node_str = node.source_mapping_str[node.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 			if len(node.sons) >= 2:
 				# the conditional statement
 				cond_set.add(node_str)
 			for son in node.sons:
 				if node_str in cd_map:
 					cd_list = cd_map[node_str]
-					son_str = son.source_mapping_str[son.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+					son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 					cd_list.append(son_str)
 				else:
 					cd_list = []
-					son_str = son.source_mapping_str[son.source_mapping_str.rindex('/') +1 : ].replace('#', ':')
+					son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 					cd_list.append(son_str)
 					cd_map[node_str] = cd_list;
 

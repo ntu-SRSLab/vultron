@@ -481,7 +481,7 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
 
 
 const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
-  var dynamicDep = [];
+  var dynamicDep = new Set();
   var var_attack_map = new Map();
   var var_target_map = new Map();
   var con_attack_set = new Set();
@@ -536,7 +536,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var read_var_attack of read_var_attack_list){
         if(var_attack_map.has(read_var_attack)){
           var write_line = var_attack_map.get(read_var_attack);
-          dynamicDep.push([write_line, step])
+          dynamicDep.add([write_line, step])
         }
       }
     }
@@ -545,7 +545,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var read_var_target of read_var_target_list){
         if(var_target_map.has(read_var_target)){
           var write_line = var_target_map.get(read_var_target);
-          dynamicDep.push([write_line, step])
+          dynamicDep.add([write_line, step])
         }
       }
     }
@@ -574,9 +574,9 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       attack_con_list = cd_attack_reverse_map.get(step);
       for(var attack_con of attack_con_list){
         if(con_attack_set.has(attack_con)){
-          dynamicDep.push([attack_con, step]);
+          dynamicDep.add([attack_con, step]);
           /// the conditional statement has found its following statement
-          attack_con.delete(attack_con);
+          con_attack_set.delete(attack_con);
           break;
         }
       }
@@ -585,16 +585,15 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       target_con_list = cd_target_reverse_map.get(step);
       for(var target_con of target_con_list){
         if(con_target_set.has(target_con)){
-          dynamicDep.push([target_con, step]);
+          dynamicDep.add([target_con, step]);
           /// the conditional statement has found its following statement
-          attack_con.delete(target_con);
+          con_target_set.delete(target_con);
           break;
         }
       }
     }
     trace_index += 1; 
   }
-  console.log(dynamicDep);
   return dynamicDep;
 }
 
