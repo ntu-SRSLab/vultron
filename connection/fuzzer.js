@@ -24,8 +24,8 @@ var staticDep_attack;
 /// the gas amount
 const gasMin = 21000;
 const gasMax = 8000000;
-const dyn_array_min = 1;
 /// dynamci array
+const dyn_array_min = 1;
 const dyn_array_max = 10;
 
 /// the maximum length of seed_callSequence
@@ -38,27 +38,57 @@ const mutateOper_maxLen = 5;
 const operSeque_maxLen = 5;
 
 /// the set to keep the coverage for guided fuzzing
-var trans_len = 0;
 var trans_depen_set = new Set();
 var seque_depen_set = new Set();
 var contr_depen_set = new Set();
 
-/// the mutation operation for neighbor
-var neighbor = [];
-neighbor.push('1.2');
-neighbor.push('0.8');
-neighbor.push('1.5');
-neighbor.push('0.5');
-neighbor.push('2.o');
-neighbor.push('0.0');  
-neighbor.push(1);
-neighbor.push(-1);
-neighbor.push(2);
-neighbor.push(-2);
-neighbor.push(4);
-neighbor.push(-4);
-neighbor.push(8);
-neighbor.push(-8);
+/// the call function list for the execution
+var sequence_call_list = [];
+/// the executed call sequence
+var sequence_executed;
+/// the index in sequence_executed
+var sequeExe_index;
+/// the execution results of a call function
+var exec_results;
+
+/// hte mutation for gas neighbor
+var gas_neighbor = [];
+gas_neighbor.push('0.1');
+gas_neighbor.push('0.2');
+gas_neighbor.push('0.3');
+gas_neighbor.push('0.5');
+gas_neighbor.push('0.8');
+gas_neighbor.push('0.9');
+gas_neighbor.push('0.92');
+gas_neighbor.push('0.95');
+gas_neighbor.push('0.98');
+gas_neighbor.push('1.02');
+gas_neighbor.push('1.05');
+gas_neighbor.push('1.08');
+gas_neighbor.push('1.1');
+gas_neighbor.push('1.2');
+gas_neighbor.push('1.5');
+gas_neighbor.push('1.7');
+gas_neighbor.push('2.0');
+gas_neighbor.push('3.0');
+
+
+/// the mutation operation for uint neighbor
+var uint_neighbor = [];
+uint_neighbor.push('1.2');
+uint_neighbor.push('0.8');
+uint_neighbor.push('1.5');
+uint_neighbor.push('0.5');
+uint_neighbor.push('2.o');
+uint_neighbor.push('0.0');  
+uint_neighbor.push(1);
+uint_neighbor.push(-1);
+uint_neighbor.push(2);
+uint_neighbor.push(-2);
+uint_neighbor.push(4);
+uint_neighbor.push(-4);
+uint_neighbor.push(8);
+uint_neighbor.push(-8);
 
 
 module.exports = {
@@ -98,7 +128,7 @@ module.exports = {
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
 
       // find bookkeeping var
-      bookKeepingAbi = findBookKeepingAbi(target_abs.abi);
+      bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
       
       /// the map that the instruction corresponds to the statement 
       targetIns_map = await tracer.buildInsMap(
@@ -130,8 +160,8 @@ module.exports = {
     };
   },
 
-  /// the dynamic fuzzing
-  fuzz: async function() {
+  /// the seed for dynamic fuzzing
+  seed: async function() {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
@@ -140,39 +170,20 @@ module.exports = {
     }
     // Generate call sequence
     var callFun_list = await seed_callSequence(attack_abs.abi);
+    sequence_executed = callFun_list.slice();
+    sequeExe_index = 0;
+    sequence_call_list.push(callFun_list);
     // Execute the seed call sequence
-    var execResult_list = await exec_callSequence(callFun_list);
+    await exec_sequence_call();
 
-    var callSequence_list = [];
-    callSequence_list.push(callFun_list);
-    while(callSequence_list.length != 0){
-      /// callSequence used to be mutated
-      var callSequence = callSequence_list.pop();
-      var callSequence_new_set = mutate_callSequence(callSequence, attack_abs.abi);
-      for(var callSequence_new of callSequence_new_set){
-        /// the number of dependencies before the execution of next call sequence
-        var contr_set_bf = contr_depen_set.length; 
-        await exec_callSequence(callSequence_new);
-        for(var seque_depen of seque_depen_set){
-          if(contr_depen_set.has(seque_depen) == false){
-            contr_depen_set.add(seque_depen);
-          }
-        }
-        /// the number of dependencies after the execution of next call sequence
-        var contr_set_af = contr_depen_set.length;
-        if(contr_set_af > contr_set_bf){
-          /// continue to mutate this call sequence
-          callSequence_list.push(callSequence_new);
-        }
-      }
-    }
+    var execResult_list = "successful!";
     return {
       callFuns: callFun_list,
       execResults: execResult_list
     };
   },
 
-  trace: async function(ins_trace) {
+  fuzz: async function(ins_trace) {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
@@ -182,26 +193,22 @@ module.exports = {
 
     /// ins_trace is the instrcution trace
     /// stmt_trace is the line nunmber trace
-    let stmt_trace = await tracer.buildTraceMap(ins_trace,
+    var stmt_trace = await tracer.buildTraceMap(ins_trace,
 						attackIns_map,
 						targetIns_map);
-    /// used to guide gas mutation
-    trans_len = stmt_trace.length;
     /// the dynamic dependencies in the stmt_trace
     trans_depen_set = await tracer.buildDynDep(stmt_trace,
 					  staticDep_attack,
 					  staticDep_target);
-    /// add into the sequence dependencies
-    for(var trans_depen of trans_depen_set){
-      if (seque_depen_set.has(trans_depen) == false){
-        seque_depen_set.add(trans_depen);
-      }
-    }
+    /// TODO
+    // /// execute a function call
+    // await exec_sequence_call();
   }
 }
 
+
 /// find the bookkeeping variable
-function findBookKeepingAbi(abis) {
+async function findBookKeepingAbi(abis) {
   for (var abi of abis) {
     if (abi.type === 'function' && abi.constant &&
       abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
@@ -315,7 +322,7 @@ function sortNumber(a,b)
 }
 
 /// generate an account address
-async function gen_address(adds_type){
+function gen_address(adds_type){
   /// returns -1, if the value to search for never occurs
   if(adds_type.indexOf('[') == -1){
     /// primitive type
@@ -352,7 +359,7 @@ async function gen_address(adds_type){
 }
 
 /// generate an unsigned integer
-async function gen_uint(uint_type, unum_min, unum_max){
+function gen_uint(uint_type, unum_min, unum_max){
   /// get rid of uint in e.g., 'uint256'
   var num_left = 4;
   /// maybe it is an array, e,g., 'uint256[]'
@@ -380,7 +387,8 @@ async function gen_uint(uint_type, unum_min, unum_max){
   }
   if(uint_type.indexOf('[') == -1){
     /// primitive type
-    var value = "" + randomNum(unum_min, unum_max);
+    var value_int = randomNum(unum_min, unum_max);
+    var value = "" + value_int;
     return value;
   }
   else if(adds_type.indexOf('[]') != -1){
@@ -389,7 +397,8 @@ async function gen_uint(uint_type, unum_min, unum_max){
     var value_num = randomNum(dyn_array_min, dyn_array_max);
     var value_index = 0;
     while(value_index < value_num){
-      var value = "" + randomNum(unum_min, unum_max);
+      var value_int = randomNum(unum_min, unum_max);
+      var value = "" + value_int;
       value_list.push(value);
       value_index += 1;
     }
@@ -397,13 +406,14 @@ async function gen_uint(uint_type, unum_min, unum_max){
   }
   else{
     /// static array
-    var adds_list = [];
+    var value_list = [];
     var left_index = uint_type.indexOf('[');
     var right_index = uint_type.indexOf(']');
     var value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
     var value_index = 0;
     while(value_index < value_num){
-      var value = "" + randomNum(unum_min, unum_max);
+      var value_int = randomNum(unum_min, unum_max);
+      var value = "" + value_int;
       value_list.push(value);
       value_index += 1;
     }
@@ -411,11 +421,29 @@ async function gen_uint(uint_type, unum_min, unum_max){
   }
 }
 
+/// generate the call input
+async function gen_callInput(abi, unum_min, unum_max) {
+  var param_list = [];  
+  abi.inputs.forEach(function(param) {
+    if (param.type.indexOf('address') == 0) {
+      var adds_param = gen_address(param.type);
+      param_list.push(adds_param);
+    }
+    else if (param.type.indexOf('uint') == 0){
+      /// uint type, its minimu is '0'
+      var uint_param = gen_uint(param.type, 0, unum_max);
+      param_list.push(uint_param);
+    }
+    else {      // default parameter
+      param_list.push(0);
+    }
+  });
+  return param_list;
+}
+
 /// modify the 'input_orig_list' at 'input_index' with 'unum_diff' 
 async function modify_uint(input_orig_list, input_index, unum_diff){
-  /// generate a copy to mutate, otherwise the original input will be modified
-  var input_orig = input_orig_list[input_index].slice();
-
+  var input_orig = input_orig_list[input_index];
   if (input_orig instanceof string){
     /// it is primitive, e.g., uint
     var input_orig_int = parseInt(input_orig, 10);
@@ -437,6 +465,8 @@ async function modify_uint(input_orig_list, input_index, unum_diff){
     }
   }
   else if (input_orig instanceof Array){
+    /// generate a copy to mutate, otherwise the original input will be modified
+    input_orig = input_orig.slice()
     /// select an element to mutate
     var index = randomNum(0, input_orig.length);
     var input_orig_int = parseInt(input_orig[index], 10);
@@ -461,26 +491,7 @@ async function modify_uint(input_orig_list, input_index, unum_diff){
   }
 }
 
-/// generate the call input
-async function gen_callInput(abi, unum_min, unum_max) {
-  var param_list = [];  
-  abi.inputs.forEach(function(param) {
-    if (param.type.indexOf('address') == 0) {
-      param_list.push(gen_address(param.type));
-    }
-    else if (param.type.indexOf('uint') == 0){
-      /// uint type, its minimu is '0'
-      param_list.push(gen_uint(param.type, 0, unum_max));
-    }
-    else {
-      // default parameter
-      param_list.push(0);
-    }
-  });
-  return param_list;
-}
-
-async function modify_callInput(call, unum_diff) {
+async function modify_callInput_uint(call, unum_diff) {
   var param_list_set = new Set();
   var input_type_list = call.abi.inputs;
   var input_orig_list = call.param;
@@ -497,7 +508,8 @@ async function modify_callInput(call, unum_diff) {
       if(modify_found == false && param_j >= param_i){
         var input_type = input_type_list[param_j];
         if(input_type.type.indexOf('uint') == 0){
-          param_list.push(modify_uint(input_orig_list, param_j, unum_diff));
+          var uint_param = await modify_uint(input_orig_list, param_j, unum_diff);
+          param_list.push(uint_param);
           /// param_i can be speed up
           param_i = param_j +1;
           modify_found = true;
@@ -526,23 +538,17 @@ async function modify_callInput(call, unum_diff) {
 
 
 async function gen_callGas(gas_min, gas_max){
-  var gas_limit = "" + randomNum(gas_min, gas_max);
+  var gas_int = randomNum(gas_min, gas_max);
+  var gas_limit = "" + gas_int;
   return gas_limit;
 }
 
 /// generate a call function based on the abi
 async function gen_callFun(abi) {
-  let parameters; 
-  let gasLimit;
-  gen_callInput(abi, 0, undefined).then(function(param_list) {
-      parameters = param_list;
-  });
-  gen_callGas(gasMin, gasMax).then(function(gas_limit) {
-      gasLimit = gas_limit;
-  });
-
-  let callFun = {
-    from: accounts[0],
+  var parameters = await gen_callInput(abi, 0, undefined);
+  var gasLimit = await gen_callGas(gasMin, gasMax);
+  var callFun = {
+    from: account_list[0],
     to: attack_abs.address,
     abi: abi,
     gas: gasLimit,
@@ -551,89 +557,93 @@ async function gen_callFun(abi) {
   return callFun;
 }
 
+
+async function modify_callFun_gas(call, gas_min, gas_max){
+  var gasLimit = await gen_callGas(gas_min, gas_max);
+  var callFun = {
+    from: call.from,
+    to: call.to,
+    abi: call.abi,
+    gas: gasLimit,
+    param: call.param.slice()
+  }
+  return callFun;
+}
+
 /// generate a call function based on the existing call
-async function gen_anotherCall(call, unum_min, unum_max, gas_min, gas_max) {
-  let parameters; 
-  let gasLimit;
-  gen_callInput(call.abi, unum_min, unum_max).then(function(param_list) {
-      parameters = param_list;
-  });
-  gen_callGas(gas_min, gas_max).then(function(gas_limit) {
-      gasLimit = gas_limit;
-  });
+async function modify_callFun_bal(call, unum_min, unum_max) {
+  var parameters = await gen_callInput(call.abi, unum_min, unum_max);
 
   let callFun = {
     from: call.from,
     to: call.to,
     abi: call.abi,
-    gas: gasLimit,
+    gas: call.gas,
     param: parameters
   }
   return callFun;
 }
 
-async function modify_callFun(call, unum_diff){
-  var callFun_list_set = new Set();
-  var parameters_set; 
-  modify_callInput(call, unum_diff).then(function(param_list_set) {
-    /// it returns a set of parameter list, because unum_diff can change many parameters
-    parameters_set = param_list_set;
-  });
+async function modify_callFun_uint(call, unum_diff){
+  var callFun_set = new Set();
+  // it returns a set of parameter list, because unum_diff can change many parameters
+  var parameters_set = await modify_callInput_uint(call, unum_diff);
+
   for(var parameters of parameters_set){
-    var gasLimit;
-    gen_callGas(gasMin, gasMax).then(function(gas_limit) {
-      gasLimit = gas_limit;
-    });
     var callFun = {
       from: call.from,
       to: call.to,
       abi: call.abi,
-      gas: gasLimit,
+      gas: call.gas,
       param: parameters
     }
-    callFun_list_set.add(callFun);
+    callFun_set.add(callFun);
   }
-  return callFun_list_set;
+  return callFun_set;
 }
 
-/// mutate the gas, we first find the gas_max that cost by execution,
-/// then, we use different gas limit
-async function mutate_gas(call){
-  var gas_min = gasMin;
-  var gas_max = gasMax;
-  /// estimate the gas_max
-  while(true){
-    callFun = gen_anotherCall(call, 0, undefined, (gas_min + gas_max) / 2, gas_max);
-    exec_callFun(callFun);
-    var exec_maxLen = trans_len;
-    callFun = gen_anotherCall(call, 0, undefined, gas_min, (gas_min + gas_max) / 2);
-    exec_callFun(callFun);
-    var exec_minLen = trans_len;
-    var diff = 5;
-    if(exec_minLen < exec_maxLen + diff){
-      break;
+/// mutate the gas, and generate a list of callsequence
+async function mutate_gas(call, callSequence, index){
+  var gas_sequence_list = [];
+  var gas_diff = parseInt(call.gas, 10) - gasMin;
+  var gas_neighbor_index = 0;
+  var gas_neighbor_len = gas_neighbor.length;
+  while(gas_neighbor_index <= gas_neighbor_len){
+    var gas_min, gas_max;
+    if(gas_neighbor_index == 0){
+      gas_min = gasMin;
     }
     else{
-      gas_max = (gas_min + gas_max) / 2
-    }                     
+      var times = parseInt(gas_neighbor[gas_neighbor_index -1], 10);
+      gas_min = Math.ceil(gasMin + gas_diff*times);
+    }
+    if(gas_neighbor_index == gas_neighbor_len){
+      gas_max = gasMax;
+    }
+    else{
+      var times = parseInt(gas_neighbor[gas_neighbor_index], 10);
+      gas_max = Math.ceil(gasMin + gas_diff*times);
+    }
+    /// generate a new call function
+    var callFun = await modify_callFun_gas(call, gas_min, gas_max);
+    /// clone the call sequence
+    var gas_sequence = callSequence.slice();
+    /// replace the given function
+    gas_sequence[index] = callFun;
+    gas_sequence_list.push(gas_sequence);
+    gas_neighbor_index += 1;
   }
-  /// divide into 50 
-  var num_divide = 50;
-  /// become integer, in case of '0.*''
-  var internal = Math.ceil((gas_max - gas_min) / num_divide);
-  var num_index = 0;
-  while(num_index < num_divide){
-    callFun = gen_anotherCall(call, 0, undefined, gas_min, gas_min + internal);
-    exec_callFun(callFun);
-    gas_min = gas_min + internal;
-    num_index += 1;
-  }
+  return gas_sequence_list;
 }
 
 /// mutate the uint based on previous balances
-async function mutate_balance(call, exec_results){
-  var exec_index = 0, exec_max = 9;
-  while(exec_index < exec_max){
+/// 'exec_results' is the result of 'call'
+async function mutate_balance(call, callSequence, index){
+  var bal_sequence_list = [];
+  var exec_index = 0;
+  var exec_len = exec_results.length;
+  while(exec_index <= exec_len){
+    var unum_min, unum_max;
     if(exec_index == 0){
       unum_min = 0;
     }
@@ -647,74 +657,55 @@ async function mutate_balance(call, exec_results){
       unum_max = exec_results[exec_index];
     }      
     /// generate the new calls and execute them
-    call = gen_anotherCall(call, unum_min, unum_max, gasMin, gasMax);
-    /// every time ,exec_result would be updated
-    exec_results = exec_callFun(call);
-    /// sort is performed at the original array, not generate a new copy
-    exec_results.sort(sortNumber);
+    var callFun = await modify_callFun_bal(call, unum_min, unum_max);
+    /// clone the call sequence
+    var bal_sequence = callSequence.slice();
+    /// replace the given function
+    bal_sequence[index] = callFun;
+    bal_sequence_list.push(bal_sequence);
     exec_index += 1;
-  }  
+  }
+  return bal_sequence_list;  
 }
 
-async function mutate_neighbor(call){
-  var neighbor_call_list = [];
-  neighbor_call_list.push(call);
-
-  while(neighbor_call_list.length != 0){
-    var callFun = neighbor_call_list.pop();
-    for(var unum_diff of neighbor){
-      var callFun_new_set = modify_callFun(callFun, unum_diff)
-      for(var callFun_new of callFun_new_set){
-        /// the dependencies in sequence before execution
-        var seque_depen_bf = seque_depen_set.length;
-        exec_callFun(callFun_new);
-        /// the dependencies in sequence before execution
-        var seque_depen_af = seque_depen_set.length;
-        if(seque_depen_af > seque_depen_bf){
-          neighbor_call_list.push(callFun_new);
-        }
-      }
+async function mutate_uint(call, callSequence, index){
+  var uint_sequence_list = [];
+  var uint_neighbor_index = 0;
+  var uint_neighbor_len = uint_neighbor.length;
+  while(uint_neighbor_index <= uint_neighbor_len){
+    /// unum_diff is not handled here, because it is relevant to multiple parameters
+    /// generate a new call function
+    var callFun_set = await modify_callFun_uint(call, unum_diff);
+    for(var callFun of callFun_set){
+      /// clone the call sequence
+      var uint_sequence = callSequence.slice();
+      /// replace the given function
+      uint_sequence[index] = callFun;
+      uint_sequence_list.push(uint_sequence);     
     }
+    uint_neighbor_index += 1;
   }
+  return uint_sequence_list;
 }
 
-async function exec_callSequence(callSequence) {
-  /// clear the previous call sequences
-  seque_depen_set.clear();
-  for (var call of callSequence) {
-    /// mutate the gas
-    mutate_gas(call);
-    var exec_results = exec_callFun(call);
-    /// sort is performed at the original array, not generate a new copy
-    exec_results.sort(sortNumber);
-    /// mutate the input based on the balance
-    mutate_balance(call, exec_results);
-    /// mutate the input based on the neighbor
-    mutate_neighbor(call);
+async function mutate_callFun(call, callSequence, index) {
+  var sequence_new_list = [];
+  /// mutate the gas
+  var gas_sequence_list = await mutate_gas(call, callSequence, index);
+  for(var gas_sequence of gas_sequence_list){
+    sequence_new_list.push(gas_sequence);
   }
-  return "Test succeeded!";
-}
-
-async function seed_callSequence(abis) {
-  var call_sequence = [];
-  var cand_sequence = [];
-  abis.forEach(function(abi) {
-    /// abi.constant == true would not change state variables
-    if (abi.type === 'function' && abi.constant == false)
-      cand_sequence.push(abi);
-  });
-  
-  var sequence_len = randomNum(1, sequence_maxLen);
-  var sequence_index = 0;
-  while (sequence_index < sequence_len){
-    /// 0 <= call_index < cand_sequence.length
-    var call_index = randomNum(0, cand_sequence.length);
-    var abi = cand_sequence[call_index];
-    let callfun = await gen_callFun(abi);
-    call_sequence.push(callFun);
-    sequence_index += 1;
+  /// mutate the input based on the balance
+  var bal_sequence_list = await mutate_balance(call, callSequence, index);
+  for(var bal_sequence of bal_sequence_list){
+    sequence_new_list.push(bal_sequence);
   }
-  return call_sequence;
+  /// mutate the input based on the neighbor
+  var uint_sequence_list = await mutate_uint(call, callSequence, index);
+  for(var uint_sequence of uint_sequence_list){
+    sequence_new_list.push(uint_sequence);
+  }  
+  return sequence_new_list;
 }
 
 async function mutate_callSequence(callSequence, abis){
@@ -735,7 +726,8 @@ async function mutate_callSequence(callSequence, abis){
         var operSeque_num = randomNum(0, operSeque_maxLen);
         var operSeque_index = 0;
         while(operSeque_index < operSeque_num){
-          var abi = abis[randomNum(0, abis.length)];
+          var abi_index = randomNum(0, abis.length)
+          var abi = abis[abi_index];
           var callFun = await gen_callFun(abi);
           /// add the element
           callSequence_new.splice(sequence_index, 0, callFun);
@@ -753,7 +745,8 @@ async function mutate_callSequence(callSequence, abis){
         var operSeque_num = randomNum(0, operSeque_maxLen);
         var operSeque_index = 0;
         while(operSeque_index < operSeque_num){
-          var abi = abis[randomNum(0, abis.length)];
+          var abi_index = randomNum(0, abis.length);
+          var abi = abis[abi_index];
           var callFun = await gen_callFun(abi);
           /// replace the element
           callSequence_new.splice(sequence_index + operSeque_index, 1, callFun);
@@ -766,6 +759,85 @@ async function mutate_callSequence(callSequence, abis){
     mutateSeque_index += 1;
   }
   return callSequence_new_set;
+}
+
+
+async function exec_sequence_call() {
+  if(sequence_call_list.length != 0){
+    var sequence = sequence_call_list[0];
+    var call = sequence[0];
+    exec_results = await exec_callFun(call);
+    /// sort is performed at the original array, not generate a new copy
+    exec_results.sort(sortNumber);
+
+    /// mutate the function call, e.g., input, gas
+    seque_depen_num_bf = seque_depen_set.length;
+    /// add into the sequence dependencies
+    for(var trans_depen of trans_depen_set){
+      if (seque_depen_set.has(trans_depen) == false){
+        seque_depen_set.add(trans_depen);
+      }
+    }
+    seque_depen_num_af = seque_depen_set.length;
+    if(seque_depen_num_af > seque_depen_num_bf){
+      /// mutate the input and gas of the call
+      var calls_new_set = await mutate_callFun(call, sequence_executed, sequeExe_index);
+      for(var calls_new of calls_new_set){
+        sequence_call_list.push(calls_new);
+      }      
+    }
+  
+    /// sequeExe_index increase
+    sequeExe_index += 1;
+    /// delete the call function
+    sequence.splice(0, 1);
+    if(sequence.length == 0){
+      /// whether generate new call sequences
+      var contr_set_num_bf = contr_depen_set.length; 
+      for(var seque_depen of seque_depen_set){
+        if(contr_depen_set.has(seque_depen) == false){
+          contr_depen_set.add(seque_depen);
+        }
+      }      
+      var contr_set_num_af = contr_depen_set.length;
+      if(contr_set_num_af > contr_set_num_bf){
+        /// the call sequence generate new coverage, generate the new call sequence
+        var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
+        for(var callSequence_new of callSequence_new_set){
+          sequence_call_list.push(callSequence_new);
+        }
+      }
+      /// clear the coverage of call sequence, because we execute the new call sequence
+      seque_depen_set.clear();
+
+      /// a call sequence is executed completely, delete the previous call sequence
+      sequence_call_list.splice(0, 1);
+      /// the call sequence for the next execution
+      sequence_executed = sequence_call_list[0].slice();
+      sequeExe_index = 0;
+    }
+  }
+}
+
+async function seed_callSequence(abis) {
+  var call_sequence = [];
+  var cand_sequence = [];
+  abis.forEach(function(abi) {
+    /// abi.constant == true would not change state variables
+    if (abi.type === 'function' && abi.constant == false)
+      cand_sequence.push(abi);
+  });
+  var sequence_len = randomNum(1, sequence_maxLen);
+  var sequence_index = 0;
+  while (sequence_index < sequence_len){
+    /// 0 <= call_index < cand_sequence.length
+    var call_index = randomNum(0, cand_sequence.length);
+    var abi = cand_sequence[call_index];
+    var callFun = await gen_callFun(abi);
+    call_sequence.push(callFun);
+    sequence_index += 1;
+  }
+  return call_sequence;
 }
 
 // async function generateFunctionInputs(abi) {
