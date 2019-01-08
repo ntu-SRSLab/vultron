@@ -202,6 +202,17 @@ module.exports = {
 					  staticDep_target);
     /// execute a function call
     await exec_sequence_call();
+  },
+  
+  reset: async function() {
+    if (target_abs === undefined || target_con === undefined) {
+      throw "Target contract is not loaded!";
+    }
+    if (attack_abs === undefined) {
+      throw "Attack contract is not loaded!";
+    }
+    await resetBookKeeping();
+    return "Bookkeeping variable is reset!";
   }
 }
 
@@ -240,6 +251,14 @@ async function getBookBalance(acc_address) {
 async function getAccountBalance() {
   let bal = await getBookBalance(attack_abs.address);
   return bal;
+}
+
+/// reset bookkeeping variable
+async function resetBookKeeping() {
+  for (var account of account_list) {
+    target_con.methods.__vultron_reset(account).call();
+  }
+  target_con.methods.__vultron_reset(attack_abs.address).call();
 }
 
 /// get the sum of bookkeeping variable

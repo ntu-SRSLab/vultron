@@ -2,6 +2,10 @@ pragma solidity ^0.4.24;
 
 contract SimpleDAO {
   mapping (address => uint) public credit;
+
+  function __vultron_reset(address user) public {
+    delete credit[user];
+  }
   
   constructor () public payable { }
   

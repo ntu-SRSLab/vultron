@@ -61,6 +61,18 @@ app.get('/seed', (req, res) => {
     });
 });
 
+app.get('/reset', (req, res) => {
+  console.log("**** GET /reset ****");
+  truffle_connect.reset()
+    .then((answer) => {
+      res.send(answer);
+    }).catch((e) => {
+      res.render('error.ejs', {
+	message: e
+      });
+    });
+});
+
 app.post('/fuzz', bodyParser.json(), (req, res) => {
   console.log("**** POST /fuzz ****");
   var trace = req.body.trace;
@@ -75,7 +87,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
 
 app.listen(port, () => {
   truffle_connect.web3 =
-    new Web3(new Web3.providers.HttpProvider("http://localhost:8546"));
+    new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
   
   console.log("Express Listening at http://localhost:" + port);
 });
