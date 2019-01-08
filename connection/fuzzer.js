@@ -200,9 +200,8 @@ module.exports = {
     trans_depen_set = await tracer.buildDynDep(stmt_trace,
 					  staticDep_attack,
 					  staticDep_target);
-    /// TODO
-    // /// execute a function call
-    // await exec_sequence_call();
+    /// execute a function call
+    await exec_sequence_call();
   }
 }
 
