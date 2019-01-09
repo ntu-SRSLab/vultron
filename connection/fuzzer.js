@@ -1,6 +1,7 @@
 const contract = require('truffle-contract');
 const assert = require('assert');
 const tracer = require('./EVM2Code');
+const BigNumber = require('bignumber.js');
 
 // truffle-contract abstractions
 var targetContract;
@@ -105,7 +106,7 @@ module.exports = {
       const attack_artifact = require(attackPath);
       attackContract = contract(attack_artifact);
       attackContract.setProvider(self.web3.currentProvider);
-      
+
       // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
       if (typeof targetContract.currentProvider.sendAsync !== "function") {
         targetContract.currentProvider.sendAsync = function() {
@@ -122,7 +123,7 @@ module.exports = {
           );
         };
       }
-      
+
       target_abs = await targetContract.deployed();
       attack_abs = await attackContract.deployed();
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
@@ -150,7 +151,6 @@ module.exports = {
       console.log(e);
       return e.message;
     }
-    
     return {
       accounts: account_list,
       target_adds: target_abs.address,
@@ -200,8 +200,9 @@ module.exports = {
     trans_depen_set = await tracer.buildDynDep(stmt_trace,
 					  staticDep_attack,
 					  staticDep_target);
-    /// execute a function call
-    await exec_sequence_call();
+    console.log(trans_depen_set);
+    // /// execute a function call
+    // await exec_sequence_call();
   },
   
   reset: async function() {
@@ -232,7 +233,7 @@ async function findBookKeepingAbi(abis) {
 
 /// get the balacne of given address in the bookkeeping variable
 async function getBookBalance(acc_address) {
-  let bal = 0;
+  var bal = new BigNumber(0);
   let encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
 
   await web3.eth.call({
@@ -263,11 +264,11 @@ async function resetBookKeeping() {
 
 /// get the sum of bookkeeping variable
 async function getBookSum() {
-  var sum = 0;
+  var sum = new BigNumber(0);
   for (var account of account_list) { 
-    sum += await getBookBalance(account);
+    sum = sum.plus(await getBookBalance(account));
   }
-  sum += await getBookBalance(attack_abs.address);
+  sum = sum.plus(await getBookBalance(attack_abs.address));
   return sum;
 }
 
@@ -283,7 +284,7 @@ async function exec_callFun(call){
   await web3.eth.sendTransaction({ from: call.from,
                                    to: call.to, 
                                    gas: call.gas,                               
-                                   data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)                                   
+                                   data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
                                  },
                                  function(error, hash) {
                                    if (!error)
@@ -324,7 +325,7 @@ async function exec_callFun(call){
 /// min <= r < max
 function randomNum(min, max){
   if(min >= max){
-    return min;
+    return Math.floor(min);
   }
   else{
   var range = max - min;
@@ -376,6 +377,31 @@ function gen_address(adds_type){
   }
 }
 
+function uintToString(num){
+  var num_str = num.toString();
+  var index = num_str.indexOf("+");
+  if(index != -1){
+    var result = num_str.slice(0, 1);
+    var power_len = parseInt(num_str.slice(index +1), 10);
+    var power_index = 0;
+    while(power_index < power_len){
+      /// num_str[index-1:] is 'e+...'
+      if((power_index +2) < (index -1)){
+        result += num_str[power_index +2];
+      }
+      else{
+        result += '0';
+      }
+      power_index += 1;
+    }
+    return result;
+  }
+  else{
+    return num.toString();
+  }
+}
+
+
 /// generate an unsigned integer
 function gen_uint(uint_type, unum_min, unum_max){
   /// get rid of uint in e.g., 'uint256'
@@ -395,7 +421,7 @@ function gen_uint(uint_type, unum_min, unum_max){
   }
   if(unum_max === undefined){
     /// unum_max is undefined, we use the default maximum value
-    var unum_max = parseInt(num_str, 16);  
+    var unum_max = parseInt(num_str, 16); 
   }
   else{
     var num_int = parseInt(num_str, 16);
@@ -406,7 +432,7 @@ function gen_uint(uint_type, unum_min, unum_max){
   if(uint_type.indexOf('[') == -1){
     /// primitive type
     var value_int = randomNum(unum_min, unum_max);
-    var value = "" + value_int;
+    var value = uintToString(value_int);
     return value;
   }
   else if(adds_type.indexOf('[]') != -1){
@@ -416,7 +442,7 @@ function gen_uint(uint_type, unum_min, unum_max){
     var value_index = 0;
     while(value_index < value_num){
       var value_int = randomNum(unum_min, unum_max);
-      var value = "" + value_int;
+      var value = uintToString(value_int);;      
       value_list.push(value);
       value_index += 1;
     }
@@ -431,7 +457,7 @@ function gen_uint(uint_type, unum_min, unum_max){
     var value_index = 0;
     while(value_index < value_num){
       var value_int = randomNum(unum_min, unum_max);
-      var value = "" + value_int;
+      var value = uintToString(value_int);
       value_list.push(value);
       value_index += 1;
     }
@@ -460,7 +486,7 @@ async function gen_callInput(abi, unum_min, unum_max) {
 }
 
 /// modify the 'input_orig_list' at 'input_index' with 'unum_diff' 
-async function modify_uint(input_orig_list, input_index, unum_diff){
+function modify_uint(input_orig_list, input_index, unum_diff){
   var input_orig = input_orig_list[input_index];
   if (input_orig instanceof string){
     /// it is primitive, e.g., uint
@@ -526,7 +552,7 @@ async function modify_callInput_uint(call, unum_diff) {
       if(modify_found == false && param_j >= param_i){
         var input_type = input_type_list[param_j];
         if(input_type.type.indexOf('uint') == 0){
-          var uint_param = await modify_uint(input_orig_list, param_j, unum_diff);
+          var uint_param = modify_uint(input_orig_list, param_j, unum_diff);
           param_list.push(uint_param);
           /// param_i can be speed up
           param_i = param_j +1;
@@ -784,6 +810,7 @@ async function exec_sequence_call() {
   if(sequence_call_list.length != 0){
     var sequence = sequence_call_list[0];
     var call = sequence[0];
+    console.log(call);
     exec_results = await exec_callFun(call);
     /// sort is performed at the original array, not generate a new copy
     exec_results.sort(sortNumber);

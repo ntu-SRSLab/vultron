@@ -5,6 +5,8 @@ const Web3 = require('web3');
 const truffle_connect = require('./connection/fuzzer.js');
 const bodyParser = require('body-parser');
 
+var pre_txHash = "0x";
+
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -68,26 +70,30 @@ app.get('/reset', (req, res) => {
       res.send(answer);
     }).catch((e) => {
       res.render('error.ejs', {
-	message: e
+	     message: e
       });
     });
 });
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
   console.log("**** POST /fuzz ****");
-  var trace = req.body.trace;
-  
-  truffle_connect.fuzz(trace)
-    .then((answer) => {
-      res.send(answer);
-    }).catch((e) => {
-      res.send(e);
-    });
+  var txHash = req.body.hash;
+  /// has different hash value
+  if(txHash != pre_txHash){
+    var trace = req.body.trace;
+    truffle_connect.fuzz(trace)
+      .then((answer) => {
+        res.send(answer);
+      }).catch((e) => {
+        res.send(e);
+      });   
+      pre_txHash = txHash; 
+  }
 });
 
 app.listen(port, () => {
   truffle_connect.web3 =
-    new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
+    new Web3(new Web3.providers.HttpProvider("http://localhost:8546"));
   
   console.log("Express Listening at http://localhost:" + port);
 });
