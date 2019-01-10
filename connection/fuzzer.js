@@ -118,16 +118,14 @@ module.exports = {
       if (typeof targetContract.currentProvider.sendAsync !== "function") {
         targetContract.currentProvider.sendAsync = function() {
           return targetContract.currentProvider.send.apply(
-            targetContract.currentProvider, arguments
-          );
+            targetContract.currentProvider, arguments);
         };
       }
       
       if (typeof attackContract.currentProvider.sendAsync !== "function") {
         attackContract.currentProvider.sendAsync = function() {
           return attackContract.currentProvider.send.apply(
-            attackContract.currentProvider, arguments
-          );
+            attackContract.currentProvider, arguments);
         };
       }
 
@@ -182,7 +180,7 @@ module.exports = {
     sequence_call_list.push(callFun_list);
     // Execute the seed call sequence
     // await exec_sequence_call();
-     mutex.lock(async function() {
+    mutex.lock(async function() {
       console.log("enter lock1....")
       try{
         await exec_sequence_call();
@@ -193,7 +191,7 @@ module.exports = {
         mutex.unlock();
       }
       console.log("go out lock1....")
-     });
+    });
 
     var execResult_list = "successful!";
     return {
@@ -220,12 +218,12 @@ module.exports = {
           /// ins_trace is the instrcution trace
           /// stmt_trace is the line nunmber trace
           var stmt_trace = await tracer.buildTraceMap(ins_trace,
-                  attackIns_map,
-                  targetIns_map);
+                                                      attackIns_map,
+                                                      targetIns_map);
           /// the dynamic dependencies in the stmt_trace
           trans_depen_set = await tracer.buildDynDep(stmt_trace,
-                  staticDep_attack,
-                  staticDep_target);
+                                                     staticDep_attack,
+                                                     staticDep_target);
           /// execute a function call
           await exec_sequence_call();
         }catch (e) {
@@ -255,8 +253,8 @@ module.exports = {
 async function findBookKeepingAbi(abis) {
   for (var abi of abis) {
     if (abi.type === 'function' && abi.constant &&
-      abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
-      abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
+        abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
+        abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
       return abi;
     }
   }
@@ -271,8 +269,7 @@ async function getBookBalance(acc_address) {
 
   await web3.eth.call({
     to: target_abs.address,
-    data: encode}, 
-    function(err, result) {
+    data: encode}, function(err, result) {
       if (!err) {
         if (web3.utils.isHex(result))
           bal += web3.utils.toBN(result);
@@ -1038,6 +1035,6 @@ async function seed_callSequence(abis) {
 //       })
 //     }
 //   });
-  
+
 //   return calls;
 // }
