@@ -15,6 +15,7 @@
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
+    /// 172.21.176.77
     networks: {
 	development: {
 	    host: "127.0.0.1",
@@ -27,7 +28,7 @@ module.exports = {
 	    network_id: "5777"
 	},
 	SCFuzzer: {
-	    host: "172.21.176.77",
+	    host: "127.0.0.1",
 	    port: 8546,
 	    network_id: "*",
 	}

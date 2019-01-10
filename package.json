@@ -23,6 +23,7 @@
     "express": "^4.16.2",
     "truffle-contract": "^1.1.11",
     "get-line-from-pos": "^1.0.0",
-    "ejs": "^2.6.1"
+    "ejs": "^2.6.1",
+    "locks": "^0.2.2"
   }
 }

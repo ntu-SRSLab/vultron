@@ -1,7 +1,11 @@
 const contract = require('truffle-contract');
 const assert = require('assert');
 const tracer = require('./EVM2Code');
+var fs = require('fs');
 const BigNumber = require('bignumber.js');
+const locks = require('locks');
+// mutex
+const mutex = locks.createMutex();
 
 // truffle-contract abstractions
 var targetContract;
@@ -30,13 +34,13 @@ const dyn_array_min = 1;
 const dyn_array_max = 10;
 
 /// the maximum length of seed_callSequence
-const sequence_maxLen = 10;
+const sequence_maxLen = 3;
 /// the maximum number of muated call sequences 
-const mutateSeque_maxLen = 10;
+const mutateSeque_maxLen = 3;
 /// the maximum number of muated operation for each call sequence
-const mutateOper_maxLen = 5;
+const mutateOper_maxLen = 2;
 /// the maximum length of changed call sequence
-const operSeque_maxLen = 5;
+const operSeque_maxLen = 2;
 
 /// the set to keep the coverage for guided fuzzing
 var trans_depen_set = new Set();
@@ -51,6 +55,9 @@ var sequence_executed;
 var sequeExe_index;
 /// the execution results of a call function
 var exec_results;
+
+/// the hash of previous transaction
+var pre_txHash = "0x0";
 
 /// hte mutation for gas neighbor
 var gas_neighbor = [];
@@ -132,17 +139,17 @@ module.exports = {
       bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
       
       /// the map that the instruction corresponds to the statement 
-      targetIns_map = await tracer.buildInsMap(
-        target_artifact.sourcePath,
-        target_artifact.deployedBytecode,
-        target_artifact.deployedSourceMap,
-        target_artifact.source);
-
       attackIns_map = await tracer.buildInsMap(
         attack_artifact.sourcePath,
         attack_artifact.deployedBytecode,
         attack_artifact.deployedSourceMap,
         attack_artifact.source);
+
+      targetIns_map = await tracer.buildInsMap(
+        target_artifact.sourcePath,
+        target_artifact.deployedBytecode,
+        target_artifact.deployedSourceMap,
+        target_artifact.source);
 
       /// the static dependencies
       staticDep_target = await tracer.buildStaticDep(targetSolPath);
@@ -174,7 +181,19 @@ module.exports = {
     sequeExe_index = 0;
     sequence_call_list.push(callFun_list);
     // Execute the seed call sequence
-    await exec_sequence_call();
+    // await exec_sequence_call();
+     mutex.lock(async function() {
+      console.log("enter lock1....")
+      try{
+        await exec_sequence_call();
+      }catch (e) {
+        console.log(e);
+        return e.message;
+      }finally{
+        mutex.unlock();
+      }
+      console.log("go out lock1....")
+     });
 
     var execResult_list = "successful!";
     return {
@@ -183,26 +202,41 @@ module.exports = {
     };
   },
 
-  fuzz: async function(ins_trace) {
+  fuzz: async function(txHash, ins_trace) {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
     if (attack_abs === undefined) {
       throw "Attack contract is not loaded!";
     }
-
-    /// ins_trace is the instrcution trace
-    /// stmt_trace is the line nunmber trace
-    var stmt_trace = await tracer.buildTraceMap(ins_trace,
-						attackIns_map,
-						targetIns_map);
-    /// the dynamic dependencies in the stmt_trace
-    trans_depen_set = await tracer.buildDynDep(stmt_trace,
-					  staticDep_attack,
-					  staticDep_target);
-    console.log(trans_depen_set);
-    // /// execute a function call
-    // await exec_sequence_call();
+    console.log("previous: " + pre_txHash);
+    console.log("current: " + txHash);
+    /// different transaction hash code
+    if(txHash != pre_txHash){
+      pre_txHash = txHash;
+      mutex.lock(async function() {
+        console.log("enter lock2....")
+        try{
+          /// ins_trace is the instrcution trace
+          /// stmt_trace is the line nunmber trace
+          var stmt_trace = await tracer.buildTraceMap(ins_trace,
+                  attackIns_map,
+                  targetIns_map);
+          /// the dynamic dependencies in the stmt_trace
+          trans_depen_set = await tracer.buildDynDep(stmt_trace,
+                  staticDep_attack,
+                  staticDep_target);
+          /// execute a function call
+          await exec_sequence_call();
+        }catch (e) {
+          console.log(e);
+          return e.message;
+        }finally{
+          mutex.unlock();
+        }
+        console.log("go out lock2....")
+      });     
+    }
   },
   
   reset: async function() {
@@ -216,7 +250,6 @@ module.exports = {
     return "Bookkeeping variable is reset!";
   }
 }
-
 
 /// find the bookkeeping variable
 async function findBookKeepingAbi(abis) {
@@ -233,8 +266,8 @@ async function findBookKeepingAbi(abis) {
 
 /// get the balacne of given address in the bookkeeping variable
 async function getBookBalance(acc_address) {
-  var bal = new BigNumber(0);
-  let encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
+  var bal = 0;
+  var encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
 
   await web3.eth.call({
     to: target_abs.address,
@@ -242,7 +275,7 @@ async function getBookBalance(acc_address) {
     function(err, result) {
       if (!err) {
         if (web3.utils.isHex(result))
-          bal = web3.utils.toBN(result);
+          bal += web3.utils.toBN(result);
       }
     });
   return bal;
@@ -250,7 +283,7 @@ async function getBookBalance(acc_address) {
 
 /// get the balance of attack in the bookkeeping variable
 async function getAccountBalance() {
-  let bal = await getBookBalance(attack_abs.address);
+  var bal = await getBookBalance(attack_abs.address);
   return bal;
 }
 
@@ -264,11 +297,11 @@ async function resetBookKeeping() {
 
 /// get the sum of bookkeeping variable
 async function getBookSum() {
-  var sum = new BigNumber(0);
+  var sum = 0;
   for (var account of account_list) { 
-    sum = sum.plus(await getBookBalance(account));
+    sum += await getBookBalance(account);
   }
-  sum = sum.plus(await getBookBalance(attack_abs.address));
+  sum += await getBookBalance(attack_abs.address);
   return sum;
 }
 
@@ -280,29 +313,40 @@ async function exec_callFun(call){
   let attack_bal_bf = await web3.eth.getBalance(attack_abs.address);
   let attack_bal_acc_bf = await getAccountBalance();
   console.log("Balance account before: " + attack_bal_acc_bf);
-  
+
+  console.log(call);
   await web3.eth.sendTransaction({ from: call.from,
                                    to: call.to, 
                                    gas: call.gas,                               
                                    data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
                                  },
                                  function(error, hash) {
-                                   if (!error)
+                                   if (!error) {
                                      console.log("Transaction " + hash + " is successful!");
+                                   }
                                    else
                                      console.log(error);
                                  });
-  
+
   let target_bal_af = await web3.eth.getBalance(target_abs.address);
   let target_bal_sum_af = await getBookSum();
   console.log("Balance sum after: " + target_bal_sum_af);
   let attack_bal_af = await web3.eth.getBalance(attack_abs.address);
   let attack_bal_acc_af = await getAccountBalance();
   console.log("Balance account after: " + attack_bal_acc_af);
+
+  // console.log(target_bal_bf);
+  // console.log(target_bal_sum_bf);
+  // console.log(target_bal_af);
+  // console.log(target_bal_sum_af);
+  // console.log(attack_bal_af);
+  // console.log(attack_bal_bf);
+  // console.log(attack_bal_acc_bf);
+  // console.log(attack_bal_acc_af);
   
   // Asserting oracles
   // Balance Invariant
-  /// TODO still not consider the price of token in bookkeeping variable
+  /// TODO still not consider the price of token in bookkeeping variable  
   assert.equal(target_bal_bf - target_bal_sum_bf,
                target_bal_af - target_bal_sum_af,
                "Balance invariant should always hold.");
@@ -310,6 +354,8 @@ async function exec_callFun(call){
   assert.equal(attack_bal_af - attack_bal_bf,
                attack_bal_acc_bf - attack_bal_acc_af,
                "Transaction invariant should always hold.");  
+  
+  console.log("exec_callFun finished....");
   return [
     target_bal_bf,
     target_bal_sum_bf,
@@ -328,10 +374,10 @@ function randomNum(min, max){
     return Math.floor(min);
   }
   else{
-  var range = max - min;
-  var rand = Math.random();
-  var num = min + Math.floor(rand * range);
-  return num; 
+    var range = max - min;
+    var rand = Math.random();
+    var num = min + Math.floor(rand * range);
+    return num; 
   }
 }
 
@@ -378,10 +424,10 @@ function gen_address(adds_type){
 }
 
 function uintToString(num){
-  var num_str = num.toString();
+  var num_str = "" + num;
   var index = num_str.indexOf("+");
   if(index != -1){
-    var result = num_str.slice(0, 1);
+    var result = num_str[0];
     var power_len = parseInt(num_str.slice(index +1), 10);
     var power_index = 0;
     while(power_index < power_len){
@@ -397,7 +443,7 @@ function uintToString(num){
     return result;
   }
   else{
-    return num.toString();
+    return num_str;
   }
 }
 
@@ -485,27 +531,56 @@ async function gen_callInput(abi, unum_min, unum_max) {
   return param_list;
 }
 
+async function modify_callInput_bal(abi, unum_min, unum_max) {
+  var param_list = []; 
+  var param_changed = false; 
+  abi.inputs.forEach(function(param) {
+    if (param.type.indexOf('address') == 0) {
+      var adds_param = gen_address(param.type);
+      param_list.push(adds_param);
+    }
+    else if (param.type.indexOf('uint') == 0){
+      /// uint type, its minimu is '0'
+      var uint_param = gen_uint(param.type, 0, unum_max);
+      param_list.push(uint_param);
+      param_changed = true;
+    }
+    else {      // default parameter
+      param_list.push(0);
+    }
+  });
+  if(param_changed){
+    return param_list;
+  }
+  else{
+    /// there is no change in parameters
+    return undefined;
+  }
+}
+
 /// modify the 'input_orig_list' at 'input_index' with 'unum_diff' 
 function modify_uint(input_orig_list, input_index, unum_diff){
   var input_orig = input_orig_list[input_index];
-  if (input_orig instanceof string){
+  if (typeof input_orig === 'string' || input_orig instanceof String){
     /// it is primitive, e.g., uint
     var input_orig_int = parseInt(input_orig, 10);
-    if(unum_diff instanceof nunmber){
+    if(typeof unum_diff === "number" || unum_diff instanceof Number){
       /// modify with the instant value
       var input_modify = input_orig_int + unum_diff;
       if(input_modify >= 0){
-        return "" + input_modify;
+        var modify_str = uintToString(input_modify)
+        return modify_str;
       }
       else{
         return '0';
       }
     }
-    else if(unum_diff instanceof string){
+    else if(typeof unum_diff === 'string' || unum_diff instanceof String){
       /// modify with 'xxx' times
       var unum_diff_int = parseInt(unum_diff, 10);
       var input_modify = input_orig_int * unum_diff;
-      return "" + Math.round(input_modify);               
+      var modify_str = uintToString(Math.round(input_modify));
+      return modify_str;               
     }
   }
   else if (input_orig instanceof Array){
@@ -514,19 +589,21 @@ function modify_uint(input_orig_list, input_index, unum_diff){
     /// select an element to mutate
     var index = randomNum(0, input_orig.length);
     var input_orig_int = parseInt(input_orig[index], 10);
-    if(unum_diff instanceof nunmber){
+    if(typeof unum_diff === "number" || unum_diff instanceof Number){
       var input_modify = input_orig_int + unum_diff;
       if(input_modify >= 0){
-        input_orig[index] = "" + input_modify;
+        var modify_str = uintToString(input_modify);
+        input_orig[index] = modify_str;
       }
       else{
         input_orig[index] = '0';
       } 
     }
-    else if(unum_diff instanceof string){
+    else if(typeof unum_diff === 'string' || unum_diff instanceof String){
       var unum_diff_int = parseInt(unum_diff, 10);
       var input_modify = input_orig_int * unum_diff;
-      input_orig[index] = "" + Math.round(input_modify);               
+      var modify_str = uintToString(Math.round(input_modify));
+      input_orig[index] = modify_str;               
     }
     return input_orig;
   }
@@ -577,13 +654,14 @@ async function modify_callInput_uint(call, unum_diff) {
       break;
     }
   }
+  /// if there is no modification, param_list_set is empty
   return param_list_set;
 }
 
 
 async function gen_callGas(gas_min, gas_max){
   var gas_int = randomNum(gas_min, gas_max);
-  var gas_limit = "" + gas_int;
+  var gas_limit = uintToString(gas_int);
   return gas_limit;
 }
 
@@ -616,23 +694,26 @@ async function modify_callFun_gas(call, gas_min, gas_max){
 
 /// generate a call function based on the existing call
 async function modify_callFun_bal(call, unum_min, unum_max) {
-  var parameters = await gen_callInput(call.abi, unum_min, unum_max);
-
-  let callFun = {
-    from: call.from,
-    to: call.to,
-    abi: call.abi,
-    gas: call.gas,
-    param: parameters
+  var parameters = await modify_callInput_bal(call.abi, unum_min, unum_max);
+  if(parameters !== undefined){
+    let callFun = {
+      from: call.from,
+      to: call.to,
+      abi: call.abi,
+      gas: call.gas,
+      param: parameters
+    }
+    return callFun;
   }
-  return callFun;
+  else{
+    return undefined;
+  }
 }
 
 async function modify_callFun_uint(call, unum_diff){
   var callFun_set = new Set();
   // it returns a set of parameter list, because unum_diff can change many parameters
   var parameters_set = await modify_callInput_uint(call, unum_diff);
-
   for(var parameters of parameters_set){
     var callFun = {
       from: call.from,
@@ -702,11 +783,16 @@ async function mutate_balance(call, callSequence, index){
     }      
     /// generate the new calls and execute them
     var callFun = await modify_callFun_bal(call, unum_min, unum_max);
-    /// clone the call sequence
-    var bal_sequence = callSequence.slice();
-    /// replace the given function
-    bal_sequence[index] = callFun;
-    bal_sequence_list.push(bal_sequence);
+    if(callFun !== undefined){
+      /// clone the call sequence
+      var bal_sequence = callSequence.slice();
+      /// replace the given function
+      bal_sequence[index] = callFun;
+      bal_sequence_list.push(bal_sequence);
+    }
+    else{
+      break;
+    }
     exec_index += 1;
   }
   return bal_sequence_list;  
@@ -750,6 +836,23 @@ async function mutate_callFun(call, callSequence, index) {
     sequence_new_list.push(uint_sequence);
   }  
   return sequence_new_list;
+}
+
+
+async function mutate_callFun_half(call, callSequence, index) {
+  var uint_sequence_list = [];
+  var unum_diff = '0.01';
+  /// unum_diff is not handled here, because it is relevant to multiple parameters
+  /// generate a new call function
+  var callFun_set = await modify_callFun_uint(call, unum_diff);
+  for(var callFun of callFun_set){
+    /// clone the call sequence
+    var uint_sequence = callSequence.slice();
+    /// replace the given function
+    uint_sequence[index] = callFun;
+    uint_sequence_list.push(uint_sequence);     
+  }
+  return uint_sequence_list;  
 }
 
 async function mutate_callSequence(callSequence, abis){
@@ -805,14 +908,22 @@ async function mutate_callSequence(callSequence, abis){
   return callSequence_new_set;
 }
 
-
 async function exec_sequence_call() {
+  console.log("enter exec_sequence_call");
   if(sequence_call_list.length != 0){
     var sequence = sequence_call_list[0];
     var call = sequence[0];
-    console.log(call);
     exec_results = await exec_callFun(call);
+    if(exec_results[0] == exec_results[4] && exec_results[2] == exec_results[6]){
+      /// there is no money change
+      /// we decrease the value
+      var calls_new_list = await mutate_callFun_half(call, sequence_executed, sequeExe_index);
+      for(var calls_new of calls_new_list){
+        sequence_call_list.push(calls_new);
+      }        
+    }
     /// sort is performed at the original array, not generate a new copy
+    /// it is used in the mutate_callFun
     exec_results.sort(sortNumber);
 
     /// mutate the function call, e.g., input, gas
@@ -826,12 +937,12 @@ async function exec_sequence_call() {
     seque_depen_num_af = seque_depen_set.length;
     if(seque_depen_num_af > seque_depen_num_bf){
       /// mutate the input and gas of the call
-      var calls_new_set = await mutate_callFun(call, sequence_executed, sequeExe_index);
-      for(var calls_new of calls_new_set){
+      var calls_new_list = await mutate_callFun(call, sequence_executed, sequeExe_index);
+      for(var calls_new of calls_new_list){
         sequence_call_list.push(calls_new);
       }      
-    }
-  
+    }      
+    
     /// sequeExe_index increase
     sequeExe_index += 1;
     /// delete the call function
@@ -857,9 +968,11 @@ async function exec_sequence_call() {
 
       /// a call sequence is executed completely, delete the previous call sequence
       sequence_call_list.splice(0, 1);
-      /// the call sequence for the next execution
-      sequence_executed = sequence_call_list[0].slice();
-      sequeExe_index = 0;
+      if(sequence_call_list.length != 0){
+        /// the call sequence for the next execution
+        sequence_executed = sequence_call_list[0].slice();
+        sequeExe_index = 0;
+      }
     }
   }
 }

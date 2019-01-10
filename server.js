@@ -5,7 +5,9 @@ const Web3 = require('web3');
 const truffle_connect = require('./connection/fuzzer.js');
 const bodyParser = require('body-parser');
 
-var pre_txHash = "0x";
+const locks = require('locks');
+// mutex
+const mutex = locks.createMutex();
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -49,12 +51,12 @@ app.get('/seed', (req, res) => {
   console.log("**** GET /seed ****");
   truffle_connect.seed()
     .then((answer) => {
-      if (typeof answer.callFun_list === 'undefined')
+      if (typeof answer.callFuns === 'undefined')
         throw "Error running seed";
       
       res.render('seeds.ejs', {
-        calls : answer.callFun_list,
-        status : answer.execResult_list
+        callFuns : answer.callFuns,
+        status : answer.execResults
       });
     }).catch((e) => {
       res.render('error.ejs', {
@@ -76,19 +78,20 @@ app.get('/reset', (req, res) => {
 });
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
-  console.log("**** POST /fuzz ****");
-  var txHash = req.body.hash;
-  /// has different hash value
-  if(txHash != pre_txHash){
+  // mutex.lock(async function() {
+    console.log("**** POST /fuzz ****");
+    var txHash = req.body.hash;
     var trace = req.body.trace;
-    truffle_connect.fuzz(trace)
+    console.log("server: " + txHash);
+    /// cannot filter the hash here,
+    /// we must call truffle_connect.fuzz, otherwise will be blocked
+    truffle_connect.fuzz(txHash, trace)
       .then((answer) => {
         res.send(answer);
       }).catch((e) => {
         res.send(e);
       });   
-      pre_txHash = txHash; 
-  }
+  // });
 });
 
 app.listen(port, () => {

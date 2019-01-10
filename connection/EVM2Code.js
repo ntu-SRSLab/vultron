@@ -1,6 +1,7 @@
 var fs = require('fs');
 var getLineFromPos = require('get-line-from-pos');
 
+/// the separator that are different basic block
 var separator_set = new Set();
 separator_set.add("JUMP");
 separator_set.add("JUMPI");
@@ -11,6 +12,10 @@ separator_set.add("CALL");
 separator_set.add("CALLCODE");
 separator_set.add("DELEGATECALL");
 separator_set.add("STATICCALL");
+
+var next_separator_set = new Set();
+next_separator_set.add("JUMPDEST");
+
 
 var STOP =0x0,
     ADD =0x1,
@@ -329,6 +334,37 @@ opCodeToString[PUSH] ="PUSH";
 opCodeToString[DUP] = "DUP";
 opCodeToString[SWAP] ="SWAP";
 
+const writeByteIndex_list = (con_list) => {
+  var byteToSrc = "";
+  let index = 0;
+  while(index < con_list.length){
+    var buffer = "[" + con_list[index][0] + "    " + con_list[index][1] + "]" + "\n";
+    byteToSrc += buffer;
+    index += 1;
+  }
+  fs.writeFileSync("./byteToSrc.txt", byteToSrc);
+}
+
+const writeMulIndex_map = (con_map) =>{
+	var byteToSrc = "";
+	con_map.forEach(function(value, key, map){
+		var buffer = "[" + key + "    ";
+		var first_iter = true;
+		for(var srcline of value){
+			if(first_iter){
+				first_iter = false;
+			}
+			else{
+				buffer += "#";
+			}
+			buffer += srcline;
+		}
+		buffer = buffer + "]" + "\n";
+		byteToSrc += buffer;
+	});
+	fs.writeFileSync("./mulToSrc.txt", byteToSrc);
+}
+
 const json_parse = (fileName, srcmap, srccode) =>{
   /// truncate the prefix of the path
   fileName = fileName.slice(fileName.lastIndexOf('/') +1);
@@ -380,6 +416,7 @@ const byteToInstIndex = (src_number, binary) => {
     byteIndex += length;
     instIndex += 1;
   }
+  // writeByteIndex_list(byteToSrc);
   return byteToSrc;
 };
 
@@ -406,6 +443,14 @@ const mulbytesToSrcCode = byteToSrc => {
     else{
       lastEle = ["", ""];
     }
+    var nextEle;
+    if (byteIndex +1 < byteToSrc.length){
+      nextEle = byteToSrc[byteIndex +1];
+    }
+    else{
+      nextEle = ["", ""];
+    }    
+
     if(curEle[1] === lastEle[1]){
       /// may be the same statement is divided into multiple sections, e.g., function selection
       if (curValue === "")
@@ -424,8 +469,9 @@ const mulbytesToSrcCode = byteToSrc => {
     }
     curKey += curEle[0];
     var filt_curEle = filtString(curEle[0]);
+    var filt_nextEle = filtString(nextEle[0]);
 
-    if (separator_set.has(filt_curEle)){
+    if (separator_set.has(filt_curEle) || next_separator_set.has(filt_nextEle)){
       if(mulToSrc.has(curKey)){
         var curValue_set = mulToSrc.get(curKey);
         curValue_set.add(curValue); 
@@ -441,16 +487,25 @@ const mulbytesToSrcCode = byteToSrc => {
     }
     byteIndex += 1;
   }
+  // writeMulIndex_map(mulToSrc);
   return mulToSrc;
 }
 
 const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
   var trace_list = [];
   var insStr = "";
-  for (var ins_ele of ins_list){
-    insStr += ins_ele;
+  var ins_index = 0;
+  var ins_len = ins_list.length;
+  while (ins_index < ins_len){
+  	var ins_ele = ins_list[ins_index];
+    var next_ins = "";
+    if(ins_index +1 < ins_len){
+    	next_ins = ins_list[ins_index +1];
+    }
     var filt_insEle = filtString(ins_ele);
-    if(separator_set.has(filt_insEle)){
+    var filt_nextEle = filtString(next_ins);
+    insStr += ins_ele;
+    if(separator_set.has(filt_insEle) || next_separator_set.has(filt_nextEle)){
       if(mulToSrc_attack.has(insStr)){
         var traceEle = mulToSrc_attack.get(insStr);  
         for(var step_list of traceEle){
@@ -458,8 +513,7 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
           for(var step of step_item){
             trace_list.push(step);
           }
-        }
-        
+        } 
       }
       else if(mulToSrc_victim.has(insStr)){
         var traceEle = mulToSrc_victim.get(insStr);
@@ -471,10 +525,12 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
         }
       }
       else{
+      	console.log(insStr);
         console.log("evm to code error!\n");
       }
       insStr = "";
     }
+    ins_index += 1;
   }
   return trace_list;
 }
@@ -536,7 +592,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var read_var_attack of read_var_attack_list){
         if(var_attack_map.has(read_var_attack)){
           var write_line = var_attack_map.get(read_var_attack);
-          dynamicDep.add([write_line, step])
+          dynamicDep.add(write_line + "#" + step)
         }
       }
     }
@@ -545,7 +601,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       for(var read_var_target of read_var_target_list){
         if(var_target_map.has(read_var_target)){
           var write_line = var_target_map.get(read_var_target);
-          dynamicDep.add([write_line, step])
+          dynamicDep.add(write_line + "#" + step)
         }
       }
     }
@@ -574,7 +630,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       attack_con_list = cd_attack_reverse_map.get(step);
       for(var attack_con of attack_con_list){
         if(con_attack_set.has(attack_con)){
-          dynamicDep.add([attack_con, step]);
+          dynamicDep.add(attack_con + "#" + step);
           /// the conditional statement has found its following statement
           con_attack_set.delete(attack_con);
           break;
@@ -585,7 +641,7 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
       target_con_list = cd_target_reverse_map.get(step);
       for(var target_con of target_con_list){
         if(con_target_set.has(target_con)){
-          dynamicDep.add([target_con, step]);
+          dynamicDep.add(target_con + "#" + step);
           /// the conditional statement has found its following statement
           con_target_set.delete(target_con);
           break;
