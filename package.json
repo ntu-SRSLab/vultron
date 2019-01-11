@@ -18,12 +18,13 @@
   },
   "homepage": "https://github.com/liyistc/vultron#readme",
   "dependencies": {
-    "web3": "^1.0.0-beta.37",
+    "async": "^2.6.1",
     "body-parser": "^1.18.2",
-    "express": "^4.16.2",
-    "truffle-contract": "^1.1.11",
-    "get-line-from-pos": "^1.0.0",
     "ejs": "^2.6.1",
-    "locks": "^0.2.2"
+    "express": "^4.16.2",
+    "get-line-from-pos": "^1.0.0",
+    "locks": "^0.2.2",
+    "truffle-contract": "^1.1.11",
+    "web3": "^1.0.0-beta.37"
   }
 }
