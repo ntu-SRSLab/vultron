@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
   console.log("**** GET / ****");
   res.render('index.ejs');
 });
-  
+
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
   truffle_connect.load('../build/contracts/SimpleDAO.json',
@@ -72,25 +72,25 @@ app.get('/reset', (req, res) => {
       res.send(answer);
     }).catch((e) => {
       res.render('error.ejs', {
-	     message: e
+	      message: e
       });
     });
 });
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
   // mutex.lock(async function() {
-    console.log("**** POST /fuzz ****");
-    var txHash = req.body.hash;
-    var trace = req.body.trace;
-    console.log("server: " + txHash);
-    /// cannot filter the hash here,
-    /// we must call truffle_connect.fuzz, otherwise will be blocked
-    truffle_connect.fuzz(txHash, trace)
-      .then((answer) => {
-        res.send(answer);
-      }).catch((e) => {
-        res.send(e);
-      });   
+  console.log("**** POST /fuzz ****");
+  var txHash = req.body.hash;
+  var trace = req.body.trace;
+  console.log("server: " + txHash);
+  /// cannot filter the hash here,
+  /// we must call truffle_connect.fuzz, otherwise will be blocked
+  truffle_connect.fuzz(txHash, trace)
+    .then((answer) => {
+      res.send(answer);
+    }).catch((e) => {
+      res.send(e);
+    });   
   // });
 });
 
