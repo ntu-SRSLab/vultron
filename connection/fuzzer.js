@@ -54,23 +54,18 @@ var sequence_call_list = [];
 var sequence_executed;
 /// the index in sequence_executed
 var sequeExe_index;
+/// the sequence_exexuted become more meaningful
+var sequeExe_meaningful;
 /// the execution results of a call function
 var exec_results;
 
 /// the hash of previous transaction
 var pre_txHash = "0x0";
 
-
 /// the candidate abi that can be used to start transaction
 var cand_sequence = [];
 
-///mutex
-// var queue = async.queue(function(task, finish){
-//   task.run();
-//   finish(null);
-// }, 1);
-
-/// hte mutation for gas neighbor
+/// the mutation for gas neighbor
 var gas_neighbor = [];
 gas_neighbor.push('0.1');
 gas_neighbor.push('0.2');
@@ -188,26 +183,18 @@ module.exports = {
     var callFun_list = await seed_callSequence(attack_abs.abi);
     sequence_executed = callFun_list.slice();
     sequeExe_index = 0;
+    sequeExe_meaningful = false;
     sequence_call_list.push(callFun_list);
     // Execute the seed call sequence
     // await exec_sequence_call();
-    // var task = {
-    //   name: "seed",
-    //   run: async function(){
-    //     await exec_sequence_call();
-    //   }, 
-    //   callback: function(err){
-    //     if(err) throw err;
-    //   }
-    // }
-    // queue.push(task, task.callback);
     mutex.lock(async function() {
       try{
         await exec_sequence_call();
-      }catch (e) {
+      }
+      catch (e) {
         console.log(e);
-        return e.message;
-      }finally{
+      }
+      finally{
         mutex.unlock();
       }
     });
@@ -229,26 +216,6 @@ module.exports = {
     /// different transaction hash code
     if(txHash != pre_txHash){
       pre_txHash = txHash;
-      // var task = {
-      //   name: "fuzz", 
-      //   run: async function(){
-      //     /// ins_trace is the instrcution trace
-      //     /// stmt_trace is the line nunmber trace
-      //     var stmt_trace = await tracer.buildTraceMap(ins_trace,
-      //             attackIns_map,
-      //             targetIns_map);
-      //     /// the dynamic dependencies in the stmt_trace
-      //     trans_depen_set = await tracer.buildDynDep(stmt_trace,
-      //             staticDep_attack,
-      //             staticDep_target);
-      //     /// execute a function call
-      //     await exec_sequence_call();          
-      //   },
-      //   callback: function(err){
-      //     if(err) throw err;
-      //   }
-      // }
-      // queue.push(task, task.callback);
       mutex.lock(async function() {
         try{
           /// ins_trace is the instrcution trace
@@ -262,10 +229,11 @@ module.exports = {
                                                      staticDep_target);
           /// execute a function call
           await exec_sequence_call();
-        }catch (e) {
+        }
+        catch (e) {
           console.log(e);
-          return e.message;
-        }finally{
+        }
+        finally{
           mutex.unlock();
         }
       });     
@@ -303,13 +271,13 @@ async function getBookBalance(acc_address) {
   var encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
 
   await web3.eth.call({
-    to: target_abs.address,
-    data: encode}, function(err, result) {
-      if (!err) {
-        if (web3.utils.isHex(result))
-          bal += web3.utils.toBN(result);
-      }
-    });
+                      to: target_abs.address,
+                      data: encode}, function(err, result) {
+                        if (!err) {
+                          if (web3.utils.isHex(result))
+                            bal += web3.utils.toBN(result);
+                        }
+                      });
   return bal;
 }
 
@@ -331,19 +299,24 @@ async function resetBookKeeping() {
 async function getBookSum() {
   var sum = 0;
   for (var account of account_list) { 
-    sum += await getBookBalance(account);
+    var account_bal = await getBookBalance(account);
+    sum += account_bal;
+
   }
-  sum += await getBookBalance(attack_abs.address);
+  var attack_bal = await getBookBalance(attack_abs.address);
+  sum += attack_bal;
   return sum;
 }
 
 /// execute the call and generate the transaction
 async function exec_callFun(call){
-  let target_bal_bf = await web3.eth.getBalance(target_abs.address);
-  let target_bal_sum_bf = await getBookSum();
+  var init_bal_bf = await web3.eth.getBalance(account_list[0]);
+  console.log("initial account before: " + init_bal_bf);
+  var target_bal_bf = await web3.eth.getBalance(target_abs.address);
+  var target_bal_sum_bf = await getBookSum();
   console.log("Balance sum before: " + target_bal_sum_bf);
-  let attack_bal_bf = await web3.eth.getBalance(attack_abs.address);
-  let attack_bal_acc_bf = await getAccountBalance();
+  var attack_bal_bf = await web3.eth.getBalance(attack_abs.address);
+  var attack_bal_acc_bf = await getAccountBalance();
   console.log("Balance account before: " + attack_bal_acc_bf);
 
   console.log(call);
@@ -360,32 +333,34 @@ async function exec_callFun(call){
                                      console.log(error);
                                  });
 
-  let target_bal_af = await web3.eth.getBalance(target_abs.address);
-  let target_bal_sum_af = await getBookSum();
+  var init_bal_af = await web3.eth.getBalance(account_list[0]);
+  console.log("initial account after: " + init_bal_af);
+  var target_bal_af = await web3.eth.getBalance(target_abs.address);
+  var target_bal_sum_af = await getBookSum();
   console.log("Balance sum after: " + target_bal_sum_af);
-  let attack_bal_af = await web3.eth.getBalance(attack_abs.address);
-  let attack_bal_acc_af = await getAccountBalance();
+  var attack_bal_af = await web3.eth.getBalance(attack_abs.address);
+  var attack_bal_acc_af = await getAccountBalance();
   console.log("Balance account after: " + attack_bal_acc_af);
 
-  // console.log(target_bal_bf);
-  // console.log(target_bal_sum_bf);
-  // console.log(target_bal_af);
-  // console.log(target_bal_sum_af);
-  // console.log(attack_bal_af);
   // console.log(attack_bal_bf);
+  // console.log(attack_bal_af);
+  // console.log(target_bal_bf);
+  // console.log(target_bal_af);
   // console.log(attack_bal_acc_bf);
   // console.log(attack_bal_acc_af);
+  // console.log(target_bal_sum_bf);
+  // console.log(target_bal_sum_af);
   
   // Asserting oracles
   // Balance Invariant
   /// TODO still not consider the price of token in bookkeeping variable  
   try{
-    assert.equal(target_bal_bf - target_bal_sum_bf,
-                 target_bal_af - target_bal_sum_af,
+    assert.equal(BigInt(target_bal_bf) - BigInt(target_bal_sum_bf),
+                 BigInt(target_bal_af) - BigInt(target_bal_sum_af),
                  "Balance invariant should always hold.");
     // Transaction Invariant
-    assert.equal(attack_bal_af - attack_bal_bf,
-                 attack_bal_acc_bf - attack_bal_acc_af,
+    assert.equal(BigInt(attack_bal_af) - BigInt(attack_bal_bf),
+                 BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af),
                  "Transaction invariant should always hold.");  
   }
   catch(e){
@@ -460,6 +435,7 @@ function gen_address(adds_type){
   }
 }
 
+
 function uintToString(num){
   var num_str = "" + num;
   var index = num_str.indexOf("+");
@@ -497,14 +473,14 @@ function gen_uint(uint_type, unum_min, unum_max){
   } 
   var byte_num = parseInt(uint_type.slice(num_left, num_right), 10) / 8;
   var byte_index = 0;
-  var num_str = "0x"
+  var num_str = '0x';
   while(byte_index < byte_num){
     num_str += 'ff';
     byte_index += 1;
   }
   if(unum_max === undefined){
     /// unum_max is undefined, we use the default maximum value
-    var unum_max = parseInt(num_str, 16); 
+    unum_max = parseInt(num_str, 16); 
   }
   else{
     var num_int = parseInt(num_str, 16);
@@ -582,7 +558,8 @@ async function modify_callInput_bal(abi, unum_min, unum_max) {
       param_list.push(uint_param);
       param_changed = true;
     }
-    else {      // default parameter
+    else {      
+      // default parameter
       param_list.push(0);
     }
   });
@@ -616,11 +593,10 @@ function modify_uint(input_orig_list, input_index, unum_diff){
       else{
         return undefined;
       }
-
     }
     else if(typeof unum_diff === 'string' || unum_diff instanceof String){
       /// modify with 'xxx' times
-      var unum_diff_int = parseInt(unum_diff, 10);
+      var unum_diff_int = parseFloat(unum_diff, 10);
       var input_modify = input_orig_int * unum_diff;
       if(input_modify !== input_orig_int){
         var modify_str = uintToString(Math.round(input_modify));
@@ -654,7 +630,7 @@ function modify_uint(input_orig_list, input_index, unum_diff){
       }
     }
     else if(typeof unum_diff === 'string' || unum_diff instanceof String){
-      var unum_diff_int = parseInt(unum_diff, 10);
+      var unum_diff_int = parseFloat(unum_diff, 10);
       var input_modify = input_orig_int * unum_diff;
       if(input_modify !== input_orig_int){
         var modify_str = uintToString(Math.round(input_modify));
@@ -665,7 +641,6 @@ function modify_uint(input_orig_list, input_index, unum_diff){
         return undefined;
       }
     }
-
   }
   else{
     /// no change, it needs to proceed further
@@ -721,6 +696,37 @@ async function modify_callInput_uint(call, unum_diff) {
   return param_list_set;
 }
 
+
+async function modify_callInput_meaningful(call, unum_diff) {
+  /// the generated parameters
+  var param_list = [];
+  var input_type_list = call.abi.inputs;
+  var input_orig_list = call.param;
+  var param_i = 0;
+  var param_len = input_type_list.length;
+  var modify_found = false;
+  /// for each element in input_orig_list to mutate
+  while(param_i < param_len){
+    var input_type = input_type_list[param_i];
+    if(input_type.type.indexOf('uint') == 0){
+      var uint_param = modify_uint(input_orig_list, param_i, unum_diff);
+      if(uint_param !== undefined){
+        param_list.push(uint_param);
+        modify_found = true;
+      }
+    }
+    else{
+      param_list.push(input_orig_list[param_i]);
+    }
+    param_i += 1;
+  }
+  if(modify_found){
+    return [true, param_list];
+  }
+  else{
+    return [false, undefined];
+  }
+}
 
 async function gen_callGas(gas_min, gas_max){
   var gas_int = randomNum(gas_min, gas_max);
@@ -784,13 +790,32 @@ async function modify_callFun_uint(call, unum_diff){
       abi: call.abi,
       gas: call.gas,
       param: parameters
-    }
+    };
     callFun_set.add(callFun);
   }
   return callFun_set;
 }
 
+async function modify_callFun_meaningful(call, unum_diff){
+  // it returns a set of parameter list, because unum_diff can change many parameters
+  var modify_result = await modify_callInput_meaningful(call, unum_diff);
+  if(modify_result[0]){
+    var callFun = {
+      from: call.from,
+      to: call.to,
+      abi: call.abi,
+      gas: call.gas,
+      param: modify_result[1]
+    };  
+    return [true, callFun];
+  }
+  else{
+    return [false, undefined];
+  }
+}
+
 /// mutate the gas, and generate a list of callsequence
+/// gas does not need BigInt
 async function mutate_gas(call, callSequence, index){
   var gas_sequence_list = [];
   var gas_diff = parseInt(call.gas, 10) - gasMin;
@@ -802,14 +827,14 @@ async function mutate_gas(call, callSequence, index){
       gas_min = gasMin;
     }
     else{
-      var times = parseInt(gas_neighbor[gas_neighbor_index -1], 10);
+      var times = parseFloat(gas_neighbor[gas_neighbor_index -1], 10);
       gas_min = Math.ceil(gasMin + gas_diff*times);
     }
     if(gas_neighbor_index == gas_neighbor_len){
       gas_max = gasMax;
     }
     else{
-      var times = parseInt(gas_neighbor[gas_neighbor_index], 10);
+      var times = parseFloat(gas_neighbor[gas_neighbor_index], 10);
       gas_max = Math.ceil(gasMin + gas_diff*times);
     }
     /// generate a new call function
@@ -836,13 +861,13 @@ async function mutate_balance(call, callSequence, index){
       unum_min = 0;
     }
     else{
-      unum_min = exec_results[exec_index -1];
+      unum_min = parseInt(exec_results[exec_index -1]);
     }
     if(exec_index == 8){
       unum_max = undefined;
     }
     else{
-      unum_max = exec_results[exec_index];
+      unum_max = parseInt(exec_results[exec_index]);
     }      
     /// generate the new calls and execute them
     var callFun = await modify_callFun_bal(call, unum_min, unum_max);
@@ -902,20 +927,19 @@ async function mutate_callFun(call, callSequence, index) {
 }
 
 
-async function mutate_callFun_half(call, callSequence, index) {
-  var uint_sequence_list = [];
+async function mutate_callFun_meaningful(call, callSequence, index) {
   var unum_diff = '0.0000001';
   /// unum_diff is not handled here, because it is relevant to multiple parameters
   /// generate a new call function
-  var callFun_set = await modify_callFun_uint(call, unum_diff);
-  for(var callFun of callFun_set){
-    /// clone the call sequence
-    var uint_sequence = callSequence.slice();
-    /// replace the given function
-    uint_sequence[index] = callFun;
-    uint_sequence_list.push(uint_sequence);     
+  var modify_result = await modify_callFun_meaningful(call, unum_diff);
+  if(modify_result[0]){
+    /// callSequence itself is changed, not change at its copy 
+    callSequence[index] = modify_result[1]; 
+    return true;
   }
-  return uint_sequence_list;  
+  else{
+    return false;
+  }
 }
 
 async function mutate_callSequence(callSequence, abis){
@@ -980,7 +1004,8 @@ async function seed_callSequence(abis) {
     if (abi.type === 'function' && abi.constant == false)
       cand_sequence.push(abi);
   });
-  var sequence_len = randomNum(1, sequence_maxLen);
+  /// at least there are two calls
+  var sequence_len = randomNum(2, sequence_maxLen);
   var sequence_index = 0;
   while (sequence_index < sequence_len){
     /// 0 <= call_index < cand_sequence.length
@@ -1011,34 +1036,25 @@ async function exec_sequence_call() {
         break;
       }
       else{
-        if(sequence_call_list.length !== 0){
+        sequence_call_list.splice(0, 1);
+        if(sequence_call_list.length != 0){
           sequence = sequence_call_list[0];
+        }
+        else{
+          console.log("fuzzing finish.....");
         }
       }
     }
     if(sequence_found){
       var call = sequence[0];
       exec_results = await exec_callFun(call);
-
       if(exec_results[0] == exec_results[4] && exec_results[2] == exec_results[6]){
         /// there is no money change
         /// we decrease the value
-        var calls_new_list = await mutate_callFun_half(call, sequence_executed, sequeExe_index);
-        if(calls_new_list.length !== 0){
-          print_callSequence(calls_new_list);
-          for(var calls_new of calls_new_list){
-            sequence_call_list.push(calls_new);
-          }  
-        }
-        else{
-          /// the transferred money cannot be change, we generate another call sequence
-          if(sequence_call_list.length <= 3){
-            var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
-            console.log(callSequence_new_set);
-            for(var callSequence_new of callSequence_new_set){
-              sequence_call_list.push(callSequence_new);
-            }
-          }
+        /// we will modify sequence_executed, and make it more meaningful
+        var mutate_suc = await mutate_callFun_meaningful(call, sequence_executed, sequeExe_index);
+        if(mutate_suc){
+          sequeExe_meaningful = true;
         }     
       }
       /// sort is performed at the original array, not generate a new copy
@@ -1067,6 +1083,25 @@ async function exec_sequence_call() {
       /// sequeExe_index increase
       sequeExe_index += 1;
       if(sequence.length === 0){
+        /// the sequence_executed becomes more meaningfule
+        if(sequeExe_meaningful){
+          /// we should use sequence_executed.slice
+          /// because sequence_executed may be changer later
+          console.log("meaningful.....");
+          console.log(sequence_executed);
+          sequence_call_list.push(sequence_executed.slice());
+        }
+        else{
+          /// the transferred money cannot be change, we generate another call sequence
+          if(sequence_call_list.length <= 3){
+            var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
+            console.log("shor list.....");
+            print_callSequence(callSequence_new_set);
+            for(var callSequence_new of callSequence_new_set){
+              sequence_call_list.push(callSequence_new);
+            }
+          }
+        }  
         /// whether generate new call sequences
         var contr_set_num_bf = contr_depen_set.length; 
         for(var seque_depen of seque_depen_set){
@@ -1091,6 +1126,7 @@ async function exec_sequence_call() {
           /// the call sequence for the next execution
           sequence_executed = sequence_call_list[0].slice();
           sequeExe_index = 0;
+          sequeExe_meaningful = false;
         }
       }
     }

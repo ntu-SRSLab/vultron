@@ -12,8 +12,8 @@ contract AttackDAO {
     dao = addr;
   }
 
-  function donate(address to, uint val) public {
-    dao.donate.value(val)(to);
+  function donate(uint val) public {
+    dao.donate.value(val)(this);
   }
 
   function withdraw(uint amount) public {
