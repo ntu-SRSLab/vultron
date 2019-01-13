@@ -12,6 +12,8 @@ separator_set.add("CALL");
 separator_set.add("CALLCODE");
 separator_set.add("DELEGATECALL");
 separator_set.add("STATICCALL");
+/// it is used for send money
+separator_set.add("GAS");
 
 var next_separator_set = new Set();
 next_separator_set.add("JUMPDEST");
@@ -652,7 +654,6 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
   }
   return dynamicDep;
 }
-
 
 module.exports = {
   buildInsMap: function(fileName, binary, srcmap, srccode) {

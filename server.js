@@ -82,7 +82,6 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   console.log("**** POST /fuzz ****");
   var txHash = req.body.hash;
   var trace = req.body.trace;
-  console.log("server: " + txHash);
   /// cannot filter the hash here,
   /// we must call truffle_connect.fuzz, otherwise will be blocked
   truffle_connect.fuzz(txHash, trace)
