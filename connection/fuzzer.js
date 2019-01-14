@@ -29,19 +29,19 @@ var staticDep_attack;
 
 /// the gas amount
 const gasMin = 25000;
-const gasMax = 8000000000;
+const gasMax = 800000000000;
 /// dynamci array
 const dyn_array_min = 1;
 const dyn_array_max = 10;
 
 /// the maximum length of seed_callSequence
-const sequence_maxLen = 3;
+const sequence_maxLen = 4;
 /// the maximum number of muated call sequences 
-const mutateSeque_maxLen = 3;
+const mutateSeque_maxLen = 4;
 /// the maximum number of muated operation for each call sequence
-const mutateOper_maxLen = 2;
+const mutateOper_maxLen = 3;
 /// the maximum length of changed call sequence
-const operSeque_maxLen = 2;
+const operSeque_maxLen = 3;
 
 /// the set to keep the coverage for guided fuzzing
 var seque_stmt_trace = [];
@@ -74,10 +74,6 @@ var fuzzing_finish = false;
 
 /// the mutation for gas neighbor
 var gas_neighbor = [];
-gas_neighbor.push('0.000001');
-gas_neighbor.push('0.00001');
-gas_neighbor.push('0.0001');
-gas_neighbor.push('0.001');
 gas_neighbor.push('0.01');
 gas_neighbor.push('0.1');
 gas_neighbor.push('0.2');
@@ -86,10 +82,18 @@ gas_neighbor.push('0.5');
 gas_neighbor.push('0.8');
 gas_neighbor.push('0.9');
 gas_neighbor.push('0.92');
+gas_neighbor.push('0.93');
 gas_neighbor.push('0.95');
+gas_neighbor.push('0.96');
+gas_neighbor.push('0.97');
 gas_neighbor.push('0.98');
+gas_neighbor.push('0.99');
+gas_neighbor.push('1.01');
 gas_neighbor.push('1.02');
+gas_neighbor.push('1.03');
+gas_neighbor.push('1.0');
 gas_neighbor.push('1.05');
+gas_neighbor.push('1.06');
 gas_neighbor.push('1.08');
 gas_neighbor.push('1.1');
 gas_neighbor.push('1.2');
@@ -126,9 +130,6 @@ uint_neighbor.push('0.01');
 uint_neighbor.push('5.0');
 uint_neighbor.push('0.001'); 
 uint_neighbor.push('0.0001')
-uint_neighbor.push('0.00001')
-uint_neighbor.push('0.000001')
-uint_neighbor.push('0.0000001')
 uint_neighbor.push(1);
 uint_neighbor.push(-1);
 uint_neighbor.push(2);
@@ -189,6 +190,8 @@ module.exports = {
         target_artifact.deployedSourceMap,
         target_artifact.source);
 
+
+
       /// the static dependencies
       staticDep_target = await tracer.buildStaticDep(targetSolPath);
       staticDep_attack = await tracer.buildStaticDep(attackSolPath);
@@ -214,7 +217,7 @@ module.exports = {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
-    var callFun_list = await simple_callSequence(attack_abs.abi);
+    var callFun_list = await seed_callSequence(attack_abs.abi);
     // Execute the seed call sequence
     // await exec_sequence_call();
     mutex.lock(async function() {
@@ -355,28 +358,35 @@ async function exec_callFun(call){
   // console.log("Balance account before: " + attack_bal_acc_bf);
 
   console.log(call);
-  await web3.eth.sendTransaction({ from: call.from,
-                                   to: call.to, 
-                                   gas: call.gas,                               
-                                   data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
-                                 },
-                                 function(error, hash) {
-                                   if (!error) {
-                                    console.log("Transaction " + hash + " is successful!");
-                                    tx_hash = hash;
-                                   }
-                                   else
-                                     console.log(error);
-                                });
+  try{
+    await web3.eth.sendTransaction({ from: call.from,
+                                     to: call.to, 
+                                     gas: call.gas,                               
+                                     data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+                                   },
+                                   function(error, hash) {
+                                     if (!error) {
+                                      tx_hash = hash;
+                                     }
+                                     else{
+                                       console.log(error);
+                                      }
+                                  });
+  }catch(e){
+    // console.log(e);
+  }
+
   await web3.eth.getTransactionReceipt(tx_hash).then((receipt) => {
-    console.log(receipt);
-      if(receipt.status == false){
-        revert_found = true;  
-        console.log('Transaction Failed');
+    console.log("receipt status: " + receipt.status + " ######receipt gasused: " + receipt.gasUsed);
+    if(receipt.status === false){
+      if((parseInt(call.gas, 10) - receipt.gasUsed) < 500){
+        console.log(tx_hash + '  out-of-gas transaction failed');
+        revert_found = true;
       }
+    }
     }).catch((e)=> {
       console.log(e);
-    });
+  });
 
   var target_bal_af = await web3.eth.getBalance(target_abs.address);
   var target_bal_sum_af = await getBookSum();
@@ -591,7 +601,7 @@ function gen_uint(uint_type, unum_min, unum_max){
 /// generate the call input
 async function gen_callInput(abi, unum_min, unum_max) {
   var param_list = [];  
-  abi.inputs.forEach(function(param) {
+  await abi.inputs.forEach(function(param) {
     if (param.type.indexOf('address') == 0) {
       var adds_param = gen_address(param.type);
       param_list.push(adds_param);
@@ -611,7 +621,7 @@ async function gen_callInput(abi, unum_min, unum_max) {
 async function modify_callInput_bal(abi, unum_min, unum_max) {
   var param_list = []; 
   var param_changed = false; 
-  abi.inputs.forEach(function(param) {
+  await abi.inputs.forEach(function(param) {
     if (param.type.indexOf('address') == 0) {
       var adds_param = gen_address(param.type);
       param_list.push(adds_param);
@@ -1039,7 +1049,7 @@ async function mutate_callFun_uint_meaningful(call, callSequence, index) {
 }
 
 async function mutate_callFun_gas_meaningful(call, callSequence, index) {
-  var gas_diff = '2.0';
+  var gas_diff = '30.0';
   var modify_result = await modify_callFun_gas_meaningful(call, gas_diff);
   /// callSequence itself is changed, not change at its copy 
   if(modify_result[0]){
@@ -1108,7 +1118,7 @@ async function seed_callSequence(abis) {
   var call_sequence = [];
   /// for different smart contracts
   cand_sequence = [];
-  abis.forEach(function(abi) {
+  await abis.forEach(function(abi) {
     /// abi.constant == true would not change state variables
     if (abi.type === 'function' && abi.constant == false)
       cand_sequence.push(abi);
@@ -1135,6 +1145,7 @@ async function print_callSequence(calls_list){
 }
 
 async function exec_sequence_call(){
+  // console.log(sequence_call_list[0]);
   if(fuzzing_finish){
     /// we finish the fuzzing
     return;
@@ -1149,11 +1160,12 @@ async function exec_sequence_call(){
     }
   }
   seque_depen_num_af = seque_depen_set.size;
-  console.log("before num: " + seque_depen_num_bf + "   after num: " + seque_depen_num_af);
+  console.log("seque before: " + seque_depen_num_bf + " seque after: " + seque_depen_num_af);
+  console.log(seque_depen_set);
   if(seque_depen_num_af > seque_depen_num_bf){
     /// mutate the input and gas of the call
     /// sequence_executed, and sequeExe_index is still right
-    var calls_new_list = await mutate_callFun(lastCall, sequence_executed, sequeExe_index);
+    var calls_new_list = await mutate_callFun(lastCall, sequence_executed, sequeExe_index -1);
     for(var calls_new of calls_new_list){
       sequence_call_list.push(calls_new);
     }      
@@ -1192,7 +1204,7 @@ async function exec_sequence_call(){
       return;
     }
   }
-
+  // console.log(sequence_call_list[0]);
   if(sequence_call_list.length !== 0){
     var sequence = sequence_call_list[0];
     var sequence_found = false;
@@ -1232,73 +1244,69 @@ async function exec_sequence_call(){
         console.log("fuzzing finish....");
         return;
       }
-      else if(exec_results[0] === "norevert" && exec_results[1] == exec_results[5] && exec_results[3] == exec_results[7]){
-        /// there is no money change
-        /// we decrease the value
-        /// we will modify sequence_executed, and make it more meaningful
-        var mutate_uint_suc = await mutate_callFun_uint_meaningful(call, sequence_executed, sequeExe_index);
-        if(mutate_uint_suc){
+      else if(exec_results[0] === "revert"){
+        var mutate_gas_suc = await mutate_callFun_gas_meaningful(call, sequence_executed, sequeExe_index);
+        if(mutate_gas_suc){
           sequeExe_meaningful = true;
-        }  
+        }    
+        if(exec_results[1] == exec_results[5] && exec_results[3] == exec_results[7]){
+          /// here we use sequence_executed[sequeExe_index], because call is changed by its gas before
+          var mutate_uint_suc = await mutate_callFun_uint_meaningful(sequence_executed[sequeExe_index], sequence_executed, sequeExe_index);
+          if(mutate_uint_suc){
+            sequeExe_meaningful = true;
+          }  
+        } 
         exec_results = exec_results.slice(1);   
         /// sort is performed at the original array, not generate a new copy
         /// it is used in the mutate_callFun
-        exec_results.sort(sortNumber);
+        exec_results.sort(sortNumber);        
       }
-      else if(exec_results[0] === "revert"){
+      else if(exec_results[0] === "norevert"){
         if(exec_results[1] == exec_results[5] && exec_results[3] == exec_results[7]){
+          /// here we use sequence_executed[sequeExe_index], because call is changed by its gas before
           var mutate_uint_suc = await mutate_callFun_uint_meaningful(call, sequence_executed, sequeExe_index);
           if(mutate_uint_suc){
             sequeExe_meaningful = true;
-          }           
-          var mutate_gas_suc = await mutate_callFun_gas_meaningful(sequence_executed[sequeExe_index], sequence_executed, sequeExe_index);
-          if(mutate_gas_suc){
-            sequeExe_meaningful = true;
-          }
-        }
-        else{
-          var mutate_gas_suc = await mutate_callFun_gas_meaningful(call, sequence_executed, sequeExe_index);
-          if(mutate_gas_suc){
-            sequeExe_meaningful = true;
-          }
-        }
+          }  
+        } 
         exec_results = exec_results.slice(1);   
-        exec_results.sort(sortNumber);
+        /// sort is performed at the original array, not generate a new copy
+        /// it is used in the mutate_callFun
+        exec_results.sort(sortNumber);        
       }
+
       /// delete the call function
       sequence.splice(0, 1);
       /// sequeExe_index increase
       sequeExe_index += 1;
       new_sequence_start = false;
       if(sequence.length === 0){
+        /// a call sequence is executed completely, delete the previous call sequence
+        sequence_call_list.splice(0, 1);
+        new_sequence_start = true;
         /// the sequence_executed becomes more meaningfule
         if(sequeExe_meaningful){
           /// we should use sequence_executed.slice
           /// because sequence_executed may be changer later
-          console.log(sequence_executed);
-          sequence_call_list.push(sequence_executed.slice());
+          /// we should add them into the front, because it is meaningful verson of last call sequence
+          sequence_call_list.unshift(sequence_executed.slice());
         }
         else{
           /// the transferred money cannot be change, we generate another call sequence
           if(sequence_call_list.length <= 3){
             var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
             for(var callSequence_new of callSequence_new_set){
-              console.log(callSequence_new);
               sequence_call_list.push(callSequence_new);
             }
           }
-        }  
-
-        /// a call sequence is executed completely, delete the previous call sequence
-        sequence_call_list.splice(0, 1);
-        new_sequence_start = true; 
+        }   
       }
     }
   }
 }
 
 
-async function generateFunctionInputs(abi) {
+async function generateFunctionInputs_donate(abi) {
   if (abi.constant) return;
   if (abi.type != 'function') return;
 
@@ -1307,7 +1315,8 @@ async function generateFunctionInputs(abi) {
     if (param.type == 'address') {
       parameters.push(attack_abs.address);
     } else if (param.type == 'uint256') {
-      parameters.push(web3.utils.toWei('1', 'ether'));
+      // parameters.push(web3.utils.toWei('1', 'ether'));
+      parameters.push("200000000000000");
     } else {
       // default parameter
       parameters.push(0);
@@ -1318,25 +1327,66 @@ async function generateFunctionInputs(abi) {
     from: account_list[0],
     to: attack_abs.address,
     abi: abi,
-    gas: '1000000',
+    gas: '35000',
+    param: parameters,
+  }
+  return call;
+}
+
+async function generateFunctionInputs_withdraw(abi) {
+  if (abi.constant) return;
+  if (abi.type != 'function') return;
+
+  let parameters = [];  
+  await abi.inputs.forEach(function(param) {
+    if (param.type == 'address') {
+      parameters.push(attack_abs.address);
+    } else if (param.type == 'uint256') {
+      // parameters.push(web3.utils.toWei('1', 'ether'));
+      parameters.push("1000000000");
+    } else {
+      // default parameter
+      parameters.push(0);
+    }
+  });
+
+  let call = {
+    from: account_list[0],
+    to: attack_abs.address,
+    abi: abi,
+    gas: '35000',
     param: parameters,
   }
   return call;
 }
 
 async function simple_callSequence(abis) {
+  cand_sequence = [];
+  await abis.forEach(function(abi) {
+    /// abi.constant == true would not change state variables
+    if (abi.type === 'function' && abi.constant == false)
+      cand_sequence.push(abi);
+  });
   let callFun_list = [];
   await abis.forEach(function(abi) {
     if (abi.constant || abi.type != 'function')
       return;
 
     if (abi.name == 'donate') {
-      generateFunctionInputs(abi).then(function(call) {
+      generateFunctionInputs_donate(abi).then(function(call) {
       callFun_list.push(call);
       })
     }
   });
-  console.log("callFun_list");
-  console.log(callFun_list);
+  await abis.forEach(function(abi) {
+    if (abi.constant || abi.type != 'function')
+      return;
+
+    if (abi.name == 'withdraw') {
+      generateFunctionInputs_withdraw(abi).then(function(call) {
+      callFun_list.push(call);
+      })
+    }
+  });
   return callFun_list;
 }

