@@ -10,10 +10,10 @@ const locks = require('locks');
 const mutex = locks.createMutex();
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: false}));
 
 // parse application/json
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');

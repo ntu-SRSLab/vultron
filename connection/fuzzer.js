@@ -2,12 +2,16 @@ const contract = require('truffle-contract');
 const assert = require('assert');
 const tracer = require('./EVM2Code');
 const fs = require('fs');
-const BigNumber = require('bignumber.js');
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
 const async = require('async');
 
+
+var self;
+/// json file
+var target_artifact;
+var attack_artifact
 // truffle-contract abstractions
 var targetContract;
 var attackContract;
@@ -16,6 +20,7 @@ var attackContract;
 var web3;
 var target_abs, attack_abs;
 var target_con;
+var attack_con;
 var account_list;
 var bookKeepingAbi;
 
@@ -29,7 +34,7 @@ var staticDep_attack;
 
 /// the gas amount
 const gasMin = 25000;
-const gasMax = 800000000000;
+const gasMax = 8000000000;
 /// dynamci array
 const dyn_array_min = 1;
 const dyn_array_max = 10;
@@ -143,15 +148,19 @@ uint_neighbor.push(-8);
 module.exports = {
   /// load some static information for the dynamic analysis.e.g., fuzzing
   load: async function(targetPath, attackPath, targetSolPath, attackSolPath) {
-    var self = this;
+    var execSync = require('child_process').execSync;
+    var cmdStr = "sh ./startTruffle.sh";
+    execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]});
+
+    self = this;
     web3 = self.web3;
     try {
       account_list = await web3.eth.getAccounts();
 
-      const target_artifact = require(targetPath);
+      target_artifact = require(targetPath);
       targetContract = contract(target_artifact);
       targetContract.setProvider(self.web3.currentProvider);
-      const attack_artifact = require(attackPath);
+      attack_artifact = require(attackPath);
       attackContract = contract(attack_artifact);
       attackContract.setProvider(self.web3.currentProvider);
 
@@ -172,7 +181,9 @@ module.exports = {
 
       target_abs = await targetContract.deployed();
       attack_abs = await attackContract.deployed();
+      console.log("first: " + target_abs.address);
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
+      attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
 
       // find bookkeeping var
       bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
@@ -189,8 +200,6 @@ module.exports = {
         target_artifact.deployedBytecode,
         target_artifact.deployedSourceMap,
         target_artifact.source);
-
-
 
       /// the static dependencies
       staticDep_target = await tracer.buildStaticDep(targetSolPath);
@@ -213,11 +222,11 @@ module.exports = {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined) {
+    if (attack_abs === undefined  || attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
-    var callFun_list = await seed_callSequence(attack_abs.abi);
+    var callFun_list = await simple_callSequence(attack_abs.abi);
     // Execute the seed call sequence
     // await exec_sequence_call();
     mutex.lock(async function() {
@@ -245,7 +254,7 @@ module.exports = {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined) {
+    if (attack_abs === undefined || attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     /// different transaction hash code
@@ -282,7 +291,7 @@ module.exports = {
     if (target_abs === undefined || target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined) {
+    if (attack_abs === undefined || attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     await resetBookKeeping();
@@ -1137,12 +1146,68 @@ async function seed_callSequence(abis) {
   return call_sequence;
 }
 
+///Redeploy contract
+// async function redeploy(target_con, attack_con){
+//   target_con = await target_con.deploy({data: target_artifact.deployedBytecode}).send({
+//     from: account_list[0],
+//     gas:80000000000,
+//     value: web3.utils.toWei("5", "ether")
+//   });
+//     // attack_con.deploy({data: attack_artifact.bytecode, arguments: [target_con.address], value: web3.utils.toWei("5", "ether")})
+//     //   .then(function(new_attack) {
+//     //     attack_con = new_attack;
+//     //   });
+//   // });
+// }
+
 /// for debugging
 async function print_callSequence(calls_list){
   for(var calls of calls_list){
     console.log(calls);
   }
 }
+
+async function resetContract(){
+  var execSync = require('child_process').execSync;
+  var cmdStr = "sh ./startTruffle.sh";
+  execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]}); 
+
+  try {
+    targetContract = contract(target_artifact);
+    targetContract.setProvider(self.web3.currentProvider);
+    attackContract = contract(attack_artifact);
+    attackContract.setProvider(self.web3.currentProvider);
+
+    // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
+    if (typeof targetContract.currentProvider.sendAsync !== "function") {
+      targetContract.currentProvider.sendAsync = function() {
+        return targetContract.currentProvider.send.apply(
+          targetContract.currentProvider, arguments);
+      };
+    }
+    
+    if (typeof attackContract.currentProvider.sendAsync !== "function") {
+      attackContract.currentProvider.sendAsync = function() {
+        return attackContract.currentProvider.send.apply(
+          attackContract.currentProvider, arguments);
+      };
+    }
+
+    target_abs = await targetContract.deployed();
+    attack_abs = await attackContract.deployed();
+    /// TODO not get the contract
+    console.log("reset: " + target_abs.address);
+    target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
+    attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
+
+    // find bookkeeping var
+    bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
+  } catch (e) {
+    console.log(e);
+    return e.message;
+  }
+}
+
 
 async function exec_sequence_call(){
   // console.log(sequence_call_list[0]);
@@ -1249,13 +1314,13 @@ async function exec_sequence_call(){
         if(mutate_gas_suc){
           sequeExe_meaningful = true;
         }    
-        if(exec_results[1] == exec_results[5] && exec_results[3] == exec_results[7]){
-          /// here we use sequence_executed[sequeExe_index], because call is changed by its gas before
-          var mutate_uint_suc = await mutate_callFun_uint_meaningful(sequence_executed[sequeExe_index], sequence_executed, sequeExe_index);
-          if(mutate_uint_suc){
-            sequeExe_meaningful = true;
-          }  
-        } 
+        // if(exec_results[1] == exec_results[5] && exec_results[3] == exec_results[7]){
+        //   /// here we use sequence_executed[sequeExe_index], because call is changed by its gas before
+        //   var mutate_uint_suc = await mutate_callFun_uint_meaningful(sequence_executed[sequeExe_index], sequence_executed, sequeExe_index);
+        //   if(mutate_uint_suc){
+        //     sequeExe_meaningful = true;
+        //   }  
+        // } 
         exec_results = exec_results.slice(1);   
         /// sort is performed at the original array, not generate a new copy
         /// it is used in the mutate_callFun
@@ -1284,6 +1349,7 @@ async function exec_sequence_call(){
         /// a call sequence is executed completely, delete the previous call sequence
         sequence_call_list.splice(0, 1);
         new_sequence_start = true;
+
         /// the sequence_executed becomes more meaningfule
         if(sequeExe_meaningful){
           /// we should use sequence_executed.slice
@@ -1299,7 +1365,8 @@ async function exec_sequence_call(){
               sequence_call_list.push(callSequence_new);
             }
           }
-        }   
+        }
+        await resetContract();  
       }
     }
   }
@@ -1327,7 +1394,7 @@ async function generateFunctionInputs_donate(abi) {
     from: account_list[0],
     to: attack_abs.address,
     abi: abi,
-    gas: '35000',
+    gas: '1000000',
     param: parameters,
   }
   return call;
