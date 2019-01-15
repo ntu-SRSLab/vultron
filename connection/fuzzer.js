@@ -18,7 +18,6 @@ var attackContract;
 
 // web3 abstractions
 var web3;
-var target_abs, attack_abs;
 var target_con;
 var attack_con;
 var account_list;
@@ -179,8 +178,8 @@ module.exports = {
         };
       }
 
-      target_abs = await targetContract.deployed();
-      attack_abs = await attackContract.deployed();
+      var target_abs = await targetContract.deployed();
+      var attack_abs = await attackContract.deployed();
       console.log("first: " + target_abs.address);
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
       attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
@@ -219,10 +218,10 @@ module.exports = {
 
   /// the seed for dynamic fuzzing
   seed: async function() {
-    if (target_abs === undefined || target_con === undefined) {
+    if (target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined  || attack_con === undefined) {
+    if (attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
@@ -251,10 +250,10 @@ module.exports = {
   },
 
   fuzz: async function(txHash, ins_trace) {
-    if (target_abs === undefined || target_con === undefined) {
+    if (target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined || attack_con === undefined) {
+    if (attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     /// different transaction hash code
@@ -288,10 +287,10 @@ module.exports = {
   },
   
   reset: async function() {
-    if (target_abs === undefined || target_con === undefined) {
+    if (target_con === undefined) {
       throw "Target contract is not loaded!";
     }
-    if (attack_abs === undefined || attack_con === undefined) {
+    if (attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
     // await resetBookKeeping();
