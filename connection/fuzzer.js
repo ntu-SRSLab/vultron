@@ -148,9 +148,9 @@ uint_neighbor.push(-8);
 module.exports = {
   /// load some static information for the dynamic analysis.e.g., fuzzing
   load: async function(targetPath, attackPath, targetSolPath, attackSolPath) {
-    var execSync = require('child_process').execSync;
-    var cmdStr = "sh ./startTruffle.sh";
-    execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]});
+    //var execSync = require('child_process').execSync;
+    //var cmdStr = "sh ./startTruffle.sh";
+    //execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]});
 
     self = this;
     web3 = self.web3;
@@ -186,7 +186,7 @@ module.exports = {
       attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
 
       // find bookkeeping var
-      bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
+      bookKeepingAbi = await findBookKeepingAbi(target_con._jsonInterface);
       
       /// the map that the instruction corresponds to the statement 
       attackIns_map = await tracer.buildInsMap(
@@ -210,10 +210,10 @@ module.exports = {
     }
     return {
       accounts: account_list,
-      target_adds: target_abs.address,
-      attack_adds: attack_abs.address,
-      target_abi: target_abs.abi,
-      attack_abi: attack_abs.abi
+      target_adds: target_con.options.address,
+      attack_adds: attack_con.options.address,
+      target_abi: target_con._jsonInterface,
+      attack_abi: attack_con._jsonInterface
     };
   },
 
@@ -226,7 +226,7 @@ module.exports = {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
-    var callFun_list = await simple_callSequence(attack_abs.abi);
+    var callFun_list = await simple_callSequence(attack_con._jsonInterface);
     // Execute the seed call sequence
     // await exec_sequence_call();
     mutex.lock(async function() {
@@ -294,8 +294,9 @@ module.exports = {
     if (attack_abs === undefined || attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
-    await resetBookKeeping();
-    return "Bookkeeping variable is reset!";
+    // await resetBookKeeping();
+    await redeploy();
+    return "Contracts are reset!";
   }
 }
 
@@ -318,7 +319,7 @@ async function getBookBalance(acc_address) {
   var encode = web3.eth.abi.encodeFunctionCall(bookKeepingAbi, [acc_address]);
 
   await web3.eth.call({
-                      to: target_abs.address,
+                      to: target_con.options.address,
                       data: encode}, function(err, result) {
                         if (!err) {
                           if (web3.utils.isHex(result))
@@ -330,7 +331,7 @@ async function getBookBalance(acc_address) {
 
 /// get the balance of attack in the bookkeeping variable
 async function getAccountBalance() {
-  var bal = await getBookBalance(attack_abs.address);
+  var bal = await getBookBalance(attack_con.options.address);
   return bal;
 }
 
@@ -339,7 +340,7 @@ async function resetBookKeeping() {
   for (var account of account_list) {
     target_con.methods.__vultron_reset(account).call();
   }
-  target_con.methods.__vultron_reset(attack_abs.address).call();
+  target_con.methods.__vultron_reset(attack_con.options.address).call();
 }
 
 /// get the sum of bookkeeping variable
@@ -350,7 +351,7 @@ async function getBookSum() {
     sum += account_bal;
 
   }
-  var attack_bal = await getBookBalance(attack_abs.address);
+  var attack_bal = await getBookBalance(attack_con.options.address);
   sum += attack_bal;
   return sum;
 }
@@ -359,10 +360,10 @@ async function getBookSum() {
 async function exec_callFun(call){
   var tx_hash;
   var revert_found = false;
-  var target_bal_bf = await web3.eth.getBalance(target_abs.address);
+  var target_bal_bf = await web3.eth.getBalance(target_con.options.address);
   var target_bal_sum_bf = await getBookSum();
   // console.log("Balance sum before: " + target_bal_sum_bf);
-  var attack_bal_bf = await web3.eth.getBalance(attack_abs.address);
+  var attack_bal_bf = await web3.eth.getBalance(attack_con.options.address);
   var attack_bal_acc_bf = await getAccountBalance();
   // console.log("Balance account before: " + attack_bal_acc_bf);
 
@@ -397,10 +398,10 @@ async function exec_callFun(call){
       console.log(e);
   });
 
-  var target_bal_af = await web3.eth.getBalance(target_abs.address);
+  var target_bal_af = await web3.eth.getBalance(target_con.options.address);
   var target_bal_sum_af = await getBookSum();
   // console.log("Balance sum after: " + target_bal_sum_af);
-  var attack_bal_af = await web3.eth.getBalance(attack_abs.address);
+  var attack_bal_af = await web3.eth.getBalance(attack_con.options.address);
   var attack_bal_acc_af = await getAccountBalance();
   // console.log("Balance account after: " + attack_bal_acc_af);
 
@@ -835,7 +836,7 @@ async function gen_callFun(abi) {
   var gasLimit = await gen_callGas(gasMin, gasMax);
   var callFun = {
     from: account_list[0],
-    to: attack_abs.address,
+    to: attack_con.options.address,
     abi: abi,
     gas: gasLimit,
     param: parameters
@@ -1147,18 +1148,20 @@ async function seed_callSequence(abis) {
 }
 
 ///Redeploy contract
-// async function redeploy(target_con, attack_con){
-//   target_con = await target_con.deploy({data: target_artifact.deployedBytecode}).send({
-//     from: account_list[0],
-//     gas:80000000000,
-//     value: web3.utils.toWei("5", "ether")
-//   });
-//     // attack_con.deploy({data: attack_artifact.bytecode, arguments: [target_con.address], value: web3.utils.toWei("5", "ether")})
-//     //   .then(function(new_attack) {
-//     //     attack_con = new_attack;
-//     //   });
-//   // });
-// }
+async function redeploy(){
+  target_con = await target_con.deploy({data: target_artifact.bytecode, arguments: []})
+    .send({
+      from: account_list[0],
+      gas: 1500000,
+      value: web3.utils.toWei("5", "ether")
+   });
+  attack_con = await attack_con.deploy({data: attack_artifact.bytecode, arguments: [target_con.options.address]})
+    .send({
+      from: account_list[0],
+      gas: 1500000,
+      value: web3.utils.toWei("5", "ether")
+    });
+}
 
 /// for debugging
 async function print_callSequence(calls_list){
@@ -1167,46 +1170,46 @@ async function print_callSequence(calls_list){
   }
 }
 
-async function resetContract(){
-  var execSync = require('child_process').execSync;
-  var cmdStr = "sh ./startTruffle.sh";
-  execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]}); 
+// async function resetContract(){
+//   //var execSync = require('child_process').execSync;
+//   //var cmdStr = "sh ./startTruffle.sh";
+//   //execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]}); 
 
-  try {
-    targetContract = contract(target_artifact);
-    targetContract.setProvider(self.web3.currentProvider);
-    attackContract = contract(attack_artifact);
-    attackContract.setProvider(self.web3.currentProvider);
+//   try {
+//     targetContract = contract(target_artifact);
+//     targetContract.setProvider(self.web3.currentProvider);
+//     attackContract = contract(attack_artifact);
+//     attackContract.setProvider(self.web3.currentProvider);
 
-    // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
-    if (typeof targetContract.currentProvider.sendAsync !== "function") {
-      targetContract.currentProvider.sendAsync = function() {
-        return targetContract.currentProvider.send.apply(
-          targetContract.currentProvider, arguments);
-      };
-    }
+//     // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
+//     if (typeof targetContract.currentProvider.sendAsync !== "function") {
+//       targetContract.currentProvider.sendAsync = function() {
+//         return targetContract.currentProvider.send.apply(
+//           targetContract.currentProvider, arguments);
+//       };
+//     }
     
-    if (typeof attackContract.currentProvider.sendAsync !== "function") {
-      attackContract.currentProvider.sendAsync = function() {
-        return attackContract.currentProvider.send.apply(
-          attackContract.currentProvider, arguments);
-      };
-    }
+//     if (typeof attackContract.currentProvider.sendAsync !== "function") {
+//       attackContract.currentProvider.sendAsync = function() {
+//         return attackContract.currentProvider.send.apply(
+//           attackContract.currentProvider, arguments);
+//       };
+//     }
 
-    target_abs = await targetContract.deployed();
-    attack_abs = await attackContract.deployed();
-    /// TODO not get the contract
-    console.log("reset: " + target_abs.address);
-    target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
-    attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
+//     target_abs = await targetContract.deployed();
+//     attack_abs = await attackContract.deployed();
+//     /// TODO not get the contract
+//     console.log("reset: " + target_abs.address);
+//     target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
+//     attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
 
-    // find bookkeeping var
-    bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
-  } catch (e) {
-    console.log(e);
-    return e.message;
-  }
-}
+//     // find bookkeeping var
+//     bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
+//   } catch (e) {
+//     console.log(e);
+//     return e.message;
+//   }
+// }
 
 
 async function exec_sequence_call(){
@@ -1247,7 +1250,7 @@ async function exec_sequence_call(){
     var contr_set_num_af = contr_depen_set.size;
     if(contr_set_num_af > contr_set_num_bf){
       /// the call sequence generate new coverage, generate the new call sequence
-      var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
+      var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_con._jsonInterface);
       for(var callSequence_new of callSequence_new_set){
         sequence_call_list.push(callSequence_new);
       }
@@ -1360,13 +1363,13 @@ async function exec_sequence_call(){
         else{
           /// the transferred money cannot be change, we generate another call sequence
           if(sequence_call_list.length <= 3){
-            var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_abs.abi);
+            var callSequence_new_set = await mutate_callSequence(sequence_executed, attack_con._jsonInterface);
             for(var callSequence_new of callSequence_new_set){
               sequence_call_list.push(callSequence_new);
             }
           }
         }
-        await resetContract();  
+        await redeploy();  
       }
     }
   }
@@ -1380,7 +1383,7 @@ async function generateFunctionInputs_donate(abi) {
   let parameters = [];  
   await abi.inputs.forEach(function(param) {
     if (param.type == 'address') {
-      parameters.push(attack_abs.address);
+      parameters.push(attack_con.options.address);
     } else if (param.type == 'uint256') {
       // parameters.push(web3.utils.toWei('1', 'ether'));
       parameters.push("200000000000000");
@@ -1392,7 +1395,7 @@ async function generateFunctionInputs_donate(abi) {
 
   let call = {
     from: account_list[0],
-    to: attack_abs.address,
+    to: attack_con.options.address,
     abi: abi,
     gas: '1000000',
     param: parameters,
@@ -1407,7 +1410,7 @@ async function generateFunctionInputs_withdraw(abi) {
   let parameters = [];  
   await abi.inputs.forEach(function(param) {
     if (param.type == 'address') {
-      parameters.push(attack_abs.address);
+      parameters.push(attack_con.options.address);
     } else if (param.type == 'uint256') {
       // parameters.push(web3.utils.toWei('1', 'ether'));
       parameters.push("1000000000");
@@ -1419,7 +1422,7 @@ async function generateFunctionInputs_withdraw(abi) {
 
   let call = {
     from: account_list[0],
-    to: attack_abs.address,
+    to: attack_con.options.address,
     abi: abi,
     gas: '35000',
     param: parameters,
