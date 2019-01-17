@@ -74,6 +74,9 @@ var pre_txHash = "0x0";
 /// the candidate abi that can be used to start transaction
 var cand_sequence = [];
 
+var reset_num = 0;
+var reset_index = 0;
+
 var fuzzing_finish = false;
 
 /// the mutation for gas neighbor
@@ -180,12 +183,21 @@ module.exports = {
 
       var target_abs = await targetContract.deployed();
       var attack_abs = await attackContract.deployed();
-      console.log("first: " + target_abs.address);
+
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
       attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
 
       // find bookkeeping var
       bookKeepingAbi = await findBookKeepingAbi(target_con._jsonInterface);
+
+      // /// the set of statements
+      attackStmt_set = await tracer.buildStmtSet(attack_artifact.sourcePath,
+        attack_artifact.deployedSourceMap,
+        attack_artifact.source);
+
+      targetStmt_set = await tracer.buildStmtSet(target_artifact.sourcePath,
+        target_artifact.deployedSourceMap,
+        target_artifact.source);     
       
       /// the map that the instruction corresponds to the statement 
       attackIns_map = await tracer.buildInsMap(
@@ -225,11 +237,14 @@ module.exports = {
       throw "Attack contract is not loaded!";
     }
     // Generate call sequence
-    var callFun_list = await simple_callSequence(attack_con._jsonInterface);
+    var callFun_list = await seed_callSequence(attack_con._jsonInterface);
+
     // Execute the seed call sequence
     // await exec_sequence_call();
     mutex.lock(async function() {
       try{
+        reset_index = 0;
+        reset_num = randomNum(0, 50);
         new_sequence_start = true;
         sequence_call_list.push(callFun_list);
         await exec_sequence_call();
@@ -486,7 +501,7 @@ function gen_address(adds_type){
   /// returns -1, if the value to search for never occurs
   if(adds_type.indexOf('[') == -1){
     /// primitive type
-    return account_list[0];
+    return attack_con.options.address;
   }
   else if(adds_type.indexOf('[]') != -1){
     /// dynamic array
@@ -1148,6 +1163,7 @@ async function seed_callSequence(abis) {
 
 ///Redeploy contract
 async function redeploy(){
+  console.log("redeploy......");
   target_con = await target_con.deploy({data: target_artifact.bytecode, arguments: []})
     .send({
       from: account_list[0],
@@ -1160,6 +1176,7 @@ async function redeploy(){
       gas: 1500000,
       value: web3.utils.toWei("5", "ether")
     });
+    console.log(target_con.options.address);
 }
 
 /// for debugging
@@ -1168,47 +1185,6 @@ async function print_callSequence(calls_list){
     console.log(calls);
   }
 }
-
-// async function resetContract(){
-//   //var execSync = require('child_process').execSync;
-//   //var cmdStr = "sh ./startTruffle.sh";
-//   //execSync(cmdStr, {stdio: [process.stdin, process.stdout, process.stderr]}); 
-
-//   try {
-//     targetContract = contract(target_artifact);
-//     targetContract.setProvider(self.web3.currentProvider);
-//     attackContract = contract(attack_artifact);
-//     attackContract.setProvider(self.web3.currentProvider);
-
-//     // This is workaround: https://github.com/trufflesuite/truffle-contract/issues/57
-//     if (typeof targetContract.currentProvider.sendAsync !== "function") {
-//       targetContract.currentProvider.sendAsync = function() {
-//         return targetContract.currentProvider.send.apply(
-//           targetContract.currentProvider, arguments);
-//       };
-//     }
-    
-//     if (typeof attackContract.currentProvider.sendAsync !== "function") {
-//       attackContract.currentProvider.sendAsync = function() {
-//         return attackContract.currentProvider.send.apply(
-//           attackContract.currentProvider, arguments);
-//       };
-//     }
-
-//     target_abs = await targetContract.deployed();
-//     attack_abs = await attackContract.deployed();
-//     /// TODO not get the contract
-//     console.log("reset: " + target_abs.address);
-//     target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
-//     attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
-
-//     // find bookkeeping var
-//     bookKeepingAbi = await findBookKeepingAbi(target_abs.abi);
-//   } catch (e) {
-//     console.log(e);
-//     return e.message;
-//   }
-// }
 
 
 async function exec_sequence_call(){
@@ -1368,7 +1344,14 @@ async function exec_sequence_call(){
             }
           }
         }
-        await redeploy();  
+        if(reset_index >= reset_num){
+          await redeploy();  
+          reset_num = randomNum(0, 50);
+          reset_index = 0;          
+        }
+        else{
+          reset_index += 1;
+        }
       }
     }
   }

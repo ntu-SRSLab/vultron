@@ -398,8 +398,8 @@ const json_parse = (fileName, srcmap, srccode) =>{
           ({ s, l, f, j }) => `${fileName}:${getLineFromPos(srccode, s)}`
         );
   return src_number;
-
 }
+
 
 const isPush = inst => inst >= 0x60 && inst < 0x7f;
 const pushDataLength = inst => inst - 0x5f;
@@ -425,6 +425,15 @@ const byteToInstIndex = (src_number, binary) => {
   // writeByteIndex_list(byteToSrc);
   return byteToSrc;
 };
+
+
+const stmtCollection = (src_number) =>{
+   	var stmt_set = new Set();
+	src_number.forEach(function(value, key, map){
+		stmt_set.add(value);
+	});
+	return stmt_set;
+}
 
 const filtString = str => {
   for(var i =0; i < str.length; i++){
@@ -669,6 +678,12 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
 }
 
 module.exports = {
+  buildStmtSet: function(fileName, srcmap, srccode) {
+    var src_number = json_parse(fileName, srcmap, srccode);
+    var stmt_set = stmtCollection(src_number);
+    return stmt_set; 
+  },
+
   buildInsMap: function(fileName, binary, srcmap, srccode) {
     var src_number = json_parse(fileName, srcmap, srccode);
     /// compute each instruction to its line number

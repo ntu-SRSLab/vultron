@@ -15,6 +15,12 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: false}));
 // parse application/json
 app.use(bodyParser.json({limit: '50mb'}));
 
+// // parse application/x-www-form-urlencoded
+// app.use(bodyParser.urlencoded({extended: false}));
+
+// // parse application/json
+// app.use(bodyParser.json());
+
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 

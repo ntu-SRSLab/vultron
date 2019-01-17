@@ -3,7 +3,6 @@ pragma solidity ^0.4.24;
 import "./SimpleDAO.sol";
 
 contract AttackDAO {
-
   SimpleDAO public dao;
   address owner;
   
