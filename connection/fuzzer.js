@@ -74,9 +74,6 @@ var pre_txHash = "0x0";
 /// the candidate abi that can be used to start transaction
 var cand_sequence = [];
 
-/// the candidate variable abi that can potentially be bookkeeping
-var cand_bookkeeping = [];
-
 var reset_num = 0;
 var reset_index = 0;
 
@@ -190,9 +187,6 @@ module.exports = {
       target_con = await new web3.eth.Contract(target_abs.abi, target_abs.address);
       attack_con = await new web3.eth.Contract(attack_abs.abi, attack_abs.address);
 
-      // find bookkeeping var
-      await getBookkeepingVariable(target_con._jsonInterface);
-
       // /// the set of statements
       attackStmt_set = await tracer.buildStmtSet(attack_artifact.sourcePath,
         attack_artifact.deployedSourceMap,
@@ -233,14 +227,19 @@ module.exports = {
 
   /// the seed for dynamic fuzzing
   seed: async function() {
-      console.log('Bookkeeping variable is: ' + bookKeepingAbi.name);
+    if (!bookKeepingAbi) {
+      throw 'Run /find first!';
+    }
 
-      if (target_con === undefined) {
+    if (target_con === undefined) {
       throw "Target contract is not loaded!";
     }
     if (attack_con === undefined) {
       throw "Attack contract is not loaded!";
     }
+
+    console.log('Bookkeeping variable is: ' + bookKeepingAbi.name);
+
     // Generate call sequence
     var callFun_list = await seed_callSequence(attack_con._jsonInterface);
 
@@ -268,6 +267,41 @@ module.exports = {
       execResults: execResult_list
     };
   },
+
+
+  find: async function() {
+    if (target_con === undefined) {
+        throw "Target contract is not loaded!";
+    }
+
+    // Retrieve the list of payable functions
+    let cand_bookkeeping = await findBookkeepingVars(target_con._jsonInterface);
+    if (!cand_bookkeeping.length) {
+      throw "Cannot find any bookkeeping variables!";
+    }
+
+    let payableFun_list = await getPayableFuns(target_con._jsonInterface);
+    try {
+      for (fun of payableFun_list) {
+        let call = await gen_callPayFun(fun);
+        console.log(call);
+        var funName = fun.name || 'fallback';
+        console.log('Searching in ' + funName + ' function');
+        await exec_callPayFun(call, cand_bookkeeping);
+        if (bookKeepingAbi) break;
+      }
+    }
+    catch (e) {
+      console.log(e);
+    }
+
+    var execResult_list = "successful!";
+    return {
+      execResults: execResult_list,
+      callFun: funName,
+      bookkeepingVar: bookKeepingAbi.name
+    };
+},
 
   fuzz: async function(txHash, ins_trace) {
     if (target_con === undefined) {
@@ -319,44 +353,6 @@ module.exports = {
   }
 }
 
-async function getBookkeepingVariable(abis) {
-    if (target_con === undefined) {
-        throw "Target contract is not loaded!";
-    }
-
-    for (var abi of abis) {
-        if (abi.type === 'function' && abi.constant &&
-            abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
-            abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
-            console.log("Added " + abi.name + " to bookkeeping candidates");
-            cand_bookkeeping.push(abi)
-        }
-    }
-    if (!cand_bookkeeping) {
-        throw "Cannot find any bookkeeping variables!";
-    }
-
-    let payFuns = await getPayableFuns(abis);
-    await mutex.lock(async function() {
-        try{
-            for (fun of payFuns) {
-                let funName = fun.name || 'fallback';
-                console.log('in ' + funName + ' function');
-                await exec_callPayFun(fun);
-                if (bookKeepingAbi) break;
-            }
-        }
-        catch (e) {
-            console.log(e);
-        } finally{
-            mutex.unlock();
-        }
-    });
-    console.log(bookKeepingAbi + 'has been found');
-    return bookKeepingAbi;
-}
-
-
 /// get the balacne of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = bookKeepingAbi) {
   var bal = 0;
@@ -400,63 +396,50 @@ async function getBookSum(bookkeepingVar = bookKeepingAbi) {
   return sum;
 }
 
+// get the sum of each bookkeeping variable candidate
+async function getAllBooksSum (cand_bookkeeping) {
+  var books_sum = [];
+  for (book_var of cand_bookkeeping) {
+    var sum = await getBookSum(book_var);
+    books_sum.push({ name: book_var.name, value: sum });
+    console.log(book_var.name, sum);
+  }
+  return books_sum;
+}
+
 /// execute the payable func call and check if the vars' values changed
-async function exec_callPayFun(abi){
+async function exec_callPayFun(call, cand_bookkeeping){
   var tx_hash;
   var revert_found = false;
   var target_bal_bf = await web3.eth.getBalance(target_con.options.address);
-  var target_bal_sum_bf = [];
+  console.log("Balance before: " + target_bal_bf);
+  console.log("Balance sum before: ");
+  var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
 
-  for (bookVar of cand_bookkeeping) {
-      var sum = await getBookSum(bookVar);
-      target_bal_sum_bf.push({name : bookVar.name, value : sum});
-  }
-    console.log("Balance before: " + target_bal_bf);
-    console.log("Balance sum before: ");
-    for (bal of target_bal_sum_bf) {
-        console.log(bal.name + ', ' + bal.value);
-    }
-
-    var parameters = [];
-
-    if (abi.inputs) {
-        parameters = await gen_callInput(abi, 0, undefined);
-    }
-
-    let call = {
-        from: account_list[0],
-        to: target_con.options.address,
-        abi: abi,
-        gas: '1000000',
-        param: parameters,
+  try {
+    const transactionConfig = {
+      from: call.from,
+      to: call.to,
+      abi: call.abi,
+      gas: call.gas,
+      value: 10e18
     };
-    console.log(call);
 
-    try {
-        const transactionConfig = {
-            from: call.from,
-            to: call.to,
-            abi: call.abi,
-            gas: call.gas,
-            value: 10e18
-        };
-
-        if (abi.inputs) {
-            transactionConfig['data'] =  web3.eth.abi.encodeFunctionCall(call.abi, call.param)
-        }
-
-        await web3.eth.sendTransaction(
-            transactionConfig,
-            function (error, hash) {
-                if (!error) {
-                    tx_hash = hash;
-                } else {
-                    console.log(error);
-                }
-            }
-        );
+    if (call.param.length) {
+      transactionConfig['data'] =  web3.eth.abi.encodeFunctionCall(call.abi, call.param)
     }
-    catch(e){
+
+    await web3.eth.sendTransaction(
+      transactionConfig,
+      function (error, hash) {
+        if (!error) {
+          tx_hash = hash;
+        } else {
+          console.log(error);
+        }
+      }
+    );
+  } catch(e) {
     console.log(e);
   }
 
@@ -473,47 +456,26 @@ async function exec_callPayFun(abi){
   });
 
   var target_bal_af = await web3.eth.getBalance(target_con.options.address);
-  var target_bal_sum_af = [];
-
-  for (bookVar of cand_bookkeeping) {
-      var sum_af = await getBookSum(bookVar);
-      target_bal_sum_af.push({name : bookVar.name, value : sum_af});
-  }
-
   console.log("Balance after: " + target_bal_af);
   console.log("Balance sum after: \n");
-    for (bal of target_bal_sum_af) {
-        console.log(bal.name + ', ' + bal.value);
-    }
+  var target_bal_sum_af = await getAllBooksSum(cand_bookkeeping);
 
-  for (bookVar of target_bal_sum_af) {
-      var beforeVar = target_bal_sum_bf.find(obj => (obj.name === bookVar.name));
-      if (beforeVar.value !== bookVar.value)
-      {
-              bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === bookVar.name));
-              console.log('\nThe bookkeeping variable \'' + bookKeepingAbi.name +'\' is found in the function ' + abi.name + '() \n');
-              return bookKeepingAbi;
-      }
+  for (book_var_af of target_bal_sum_af) {
+    var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === bookVar.name));
+    if (book_var_bf.value !== book_var_af.value)
+    {
+       bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === bookVar.name));
+       console.log('\nThe bookkeeping variable \'' + bookKeepingAbi.name +'\' is found');
     }
+  }
 
-  if(revert_found){
-    return [
-      "revert",
-      target_bal_bf,
-      target_bal_sum_bf,
-      target_bal_af,
-      target_bal_sum_af,
-    ];
-  }
-  else{
-    return [
-      "norevert",
-      target_bal_bf,
-      target_bal_sum_bf,
-      target_bal_af,
-      target_bal_sum_af,
-    ];
-  }
+  return [
+    revert_found ? 'revert' : 'norevert',
+    target_bal_bf,
+    target_bal_sum_bf,
+    target_bal_af,
+    target_bal_sum_af,
+  ];
 }
 
 
@@ -1005,6 +967,17 @@ async function gen_callFun(abi) {
   return callFun;
 }
 
+/// generate a payable call function based on the abi
+async function gen_callPayFun(abi) {
+  var callFun = {
+    from: account_list[0],
+    to: target_con.options.address,
+    abi: abi,
+    gas: '1000000',
+    param: abi.inputs ? await gen_callInput(abi, 0, undefined) : []
+  };
+  return callFun;
+}
 
 async function modify_callFun_gas(call, gas_min, gas_max){
   var gasLimit = await gen_callGas(gas_min, gas_max);
@@ -1560,16 +1533,28 @@ async function generateFunctionInputs_withdraw(abi) {
 }
 
 async function getPayableFuns(abis) {
-    cand_sequence = [];
-    await abis.forEach(function(abi) {
-        /// abi.constant == true would not change state variables
-        if ((abi.type === 'function' || abi.type === 'fallback') && !abi.constant && abi.payable) {
-            cand_sequence.push(abi);
-        }
-    });
-    return cand_sequence.sort((a, b) => a.type.localeCompare(b.type));
+  let cand_functions = [];
+  await abis.forEach(function(abi) {
+    /// abi.constant == true would not change state variables
+    if ((abi.type === 'function' || abi.type === 'fallback') && !abi.constant && abi.payable) {
+      cand_functions.push(abi);
+    }
+  });
+  return cand_functions.sort((a, b) => a.type.localeCompare(b.type));
 }
 
+async function findBookkeepingVars(abis) {
+  let cand_bookkeeping = [];
+  for (var abi of abis) {
+    if (abi.type === 'function' && abi.constant &&
+      abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
+      abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
+        console.log("Added " + abi.name + " to bookkeeping candidates");
+        cand_bookkeeping.push(abi)
+      }
+  }
+  return cand_bookkeeping;
+}
 
 async function simple_callSequence(abis) {
   cand_sequence = [];

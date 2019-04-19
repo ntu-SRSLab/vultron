@@ -53,6 +53,26 @@ app.get('/load', (req, res) => {
     });
 });
 
+app.get('/find', (req, res) => {
+  console.log("**** GET /find ****");
+  truffle_connect.find('../build/contracts/SimpleDAO.json',
+                       './contracts/SimpleDAO.sol')
+      .then((answer) => {
+        if (typeof answer.callFun === 'undefined')
+          throw "Error finding the bookkeeping variables";
+
+        res.render('bookvar.ejs', {
+          callFun : answer.callFun,
+          status : answer.execResults,
+          bookkeepingVar: answer.bookkeepingVar
+        });
+      }).catch((e) => {
+    res.render('error.ejs', {
+      message: e
+    });
+  });
+});
+
 app.get('/seed', (req, res) => {
   console.log("**** GET /seed ****");
   truffle_connect.seed()
