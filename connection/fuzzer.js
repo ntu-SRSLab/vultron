@@ -415,6 +415,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
   console.log("Balance before: " + target_bal_bf);
   console.log("Balance sum before: ");
   var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
+  var tx_value = 10e18;
 
   try {
     const transactionConfig = {
@@ -422,7 +423,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
       to: call.to,
       abi: call.abi,
       gas: call.gas,
-      value: 10e18
+      value: tx_value
     };
 
     if (call.param.length) {
@@ -461,11 +462,12 @@ async function exec_callPayFun(call, cand_bookkeeping){
   var target_bal_sum_af = await getAllBooksSum(cand_bookkeeping);
 
   for (book_var_af of target_bal_sum_af) {
-    var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === bookVar.name));
-    if (book_var_bf.value !== book_var_af.value)
+    var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === book_var_af.name));
+    if (book_var_af.value - book_var_bf.value == tx_value)
     {
-       bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === bookVar.name));
+       bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === book_var_af.name));
        console.log('\nThe bookkeeping variable \'' + bookKeepingAbi.name +'\' is found');
+       return;
     }
   }
 
@@ -536,7 +538,6 @@ async function exec_callFun(call){
   console.log(attack_bal_acc_af);
   console.log(target_bal_sum_bf);
   console.log(target_bal_sum_af);
-
   // Asserting oracles
   // Balance Invariant
   /// TODO still not consider the price of token in bookkeeping variable
