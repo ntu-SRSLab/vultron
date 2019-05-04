@@ -31,10 +31,10 @@ app.get('/', (req, res) => {
 
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
-  truffle_connect.load('../build/contracts/SimpleDAO.json',
-                       '../build/contracts/AttackDAO.json',
-                       './contracts/SimpleDAO.sol',
-                       './contracts/Attack.sol')
+  truffle_connect.load('../build/contracts/store.json',
+                       '../build/contracts/Attack_store1.json',
+                       './store.sol',
+                       './contracts/Attack_store1.sol')
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";

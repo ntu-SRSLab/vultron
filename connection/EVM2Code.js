@@ -340,6 +340,18 @@ opCodeToString[PUSH] ="PUSH";
 opCodeToString[DUP] = "DUP";
 opCodeToString[SWAP] ="SWAP";
 
+const writeSrcIndex_list = (con_list) => {
+  var srcIndex = "";
+  let index = 0;
+  while(index < con_list.length){
+    var buffer = con_list[index] + "\n";
+    srcIndex += buffer;
+    index += 1;
+  }
+  fs.writeFileSync("./srcIndex.txt", srcIndex);
+}
+
+
 const writeByteIndex_list = (con_list) => {
   var byteToSrc = "";
   let index = 0;
@@ -372,6 +384,10 @@ const writeMulIndex_map = (con_map) =>{
 }
 
 const json_parse = (fileName, srcmap, srccode) =>{
+  /// the window may use '\r\n' as newline, but getLineFromPos would take them as two lines
+  srccode = srccode.split('\r\n').join('\n');
+  srccode = srccode.split('\n\r').join('\n');
+  console.log(srccode);
   /// truncate the prefix of the path
   fileName = fileName.slice(fileName.lastIndexOf('/') +1);
   /// the first "" is set undefined (map ([s, l, f, j])), l,f,j does not exist.
@@ -397,6 +413,7 @@ const json_parse = (fileName, srcmap, srccode) =>{
         .map(
           ({ s, l, f, j }) => `${fileName}:${getLineFromPos(srccode, s)}`
         );
+  // writeSrcIndex_list(src_number);
   return src_number;
 }
 
@@ -549,7 +566,7 @@ const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
         }
       }
       else{
-      	console.log(insStr);
+      	// console.log(insStr);
         console.log("evm to code error!\n");
       }
       insStr = "";

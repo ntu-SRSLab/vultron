@@ -25,6 +25,6 @@
     "get-line-from-pos": "^1.0.0",
     "locks": "^0.2.2",
     "truffle-contract": "^1.1.11",
-    "web3": "^1.0.0-beta.37"
+    "web3": "^1.0.0-beta.53"
   }
 }

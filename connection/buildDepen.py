@@ -33,58 +33,74 @@ for contract in slither.contracts:
 	for function in contract.functions:
 		for node in function.nodes:
 			node_str = node.source_mapping_str[node.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
-			if len(node.sons) >= 2:
-				# the conditional statement
-				cond_set.add(node_str)
-			for son in node.sons:
-				if node_str in cd_map:
-					cd_list = cd_map[node_str]
-					son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
-					cd_list.append(son_str)
-				else:
-					cd_list = []
-					son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
-					cd_list.append(son_str)
-					cd_map[node_str] = cd_list;
+			if node_str.find(':') != -1:															
+				if len(node.sons) >= 2:
+					# the conditional statement
+					cond_set.add(node_str)
+				for son in node.sons:
+					if node_str in cd_map:
+						cd_list = cd_map[node_str]
+						son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
+						if son_str.find(':') != -1:
+							cd_list.append(son_str)
+					else:
+						cd_list = []
+						son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
+						if son_str.find(':') != -1:
+							cd_list.append(son_str)						
+							cd_map[node_str] = cd_list;
 
-for key, value_set in cd_map.items():
-	if key in cond_set:
-		key_str = key.split("-")[0]
+# print(cd_map)
+for cd_key, cd_value_list in cd_map.items():
+	if cd_key in cond_set:
+		cd_key_str = cd_key.split("-")[0]
 		value_list = []
-		for value in value_set:
+		for value in cd_value_list:
 			if value.find("-") == -1:
 				value_list.append(value)
 				# at most two branch, the third is following the whole conditional statement
 				if len(value_list) == 2:
 					break
+		if len(value_list) < 2:
+			cd_key_item = cd_key.split("-")
+			cd_key_min = cd_key_item[0].split(":")[1]
+			for value in cd_value_list:
+				if value.find("-") != -1:
+					value_item = value.split("-")
+					value_min = value_item[0].split(":")[1]
+					if int(cd_key_min) < int(value_min):
+						value_list.append(value_item[0])
+						# at most two branch, the third is following the whole conditional statement
+						if len(value_list) == 2:
+							break
 		# find the sec branch, the first must be found in above section
 		if len(value_list) < 2:
 			value_worklist = []
 			value_workset = set()
-			for value in value_set:
+			for value in cd_value_list:
 				if value.find("-") != -1:
 					value_worklist.append(value)
 					value_workset.add(value)
 			while len(value_worklist) != 0:
-				key = value_worklist.pop()
-				key_max = key.split("-")[1]
+				value = value_worklist.pop()
+				value_max = value.split("-")[1]
 				sec_found = False
-				if key in cd_map:
-					valuemap_list = cd_map[key]
-					for value in valuemap_list:
-						value_item = value.split("-")
-						value_min = value_item[0].split(":")[1]
-						if int(value_min) > int(key_max):
-							value_list.append(value_item[0])
+				if value in cd_map:
+					valuemap_list = cd_map[value]
+					for valuemap in valuemap_list:
+						valuemap_item = valuemap.split("-")
+						valuemap_min = valuemap_item[0].split(":")[1]
+						if int(valuemap_min) > int(value_max):
+							value_list.append(valuemap_item[0])
 							sec_found = True
 							break
-						if value not in value_set:
-							value_worklist.append(value)
-							value_workset.add(value)
+						if valuemap not in value_workset and valuemap.find("-") != -1:
+							value_worklist.append(valuemap)
+							value_workset.add(valuemap)
 				if sec_found:
 					break
 		cdepen_map = depen_map["CDepen"]
-		cdepen_map[key_str] = value_list
+		cdepen_map[cd_key_str] = value_list
 
 jStr = json.dumps(depen_map)
 print(jStr)
