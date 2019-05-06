@@ -34,10 +34,10 @@ app.get('/', (req, res) => {
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
  
-  truffle_connect.test_load('../build/contracts/SimpleDAO.json',
+  truffle_connect.load('../build/contracts/SimpleDAO.json',
                        '../build/contracts/Attack_SimpleDAO0.json',
-                       '../contracts/SimpleDAO.sol',
-                       '../contracts/Attack_SimpleDAO0.sol')
+                       './contracts/SimpleDAO.sol',
+                       './contracts/Attack_SimpleDAO0.sol')
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
@@ -55,27 +55,6 @@ app.get('/load', (req, res) => {
       });
     });
 
-  // truffle_connect.load('../build/contracts/SimpleDAO.json',
-  //                      '../build/contracts/Attack_SimpleDAO0.json',
-  //                      '../contracts/SimpleDAO.sol',
-  //                      '../contracts/Attack_SimpleDAO0.sol')
-  //   .then((answer) => {
-  //     if (typeof answer.accounts === 'undefined')
-  //       throw "Error loading contracts";
-  //     console.log(JSON.stringify(answer));
-  //     res.render('contracts.ejs', {
-  //       accounts: answer.accounts,
-  //       target_adds: answer.target_adds,
-  //       attack_adds: answer.attack_adds,
-  //       target_abi: JSON.stringify(answer.target_abi),
-  //       attack_abi: JSON.stringify(answer.attack_abi)
-  //     });
-  //   }).catch(e=>{
-  //     res.render('error.ejs', {
-  //       message: e
-  //     });
-  //   });
-  
 });
 
 app.get('/seed', (req, res) => {
