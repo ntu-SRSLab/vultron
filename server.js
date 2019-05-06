@@ -1,3 +1,5 @@
+const contract = require('truffle-contract');
+
 const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
@@ -31,14 +33,15 @@ app.get('/', (req, res) => {
 
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
-  truffle_connect.load('../build/contracts/store.json',
-                       '../build/contracts/Attack_store1.json',
-                       './store.sol',
-                       './contracts/Attack_store1.sol')
+ 
+  truffle_connect.test_load('../build/contracts/SimpleDAO.json',
+                       '../build/contracts/Attack_SimpleDAO0.json',
+                       '../contracts/SimpleDAO.sol',
+                       '../contracts/Attack_SimpleDAO0.sol')
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
-      
+      console.log(JSON.stringify(answer));
       res.render('contracts.ejs', {
         accounts: answer.accounts,
         target_adds: answer.target_adds,
@@ -46,11 +49,33 @@ app.get('/load', (req, res) => {
         target_abi: JSON.stringify(answer.target_abi),
         attack_abi: JSON.stringify(answer.attack_abi)
       });
-    }).catch((e) => {
+    }).catch(e=>{
       res.render('error.ejs', {
         message: e
       });
     });
+
+  // truffle_connect.load('../build/contracts/SimpleDAO.json',
+  //                      '../build/contracts/Attack_SimpleDAO0.json',
+  //                      '../contracts/SimpleDAO.sol',
+  //                      '../contracts/Attack_SimpleDAO0.sol')
+  //   .then((answer) => {
+  //     if (typeof answer.accounts === 'undefined')
+  //       throw "Error loading contracts";
+  //     console.log(JSON.stringify(answer));
+  //     res.render('contracts.ejs', {
+  //       accounts: answer.accounts,
+  //       target_adds: answer.target_adds,
+  //       attack_adds: answer.attack_adds,
+  //       target_abi: JSON.stringify(answer.target_abi),
+  //       attack_abi: JSON.stringify(answer.attack_abi)
+  //     });
+  //   }).catch(e=>{
+  //     res.render('error.ejs', {
+  //       message: e
+  //     });
+  //   });
+  
 });
 
 app.get('/seed', (req, res) => {
@@ -99,9 +124,27 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   // });
 });
 
+function parse_cmd() {
+  let args = process.argv.slice(2,process.argv.length);
+  let httpRpcAddr =  "http://127.0.0.1:8546";
+  if (args.length==2){
+      let i=0;
+      while(i<2){
+         if (args[i].indexOf("--gethrpcport")==0){
+          httpRpcAddr = args[i+1]; 
+          console.log(httpRpcAddr);
+        }
+        i += 2;
+      }
+  }
+  truffle_connect.setProvider(httpRpcAddr);
+  truffle_connect.unlockAccount(); 
+}
+
+parse_cmd();
 app.listen(port, () => {
-  truffle_connect.web3 =
-    new Web3(new Web3.providers.HttpProvider("http://localhost:8546"));
-  
+  // truffle_connect.web3 =
+  //   new Web3(new Web3.providers.HttpProvider("http://localhost:8546"));
+  // truffle_connect.setProvider("http://localhost:8546");
   console.log("Express Listening at http://localhost:" + port);
 });

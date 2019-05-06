@@ -1,6 +1,6 @@
-pragma solidity ^0.4.19;
+pragma solidity>=0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/SimpleDAO.sol";
+import "./SimpleDAO.sol";
 
 contract Attack_SimpleDAO0 {
 
