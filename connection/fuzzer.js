@@ -1333,7 +1333,7 @@ async function redeploy(){
         gas: 1500000,
         value: web3.utils.toWei("5", "ether")
      });
-  g_attackContract = await g_targetContract.new(g_targetContract.address,{
+  g_attackContract = await g_attackContract.new(g_targetContract.address,{
       from: g_account_list[0],
       gas: 1500000,
       value: web3.utils.toWei("5", "ether")
