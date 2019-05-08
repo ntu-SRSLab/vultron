@@ -1,28 +1,6 @@
 var fs = require('fs');
 var getLineFromPos = require('get-line-from-pos');
 
-/// the separator that are different basic block
-var separator_set = new Set();
-separator_set.add("JUMP");
-separator_set.add("JUMPI");
-separator_set.add("RETURN");
-separator_set.add("STOP");
-separator_set.add("REVERT");
-separator_set.add("CALL");
-separator_set.add("CALLCODE");
-separator_set.add("DELEGATECALL");
-separator_set.add("STATICCALL");
-/// it is used to trnasfer money
-separator_set.add("GAS");
-
-var next_separator_set = new Set();
-next_separator_set.add("JUMPDEST");
-/// transfer money
-next_separator_set.add("SHA3");
-/// transfer meoney
-next_separator_set.add("ISZERO");
-next_separator_set.add("SSTORE");
-
 var STOP =0x0,
     ADD =0x1,
     MUL =0x2,
@@ -363,31 +341,10 @@ const writeByteIndex_list = (con_list) => {
   fs.writeFileSync("./byteToSrc.txt", byteToSrc);
 }
 
-const writeMulIndex_map = (con_map) =>{
-	var byteToSrc = "";
-	con_map.forEach(function(value, key, map){
-		var buffer = "[" + key + "    ";
-		var first_iter = true;
-		for(var srcline of value){
-			if(first_iter){
-				first_iter = false;
-			}
-			else{
-				buffer += "#";
-			}
-			buffer += srcline;
-		}
-		buffer = buffer + "]" + "\n";
-		byteToSrc += buffer;
-	});
-	fs.writeFileSync("./mulToSrc.txt", byteToSrc);
-}
-
 const json_parse = (fileName, srcmap, srccode) =>{
-  /// the window may use '\r\n' as newline, but getLineFromPos would take them as two lines
+  /// the window system may use '\r\n' as newline, but getLineFromPos would take them as two lines
   srccode = srccode.split('\r\n').join('\n');
   srccode = srccode.split('\n\r').join('\n');
-  console.log(srccode);
   /// truncate the prefix of the path
   fileName = fileName.slice(fileName.lastIndexOf('/') +1);
   /// the first "" is set undefined (map ([s, l, f, j])), l,f,j does not exist.
@@ -445,135 +402,99 @@ const byteToInstIndex = (src_number, binary) => {
 
 
 const stmtCollection = (src_number) =>{
-   	var stmt_set = new Set();
+  var stmt_set = new Set();
 	src_number.forEach(function(value, key, map){
 		stmt_set.add(value);
 	});
 	return stmt_set;
 }
 
-const filtString = str => {
-  for(var i =0; i < str.length; i++){
-    var ch = str.charAt(i);
-    if(ch < '0' || ch > '9'){
-      return str.slice(i);
-    }
-  }
-}
-
-const mulbytesToSrcCode = byteToSrc => {
-  const mulToSrc = new Map();
-  let byteIndex = 0;
-  var curKey = "";
-  var curValue = "";
-  while(byteIndex < byteToSrc.length){
-    var curEle = byteToSrc[byteIndex];
-    var lastEle;
-    if (byteIndex -1 >=0){
-      lastEle = byteToSrc[byteIndex -1];
-    }
-    else{
-      lastEle = ["", ""];
-    }
-    var nextEle;
-    if (byteIndex +1 < byteToSrc.length){
-      nextEle = byteToSrc[byteIndex +1];
-    }
-    else{
-      nextEle = ["", ""];
-    }    
-
-    if(curEle[1] === lastEle[1]){
-      /// may be the same statement is divided into multiple sections, e.g., function selection
-      if (curValue === "")
-        if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-          curValue += curEle[1];
-    }
-    else{
-      if(curValue === ""){
-        if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1)
-          curValue += curEle[1];
-      }
-      else{
-        if(curEle[1] != undefined && curEle[1].indexOf("undefined") === -1){
-          if(curEle[0].indexOf("PUSH1") === -1){
-          	/// not consider push1, because it may lead to other wrong statement
-          	curValue = curValue + "#" + curEle[1];
- 		  }
-      	}
-      }
-    }
-    curKey += curEle[0];
-    var filt_curEle = filtString(curEle[0]);
-    var filt_nextEle = filtString(nextEle[0]);
-
-    if (separator_set.has(filt_curEle) || next_separator_set.has(filt_nextEle)){
-      if(mulToSrc.has(curKey)){
-        var curValue_set = mulToSrc.get(curKey);
-        curValue_set.add(curValue); 
-      }
-      else{
-        var curValue_set = new Set();
-        curValue_set.add(curValue);
-        mulToSrc.set(curKey, curValue_set);
-      }
-      /// for next key
-      curKey = "";
-      curValue = ""; 
-    }
-    byteIndex += 1;
-  }
-  // writeMulIndex_map(mulToSrc);
-  return mulToSrc;
-}
-
-const mulToTrace = (ins_list, mulToSrc_attack, mulToSrc_victim) => {
+const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target) => {
   var trace_list = [];
-  var insStr = "";
+  /// get the trace list
   var ins_index = 0;
   var ins_len = ins_list.length;
   while (ins_index < ins_len){
-  	var ins_ele = ins_list[ins_index];
-    var next_ins = "";
-    if(ins_index +1 < ins_len){
-    	next_ins = ins_list[ins_index +1];
+  	var ins = ins_list[ins_index];
+    var attack_match = false;
+    var target_match = false;
+    /// it may be matched with both attack and target contract
+    if(byteToSrc_attack.has(ins)){
+      var trace_attack = byteToSrc_attack.get(ins);
+      attack_match = true;
     }
-    var filt_insEle = filtString(ins_ele);
-    var filt_nextEle = filtString(next_ins);
-    insStr += ins_ele;
-    if(separator_set.has(filt_insEle) || next_separator_set.has(filt_nextEle)){
-      if(mulToSrc_attack.has(insStr)){
-        var traceEle = mulToSrc_attack.get(insStr);  
-        for(var step_list of traceEle){
-          var step_item = step_list.split("#");
-          for(var step of step_item){
-          	var lastStep = trace_list[trace_list.length -1];
-          	if(lastStep != step) 
-          		/// the different statements 
-            	trace_list.push(step);
-          }
-        } 
-      }
-      else if(mulToSrc_victim.has(insStr)){
-        var traceEle = mulToSrc_victim.get(insStr);
-        for(var step_list of traceEle){
-          var step_item = step_list.split("#");
-          for(var step of step_item){
-          	var lastStep = trace_list[trace_list.length -1];
-          	if(lastStep != step) 
-            	trace_list.push(step);
-          }
-        }
+    if(byteToSrc_target.has(ins)){
+      var trace_target = byteToSrc_target.get(ins);
+      target_match = true;
+    }
+    var last_trace = trace_list[trace_list.length -1];
+    if(attack_match && target_match){
+      var lastFile = last_trace.split(":")[0];
+      var attackFile = trace_attack.split(":")[0];
+      if(lastFile == attackFile){
+        /// it is attack file, we falsify target_match
+        target_match = false;
       }
       else{
-      	// console.log(insStr);
-        console.log("evm to code error!\n");
+        /// it is target file, we falsify attack_match
+        attack_match = false;
       }
-      insStr = "";
+    }
+    if(attack_match){
+      /// we did not add the repetive trace
+      if(last_trace != trace_attack){
+        trace_list.push(trace_attack);
+      }
+    }
+    else{
+      /// we did not add the repetive trace
+      if(last_trace != trace_target){
+        trace_list.push(trace_target);
+      }
     }
     ins_index += 1;
   }
   return trace_list;
+}
+
+const trace_WR = (stmt_trace, staticDep_attack, staticDep_target) => {
+  var stmt_write_set = new Set();
+  var stmt_read_set = new Set();
+  var readMap_attack = staticDep_attack["Read"];
+  var writeMap_attack = staticDep_attack["Write"];
+  var readMap_target = staticDep_target["Read"];
+  var writeMap_target = staticDep_target["Write"];
+  for(var stmt of stmt_trace){
+    /// the stmt_tract write variable
+    if(writeMap_attack.has(stmt) ){
+      write_var_list = writeMap_attack.get(stmt);
+      for(var write_var of write_var_list){
+        stmt_write_set.add(write_var);
+      }
+    }
+    else if (writeMap_target.has(stmt)) {
+      write_var_list = writeMap_target.get(stmt);
+      for(var write_var of write_var_list){
+        stmt_write_set.add(write_var);
+      }
+    }
+
+    /// the stmt_tract read variable
+    if(readMap_attack.has(stmt) ){
+      read_var_list = readMap_attack.get(stmt);
+      for(var read_var of read_var_list){
+        stmt_read_set.add(read_var);
+      }
+    }
+    else if (readMap_target.has(stmt)) {
+      read_var_list = readMap_target.get(stmt);
+      for(var read_var of read_var_list){
+        stmt_read_set.add(read_var);
+      }
+    }
+  }
+
+  return [stmt_write_set, stmt_read_set];
 }
 
 
@@ -706,17 +627,23 @@ module.exports = {
     /// compute each instruction to its line number
     var byteToSrc = byteToInstIndex(src_number, binary);
     /// compute multiple instructions to their line number
-    var mulToSrc = mulbytesToSrcCode(byteToSrc);
-    return mulToSrc; 
+    /// we do not use multiple instructions to the line number again, 
+    /// because it is difficult to recognize the seperator instruction, specially not executed completely due to gas limit
+    // var mulToSrc = mulbytesToSrcCode(byteToSrc);
+    // return mulToSrc; 
+    return byteToSrc
   },
 
-  /// mulToSrc_* is the mapping from multiple instructions to their line number
-  buildTraceMap: function(ins_list, mulToSrc_attack, mulToSrc_victim) {
-    var trace_list = mulToTrace(ins_list, mulToSrc_attack, mulToSrc_victim);
-    // console.log(trace_list);
+  buildTraceMap: function(ins_list, byteToSrc_attack, byteToSrc_target) {
+    var trace_list = byteToTrace(ins_list, byteToSrc_attack, byteToSrc_target);
     return trace_list;
   },
   
+  buildWRSet: function(stmt_trace, staticDep_attack, staticDep_target){
+    var WR_set = trace_WR(stmt_trace, staticDep_attack, staticDep_target);
+    return WR_set;
+  },
+
   buildStaticDep: function(fileName){
     var execSync = require('child_process').execSync;
     var cmdStr = "python3 ./connection/buildDepen.py " + fileName;

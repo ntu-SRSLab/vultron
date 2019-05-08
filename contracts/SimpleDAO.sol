@@ -1,13 +1,17 @@
 pragma solidity>=0.4.24;
 
 contract SimpleDAO {
+  address public owner;
   mapping (address => uint) public credit;
 
-  function vultron_reset(address user) public {
-    delete credit[user];
+  constructor () public payable {
+    owner = msg.sender;
   }
-  
-  constructor () public payable { }
+
+  modifier onlyOwner {
+    require(msg.sender == owner, "Sender not authorized!");
+    _;
+  }
   
   function donate(address to) public payable {
     credit[to] += msg.value;
@@ -18,6 +22,10 @@ contract SimpleDAO {
       bool res = msg.sender.call.value(amount)();
       credit[msg.sender] -= amount;
     }
+  }
+
+  function withdrawAll() public onlyOwner {
+    bool res = msg.sender.call.value(this.balance)();
   }
 
   function() public payable {
