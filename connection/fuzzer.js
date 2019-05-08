@@ -97,13 +97,14 @@ function setProvider(httpRpcAddr){
 
 async function get_instance(artifact_path){
   let artifact = require(artifact_path);
+  let network_id = Object.keys(artifact["networks"])[0];
   let conf = {
     contract_name:artifact["contractName"],
     abi:  artifact["abi"],                     // Array; required.  Application binary interface.
     unlinked_binary: artifact["bytecode"],       // String; optional. Binary without resolve library links.
-    address: artifact["networks"]["1000"]["address"],               // String; optional. Deployed address of contract.
-    network_id: 1000,            // String; optional. ID of network being saved within abstraction.
-    default_network: 1000       // String; optional. ID of default network this abstraction should use.
+    address: artifact["networks"][network_id]["address"],               // String; optional. Deployed address of contract.
+    network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
+    default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
   };
   let MyContract = truffle_Contract(conf);
   MyContract.setProvider(Provider);

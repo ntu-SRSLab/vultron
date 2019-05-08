@@ -47,7 +47,12 @@ app.get('/load', (req, res) => {
       res.render('error.ejs', {
         message: e
       });
+<<<<<<< HEAD
     });  
+=======
+    });
+
+>>>>>>> fd3a399e5f3126a72bb77e986ffdb00ef041b102
 });
 
 app.get('/seed', (req, res) => {
