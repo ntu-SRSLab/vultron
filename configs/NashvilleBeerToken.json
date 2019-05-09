@@ -1,0 +1,1 @@
+{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"NashvilleBeerToken","param_Names":["_maxSupply"],"param_Types":["uint256"],"param_Values":{"_maxSupply":20},"payable":false,"value":"none","values":[20]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}
