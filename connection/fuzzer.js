@@ -1,4 +1,8 @@
 #! /local/bin/babel-node
+const AbiCoder = require('web3-eth-abi');
+console.log(AbiCoder);
+const abiCoder = new AbiCoder.AbiCoder();
+
 const Web3 = require('web3');
 const Promise = require("bluebird");
 const truffle_Contract = require('truffle-contract');
@@ -39,7 +43,6 @@ let g_staticDep_target;
 /// the set of call that has been selected
 var g_added_set = new Set();
 /// the gas amount
-const gasMin = 25000;
 const gasMax = 8000000000;
 /// dynamci array
 const dyn_array_min = 1;
@@ -66,26 +69,30 @@ let g_sequen_stmt_trace = [];
 /// the key is i^th call in sequence, the value is read/write variable
 let g_stmt_read_map = new Map();
 let g_stmt_write_map = new Map();
-/// the size of dynamic dependencies before this execution
-let g_pre_sequen_depen_size = 0;
 /// the set of dynamic dependencies in a call sequence
 let g_sequen_depen_set = new Set();
+/// the set of all dynamic dependencies in this contract until now
+let g_contra_depen_set = new Set();
 
 /// the hash of previous transaction
 let g_pre_txHash = "0x0";
 let g_startTime, g_endTime;
 let g_timeDiff;
 
+/// the current call that is executed
+let g_callFun_cur;
 /// the candidate abi that can be used to start transaction
 let g_cand_sequence = [];
-let g_reset_num = 0;
-let g_reset_index = 0;
 let g_fuzzing_finish = false;
 
+/// the account pools
 let g_from_account;
 function unlockAccount(){
+  /// it is initialized by the blockchain, 
+  /// for example, /home/hjwang/Tools/SCFuzzer/test_geth/data/keystore
   g_account_list = web3.eth.accounts;
   g_from_account = g_account_list[0];
+  /// unlock initial user, which is also miner account
   web3.personal.unlockAccount(g_from_account, "123", 200 * 60 * 60);
 }
 
@@ -112,49 +119,41 @@ async function get_instance(artifact_path){
   return instance;
 }
 
-
 /// load some static information for the dynamic analysis.e.g., fuzzing
 async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
-  g_startTime = new Date();
-  g_targetContract = await get_instance(targetPath);
   g_attackContract = await get_instance(attackPath);
+  g_targetContract = await get_instance(targetPath);
   g_attack_artifact = require(attackPath);
   g_target_artifact = require(targetPath);
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
 
-  /// find bookkeeping var
+  /// find bookkeeping varirable
   g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
 
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
   await findCandSequence(g_targetContract.abi, g_attackContract.abi);
-  console.log(g_cand_sequence);
 
-  /// the set of statements
+  /// the set of statements, which may be used for computing experimental results
   g_attackStmt_set = await tracer.buildStmtSet(g_attack_artifact.sourcePath,
-    g_attack_artifact.deployedSourceMap,
-    g_attack_artifact.source);
-
+                                                g_attack_artifact.deployedSourceMap,
+                                                g_attack_artifact.source);
   g_targetStmt_set = await tracer.buildStmtSet(g_target_artifact.sourcePath,
-    g_target_artifact.deployedSourceMap,
-    g_target_artifact.source);     
+                                                g_target_artifact.deployedSourceMap,
+                                                g_target_artifact.source);     
   
   /// the map that the instruction corresponds to the statement 
   /// the form: [ '239JUMPI', 'Attack_SimpleDAO0.sol:1' ]
   /// where 239 is the offset, JUMPI is the instruction
-  g_attackIns_map = await tracer.buildInsMap(
-    g_attack_artifact.sourcePath,
-    g_attack_artifact.deployedBytecode,
-    g_attack_artifact.deployedSourceMap,
-    g_attack_artifact.source);
-
-  g_targetIns_map = await tracer.buildInsMap(
-    g_target_artifact.sourcePath,
-    g_target_artifact.deployedBytecode,
-    g_target_artifact.deployedSourceMap,
-    g_target_artifact.source);
-
+  g_attackIns_map = await tracer.buildInsMap(g_attack_artifact.sourcePath,
+                                              g_attack_artifact.deployedBytecode,
+                                              g_attack_artifact.deployedSourceMap,
+                                              g_attack_artifact.source);
+  g_targetIns_map = await tracer.buildInsMap(g_target_artifact.sourcePath,
+                                              g_target_artifact.deployedBytecode,
+                                              g_target_artifact.deployedSourceMap,
+                                              g_target_artifact.source);
   /// the static dependencies
   /// The form:
   // { Read: { 'SimpleDAO.sol:17': [ 'credit' ] },
@@ -190,7 +189,6 @@ async function seed() {
   let callFun_list = await seed_callSequence();
 
   // Execute the seed call sequence
-  // await exec_sequence_call();
   mutex.lock(async function() {
     try{
       /// the call sequence to be executed
@@ -222,33 +220,42 @@ async function fuzz(txHash, ins_trace) {
     throw "Target contract is not loaded!";
   }
 
-  /// different transaction hash code
+  /// different transaction hash code, it is a string
   if(txHash != g_pre_txHash){
     /// store current txHash as previous txHash
     g_pre_txHash = txHash;
     mutex.lock(async function() {
       try{
+        /// when attack_target == 0, it is on attack contract
+        /// when attack_target == 1, it is on target contract
+        var attack_target = 0;
         /// ins_trace is the instrcution trace
         /// g_stmt_trace is list of line nunmber trace
+        if(g_callFun_cur.to == g_targetContract.address){
+          attack_target = 1;
+        }
         g_trans_stmt_trace = await tracer.buildTraceMap(ins_trace,
                                                         g_attackIns_map,
-                                                        g_targetIns_map);
+                                                        g_targetIns_map,
+                                                        attack_target);
+
         /// the read/write variable in this transaction
         /// we use it to switch the order of sequence
         var WR_set = await tracer.buildWRSet(g_trans_stmt_trace,
-                                            g_staticDep_attack,
-                                            g_staticDep_target);
-        g_stmt_write_map[g_callIndex_cur] = WR_set[0];
-        g_stmt_read_map[g_callIndex_cur] = WR_set[1];
+                                             g_staticDep_attack,
+                                             g_staticDep_target);
+        g_stmt_write_map[g_callIndex_cur -1] = WR_set[0];
+        g_stmt_read_map[g_callIndex_cur -1] = WR_set[1];
 
         /// concate the transaction tract into sequence trace
         g_sequen_stmt_trace = g_sequen_stmt_trace.concat(g_trans_stmt_trace);
-        /// the size of dynamic dependenices before this execution
-        g_pre_sequen_depen_size = g_sequen_depen_set.size;
         /// the dynamic dependencies in the g_stmt_trace
         g_sequen_depen_set = await tracer.buildDynDep(g_sequen_stmt_trace,
                                                       g_staticDep_attack,
                                                       g_staticDep_target);
+        /// before executing next transaction, we first mutate the just executed transaction
+        await determine_funMutation();
+        await determine_sequenMutation();
         /// execute a function call
         await exec_sequence_call();
       }
@@ -319,11 +326,35 @@ async function findBookKeepingAbi(abis) {
   return;
 }
 
-/// add all the functions into the cand_sequence, then use cand_sequence to generate the call sequence
+/// add all the functions into the g_cand_sequence, then use g_cand_sequence to generate the call sequence
 async function findCandSequence(target_abis, attack_abis){
-  /// the switch to decide whether we add the functions in target/attack contracts into to cand_sequence
-  var target_switch = true;
+  /// the switch to decide whether we add the functions in target/attack contracts into to g_cand_sequence
   var attack_switch = true;
+  var target_switch = true;
+
+  if(attack_switch){
+    await attack_abis.forEach(function(abi) {
+      if (abi.type === 'function' && abi.constant == false){
+        let notsupport = false;
+
+        let input_index = 0;
+        let input_len = abi.inputs.length;
+        while(input_index < input_len){
+          var input = abi.inputs[input_index];
+          /// at present, we only support the types of "address", "uint*", and "int*"
+          if(input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0){
+            notsupport = true;
+            break;
+          }
+          input_index += 1;
+        }
+        if(!notsupport){
+          var abi_pair = [abi, g_attackContract.address]
+          g_cand_sequence.push(abi_pair);
+        }
+      }
+    }); 
+  }
 
   if(target_switch){
     await target_abis.forEach(function(abi) {
@@ -331,6 +362,7 @@ async function findCandSequence(target_abis, attack_abis){
       /// thus, it may not be a transaction if we call it
       if (abi.type === 'function' && abi.constant == false){
         let notsupport = false;
+
         let input_len = abi.inputs.length;
         let input_index = 0;
         while(input_index < input_len){
@@ -343,28 +375,8 @@ async function findCandSequence(target_abis, attack_abis){
           input_index += 1;
         }
         if(!notsupport){
-          g_cand_sequence.push(abi);
-        }
-      }
-    }); 
-  }
-  if(attack_switch){
-    await attack_abis.forEach(function(abi) {
-      if (abi.type === 'function' && abi.constant == false){
-        let notsupport = false;
-        let input_len = abi.inputs.length;
-        let input_index = 0;
-        while(input_index < input_len){
-          var input = abi.inputs[input_index];
-          /// at present, we only support the types of "address", "uint*", and "int*"
-          if(input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0){
-            notsupport = true;
-            break;
-          }
-          input_index += 1;
-        }
-        if(!notsupport){
-          g_cand_sequence.push(abi);
+          var abi_pair = [abi, g_targetContract.address]
+          g_cand_sequence.push(abi_pair);
         }
       }
     }); 
@@ -372,20 +384,20 @@ async function findCandSequence(target_abis, attack_abis){
 }
 
 /// get the balacne of given address in the bookkeeping variable
-async function getBookBalance(acc_address) {
-  let balance = 0;
-  let encode = web3.eth.abi.encodeFunctionCall(g_bookKeepingAbi, [acc_address]);
+async function getBookBalance(acc_address){
+  let balance = BigInt(0);
+  let encode = abiCoder.encodeFunctionCall(g_bookKeepingAbi, [acc_address]);
   await web3.eth.call({
                       to: g_targetContract.address,
                       data: encode},
                       function(err, result) {
                         if (!err) {
-                          if (web3.utils.isHex(result)){
-                            balance += web3.utils.toBN(result);
+                          if (abiCoder.utils.isHex(result)){
+                            balance += abiCoder.utils.toBN(result);
                           }
                         }
                       });
-  return balance;
+  return BigInt(balance);
 }
 
 /// get the sum of bookkeeping variable
@@ -402,29 +414,31 @@ async function getBookSum() {
 const writeExploit = (callSequen_cur) => {
   var call_str = "";
   let call_index = 0;
+  /// g_callIndex_cur is current index in call sequence
   while(call_index < g_callIndex_cur){
     var call_cur = callSequen_cur[call_index];
     call_str = call_str + call_cur.name + "  "; 
     call_index += 1;
   }
-  call_str = call_str + "\n";
+  call_str += "\n";
   fs.appendFileSync(g_exploit_path, call_str);
 }
 
 
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
-  let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
-  let target_bal_sum_bf = await getBookSum();
+  g_callFun_cur = call;
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
+  let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
+  let target_bal_sum_bf = await getBookSum();
 
   let tx_hash;
   try{
     await web3.eth.sendTransaction({ from: call.from,
                                      to: call.to, 
                                      gas: call.gas,                               
-                                     data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+                                     data: abiCoder.encodeFunctionCall(call.abi, call.param)
                                    },
                                    function(error, hash) {
                                      if (!error) {
@@ -438,16 +452,16 @@ async function exec_callFun(call, callSequen_cur){
     console.log(e);
   }
 
+  let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
+  let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_af = await getBookSum();
-  let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
-  let attack_bal_acc_af = await getBookBalance(g_attackContract.address);;
    
   try{ 
-    if((BigInt(target_bal_bf) - BigInt(target_bal_sum_bf)) != (BigInt(target_bal_af) - BigInt(target_bal_sum_af))){
+    if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
       throw "Balance invariant is not held....";
     }
-    if((BigInt(attack_bal_af) - BigInt(attack_bal_bf)) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
+    if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
       throw "Transaction invariant is not held....";
     }
   }
@@ -455,6 +469,46 @@ async function exec_callFun(call, callSequen_cur){
     writeExploit(callSequen_cur);
     return "Oracles are violated!";
   }
+}
+
+/// synthesize the initial call sequence
+async function seed_callSequence() {
+  var call_sequence = [];
+
+  var sequence_len = randomNum(1, sequence_maxLen);
+  var sequence_index = 0;
+  while (sequence_index < sequence_len){
+    /// 0 <= call_index < g_cand_sequence.length
+    var abi_index = randomNum(0, g_cand_sequence.length);
+    /// we select the function in call_sequence without duplicates
+    var abi_index_orig = abi_index;
+    while(g_added_set.has(abi_index)){
+      if(abi_index >= g_cand_sequence.length){
+        break;
+      }
+      abi_index = abi_index +1;
+    }
+    if(abi_index >= g_cand_sequence.length){
+      abi_index = abi_index_orig -1;
+      while(g_added_set.has(abi_index)){
+        if(abi_index < 0){
+          break;
+        }
+        abi_index = abi_index -1;
+      }
+    }
+    if(abi_index < 0){
+      break;
+    }
+    var abi_pair = g_cand_sequence[abi_index];
+    g_added_set.add(abi_index);
+    var callFun = await gen_callFun(abi_pair);
+    call_sequence.push(callFun);
+
+    sequence_index += 1;
+  }
+  /// we only generate a call sequence
+  return call_sequence;
 }
 
 /// min <= r < max
@@ -487,8 +541,8 @@ function gen_address(adds_type){
   else if(adds_type.indexOf('[]') != -1){
     /// dynamic array
     let adds_list = [];
-    let adds_num = randomNum(dyn_array_min, dyn_array_max);
     let adds_index = 0;
+    let adds_num = randomNum(dyn_array_min, dyn_array_max);
     while(adds_index < adds_num){
       let account_index = randomNum(0, g_account_list.length);
       let account = g_account_list[account_index];
@@ -534,10 +588,16 @@ function uintToString(num){
       }
       power_index += 1;
     }
-    return result;
+    var big_result = BigInt(result);
+    var hex_result = big_result.toString(16);
+    var hex_result = "0x" + hex_result;
+    return hex_result;
   }
   else{
-    return num_str;
+    var big_result = BigInt(num_str);
+    var hex_result = big_result.toString(16);
+    var hex_result = "0x" + hex_result;
+    return hex_result;
   }
 }
 
@@ -698,7 +758,15 @@ function gen_int(int_type, num_min, num_max){
 /// unum_max may not be defined, e.g., undefined
 function gen_uint(uint_type, unum_min, unum_max){
   var uintMax = gen_uintMax(uint_type);
-  if(unum_max === undefined){
+  if(unum_min == undefined){
+    unum_min = uintMax;
+  }
+  else{
+    if(unum_min < 0){
+      unum_min = 0;
+    }
+  }
+  if(unum_max == undefined){
     /// unum_max is undefined, we use the default maximum value
     unum_max = uintMax; 
   }
@@ -774,7 +842,7 @@ async function gen_callInput(abi, unum_min, unum_max, num_min, num_max) {
 
 /// generate a call function based on the existing call
 /// we mutate the input on the lastCall_exec
-async function modify_input_range(lastCall_exec, unum_min, unum_max) {
+async function modify_input_range(lastCall_exec, num_min, num_max) {
   let param_list = []; 
   let param_changed = false; 
 
@@ -783,10 +851,20 @@ async function modify_input_range(lastCall_exec, unum_min, unum_max) {
   /// we mutate all inputs that satisfy conditions
   while(input_index < input_len){
     let param = lastCall_exec.abi.inputs[input_index];
-    if (param.type.indexOf('uint') == 0 || param.type.indexOf('int') == 0){
-      /// we only use gen_uint, because contract state is unsingned int
-      let uint_param = gen_uint(param.type, unum_min, unum_max);
-      param_list.push(uint_param);
+    if (param.type.indexOf('uint') == 0){
+      if(num_min >= 0){
+        let uint_param = gen_uint(param.type, num_min, num_max);
+        param_list.push(uint_param);
+        param_changed = true;
+      }
+      else{
+        // use the original input
+        param_list.push(lastCall_exec.param[input_index]);        
+      }
+    }
+    else if(param.type.indexOf('int') == 0){
+      let int_param = gen_int(param.type, num_min, num_max);
+      param_list.push(int_param);
       param_changed = true;
     }
     else {      
@@ -798,10 +876,10 @@ async function modify_input_range(lastCall_exec, unum_min, unum_max) {
 
   if(param_changed){
     let callFun = {
-      from: call.from,
-      to: call.to,
-      abi: call.abi,
-      gas: call.gas,
+      from: lastCall_exec.from,
+      to: lastCall_exec.to,
+      abi: lastCall_exec.abi,
+      gas: lastCall_exec.gas,
       param: param_list
     }
     return callFun;
@@ -811,17 +889,28 @@ async function modify_input_range(lastCall_exec, unum_min, unum_max) {
   }
 }
 
-async function modify_input_point(lastCall_exec, unum) {
+async function modify_input_point(lastCall_exec, num) {
   let param_list = []; 
   let param_changed = false; 
-  let input_len = abi.inputs.length;
+  let input_len = lastCall_exec.abi.inputs.length;
   let input_index = 0;
   while(input_index < input_len){
-    let param = abi.inputs[input_index];
-    if (param.type.indexOf('uint') == 0 || param.type.indexOf('int') == 0){
-      /// it generate the unum number
-      let uint_param = gen_uint(param.type, unum, unum);
-      param_list.push(uint_param);
+    let param = lastCall_exec.abi.inputs[input_index];
+    if (param.type.indexOf('uint') == 0){
+      if(num >= 0){
+        /// it generate the num number
+        let uint_param = gen_uint(param.type, num, num);
+        param_list.push(uint_param);
+        param_changed = true;
+      }
+      else{
+        // use hte original input
+        param_list.push(lastCall_exec.param[input_index]);
+      }
+    }
+    else if(param.type.indexOf('int') == 0){
+      let int_param = gen_int(param.type, num, num);
+      param_list.push(int_param);
       param_changed = true;
     }
     else {      
@@ -833,10 +922,10 @@ async function modify_input_point(lastCall_exec, unum) {
 
   if(param_changed){
     let callFun = {
-      from: call.from,
-      to: call.to,
-      abi: call.abi,
-      gas: call.gas,
+      from: lastCall_exec.from,
+      to: lastCall_exec.to,
+      abi: lastCall_exec.abi,
+      gas: lastCall_exec.gas,
       param: param_list
     }
     return callFun;
@@ -854,16 +943,16 @@ async function gen_callGasMax(){
 
 
 /// generate a call function based on the abi
-async function gen_callFun(abi) {
+async function gen_callFun(abi_pair) {
   /// the first (0, undefined) for uint
   /// the second (undefined, undefined) for int
-  let parameters = await gen_callInput(abi, 0, undefined, undefined, undefined);
+  let parameters = await gen_callInput(abi_pair[0], 0, undefined, undefined, undefined);
   let gasLimit = await gen_callGasMax();
   let callFun = {
     /// g_account_list[0] is the initial account, which is also a miner account
     from: g_account_list[0],
-    to: abi.name.indexOf('vultron_') !== -1 ? g_attackContract.address : g_targetContract.address,
-    abi: abi,
+    to: abi_pair[1],
+    abi: abi_pair[0],
     gas: gasLimit,
     param: parameters
   }
@@ -877,9 +966,9 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   /// add the dynamic contract states into "dynamic_state_list" and sort it by increasement
   let dynamic_state_list = [];
   let attack_bal = await web3.eth.getBalance(g_attackContract.address);
-  dynamic_state_list.push(attack_bal);
+  dynamic_state_list.push(BigInt(uintToString(attack_bal)));
   let target_bal = await web3.eth.getBalance(g_targetContract.address);
-  dynamic_state_list.push(target_bal);
+  dynamic_state_list.push(BigInt(uintToString(target_bal)));
   for (let account of g_account_list) { 
     let account_bal = await getBookBalance(account);
     dynamic_state_list.push(account_bal);
@@ -891,7 +980,7 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   let exec_index = 0;  
   let dyn_state_len = dynamic_state_list.length;
   /// we use "<=", because we also generate value greater than the last element
-  while(exec_index <= exec_len){
+  while(exec_index <= dyn_state_len){
     let unum_min, unum_max;
     
     /// we generate the range where we produce a number
@@ -901,7 +990,7 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
     else{
       unum_min = parseInt(dynamic_state_list[exec_index -1]);
     }
-    if(exec_index == exec_len){
+    if(exec_index == dyn_state_len){
       unum_max = undefined;
     }
     else{
@@ -946,7 +1035,7 @@ async function mutate_uint(lastCall_exec, callSequen_cur, lastCall_index){
   let uint_range_len = uint_range_list.length;
   /// we start from 1, because we generate value in the range
   let exec_index = 1;  
-  while(exec_index < exec_len){
+  while(exec_index < uint_range_len){
     let unum_min = parseInt(uint_range_list[exec_index -1]);
     let unum_max = parseInt(uint_range_list[exec_index]);
     /// mutate lastCall_exec and generate the new calls
@@ -982,7 +1071,7 @@ async function mutate_int(lastCall_exec, callSequen_cur, lastCall_index){
   let int_range_len = int_range_list.length;
   /// we start from 1, because we generate value in the range
   let exec_index = 1;  
-  while(exec_index < exec_len){
+  while(exec_index < int_range_len){
     let num_min = parseInt(int_range_list[exec_index -1]);
     let num_max = parseInt(int_range_list[exec_index]);
     /// mutate lastCall_exec and generate the new calls
@@ -1031,17 +1120,17 @@ async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur){
 /// we add a function into call sequence
 async function mutate_callSequen(callSequen_cur){
   var callSequen_new = callSequen_cur.slice();
-  /// 0 <= call_index < cand_sequence.length
-  var abi_index = randomNum(0, cand_sequence.length);
+  /// 0 <= call_index < g_cand_sequence.length
+  var abi_index = randomNum(0, g_cand_sequence.length);
   /// we select the function in call_sequence without duplicates
   var abi_index_orig = abi_index;
   while(g_added_set.has(abi_index)){
-    if(abi_index >= cand_sequence.length){
+    if(abi_index >= g_cand_sequence.length){
       break;
     }
     abi_index = abi_index +1;
   }
-  if(abi_index >= cand_sequence.length){
+  if(abi_index >= g_cand_sequence.length){
     abi_index = abi_index_orig -1;
     while(g_added_set.has(abi_index)){
       if(abi_index < 0){
@@ -1054,9 +1143,9 @@ async function mutate_callSequen(callSequen_cur){
     return undefined;
   }
 
-  var abi = cand_sequence[abi_index];
+  var abi_pair = g_cand_sequence[abi_index];
   g_added_set.add(abi_index);
-  var callFun = await gen_callFun(abi);
+  var callFun = await gen_callFun(abi_pair);
   callSequen_new.push(callFun);
 
   var insert_index = randomNum(0, callSequen_new.length);
@@ -1064,49 +1153,17 @@ async function mutate_callSequen(callSequen_cur){
   return callSequen_new;
 }
 
-/// synthesize the initial call sequence
-async function seed_callSequence() {
-  var call_sequence = [];
-
-  var sequence_len = randomNum(1, sequence_maxLen);
-  var sequence_index = 0;
-  while (sequence_index < sequence_len){
-    /// 0 <= call_index < cand_sequence.length
-    var abi_index = randomNum(0, cand_sequence.length);
-    /// we select the function in call_sequence without duplicates
-    var abi_index_orig = abi_index;
-    while(g_added_set.has(abi_index)){
-      if(abi_index >= cand_sequence.length){
-        break;
-      }
-      abi_index = abi_index +1;
-    }
-    if(abi_index >= cand_sequence.length){
-      abi_index = abi_index_orig -1;
-      while(g_added_set.has(abi_index)){
-        if(abi_index < 0){
-          break;
-        }
-        abi_index = abi_index -1;
-      }
-    }
-    if(abi_index < 0){
-      break;
-    }
-    var abi = cand_sequence[abi_index];
-    g_added_set.add(abi_index);
-    var callFun = await gen_callFun(abi);
-    call_sequence.push(callFun);
-
-    sequence_index += 1;
-  }
-  /// we only generate a call sequence
-  return call_sequence;
-}
-
 /// use to mutate input of a function
 async function determine_funMutation(){
-  if(g_pre_sequen_depen_size < g_sequen_depen_set.size){
+  var depen_new_found = false;
+  for(var sequen_depen of g_sequen_depen_set){
+    if(!g_contra_depen_set.has(sequen_depen)){
+      g_contra_depen_set.add(sequen_depen);
+      depen_new_found = true;
+    }
+  }
+
+  if(depen_new_found){
     /// mutate the input of last call
     let callSequen_new_list = await mutate_callFun(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur -1);
     for(let callSequen_new of callSequen_new_list){
@@ -1120,7 +1177,7 @@ async function determine_sequenMutation(){
   var call_index = 0;
   /// whether we switch the order of call sequence
   var write_set_cur = g_stmt_write_map[g_callIndex_cur -1];
-  while(call_index < g_callIndex_cur){
+  while(call_index < g_callIndex_cur -1){
     var switch_order = false;
     var trans_read_set = g_stmt_read_map[call_index];
     for(var read_var of trans_read_set){
@@ -1134,6 +1191,7 @@ async function determine_sequenMutation(){
       let callSequen_new = await mutate_callOrder(g_callSequen_cur, call_index, g_callIndex_cur -1);
       g_callSequen_list.push(callSequen_new);
     }
+    call_index += 1;
   }
 
   /// we add more call function into this sequence
@@ -1149,12 +1207,8 @@ async function exec_sequence_call(){
   if(g_fuzzing_finish){
     return;
   }
-  /// before executing next transaction, we first mutate the just executed transaction
-  await determine_funMutation();
-  await determine_sequenMutation();
 
   /// initialization for the new call sequence
-  var has_callSequen = false;
   if(g_callSequen_start){
     if(g_callSequen_list.length != 0){
       /// the call sequence for the next execution
@@ -1169,10 +1223,9 @@ async function exec_sequence_call(){
       g_sequen_stmt_trace = [];
       g_stmt_read_map.clear();
       g_stmt_write_map.clear();
-      /// the size of dynamic dependencies before this execution
-      g_pre_sequen_depen_size = 0;
       /// clear dynamic dependencies in call sequence, because we execute the new call sequence
       g_sequen_depen_set.clear();
+      /// we did not clear g_contra_depen_set
       g_callSequen_start = false;
     }
     else{
@@ -1180,18 +1233,19 @@ async function exec_sequence_call(){
       return;
     }
   }
-
+ 
   /// execute the transaction
   if(g_callIndex_cur < g_callSequen_cur.length){
     var curCall = g_callSequen_cur[g_callIndex_cur];
-    lastCall_exec = curCall;
     await exec_callFun(curCall, g_callSequen_cur);
+    g_lastCall_exec = curCall;
     g_callIndex_cur = g_callIndex_cur +1;
     /// the current call sequence is executed completely
     if(g_callIndex_cur == g_callSequen_cur.length){
       g_callSequen_start = true;
     }
   }
+ 
 }
 
 
@@ -1247,27 +1301,6 @@ async function generateFunctionInputs_withdraw(abi) {
   return call;
 }
 
-async function simple_callSequence() {
-  let callFun_list = [];
-  await g_cand_sequence.forEach(function(abi) {
-    if (abi.name == 'setTaxes') {
-      generateFunctionInputs_donate(abi).then(function(call) {
-      callFun_list.push(call);
-      })
-    }
-  });
-  await g_cand_sequence.forEach(function(abi) {
-    if (abi.constant || abi.type != 'function')
-      return;
-
-    if (abi.name == 'transfer') {
-      generateFunctionInputs_withdraw(abi).then(function(call) {
-      callFun_list.push(call);
-      })
-    }
-  });
-  return callFun_list;
-}
 
 module.exports.fuzz = fuzz;
 module.exports.seed = seed;

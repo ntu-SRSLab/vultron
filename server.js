@@ -35,7 +35,7 @@ app.get('/load', (req, res) => {
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
-      console.log(JSON.stringify(answer));
+      // console.log(JSON.stringify(answer));
       res.render('contracts.ejs', {
         accounts: answer.accounts,
         target_adds: answer.target_adds,
@@ -47,12 +47,7 @@ app.get('/load', (req, res) => {
       res.render('error.ejs', {
         message: e
       });
-<<<<<<< HEAD
-    });  
-=======
     });
-
->>>>>>> fd3a399e5f3126a72bb77e986ffdb00ef041b102
 });
 
 app.get('/seed', (req, res) => {

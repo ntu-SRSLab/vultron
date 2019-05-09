@@ -381,7 +381,7 @@ const instructionLength = inst => (isPush(inst) ? 1 + pushDataLength(inst) : 1);
 
 /// each byte to the source code
 const byteToInstIndex = (src_number, binary) => {
-  const byteToSrc = [];
+  const byteToSrc = new Map();
   /// "0x" is removed from binary
   let byteIndex = 0;
   let instIndex = 0;
@@ -389,9 +389,10 @@ const byteToInstIndex = (src_number, binary) => {
   const binmap = Buffer.from(binary.substring(2), "hex");
   while (byteIndex < binmap.length) {
     const length = instructionLength(binmap[byteIndex]);
-    if(opCodeToString[binmap[byteIndex]] !== undefined){
-      var pair = [byteIndex + opCodeToString[binmap[byteIndex]], src_number[instIndex]];
-      byteToSrc.push(pair);
+    if(opCodeToString[binmap[byteIndex]] != undefined && src_number[instIndex] != undefined){
+      var key = byteIndex + opCodeToString[binmap[byteIndex]];
+      var value = src_number[instIndex];
+      byteToSrc[key] = value;
     }
     byteIndex += length;
     instIndex += 1;
@@ -409,7 +410,7 @@ const stmtCollection = (src_number) =>{
 	return stmt_set;
 }
 
-const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target) => {
+const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target, attack_target) => {
   var trace_list = [];
   /// get the trace list
   var ins_index = 0;
@@ -418,38 +419,62 @@ const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target) => {
   	var ins = ins_list[ins_index];
     var attack_match = false;
     var target_match = false;
+    var tract_attack;
+    var trace_target;
     /// it may be matched with both attack and target contract
-    if(byteToSrc_attack.has(ins)){
-      var trace_attack = byteToSrc_attack.get(ins);
+    if(byteToSrc_attack.hasOwnProperty(ins)){
+      trace_attack = byteToSrc_attack[ins];
       attack_match = true;
     }
-    if(byteToSrc_target.has(ins)){
-      var trace_target = byteToSrc_target.get(ins);
+    if(byteToSrc_target.hasOwnProperty(ins)){
+      trace_target = byteToSrc_target[ins];
       target_match = true;
     }
-    var last_trace = trace_list[trace_list.length -1];
-    if(attack_match && target_match){
-      var lastFile = last_trace.split(":")[0];
-      var attackFile = trace_attack.split(":")[0];
-      if(lastFile == attackFile){
-        /// it is attack file, we falsify target_match
-        target_match = false;
-      }
-      else{
-        /// it is target file, we falsify attack_match
-        attack_match = false;
+
+    /// we consider the same file with previous step
+    var last_trace = "0:0";
+    if(trace_list.length > 0){ 
+      last_trace = trace_list[trace_list.length -1];
+      if(attack_match && target_match){
+        var lastFile = last_trace.split(":")[0];
+        var attackFile = trace_attack.split(":")[0];
+        if(lastFile == attackFile){
+          /// it is attack file, we falsify target_match
+          target_match = false;
+        }
+        else{
+          /// it is target file, we falsify attack_match
+          attack_match = false;
+        }
       }
     }
+    else{
+      if(attack_match && target_match){
+        /// attack_target == 0, it is on attack contract
+        /// attack_target == 1, it is on target contract
+        if(attack_target == 0){
+          target_match = false;
+        }
+        else{
+          attack_match = false;
+        }
+      }
+    }
+
     if(attack_match){
       /// we did not add the repetive trace
-      if(last_trace != trace_attack){
-        trace_list.push(trace_attack);
+      if(trace_target != undefined){
+        if(last_trace != trace_attack){
+          trace_list.push(trace_attack);
+        }
       }
     }
     else{
       /// we did not add the repetive trace
-      if(last_trace != trace_target){
-        trace_list.push(trace_target);
+      if(trace_target == undefined){
+        if(last_trace != trace_target){
+          trace_list.push(trace_target);
+        }
       }
     }
     ins_index += 1;
@@ -466,28 +491,28 @@ const trace_WR = (stmt_trace, staticDep_attack, staticDep_target) => {
   var writeMap_target = staticDep_target["Write"];
   for(var stmt of stmt_trace){
     /// the stmt_tract write variable
-    if(writeMap_attack.has(stmt) ){
-      write_var_list = writeMap_attack.get(stmt);
+    if(writeMap_attack.hasOwnProperty(stmt) ){
+      write_var_list = writeMap_attack[stmt];
       for(var write_var of write_var_list){
         stmt_write_set.add(write_var);
       }
     }
-    else if (writeMap_target.has(stmt)) {
-      write_var_list = writeMap_target.get(stmt);
+    else if (writeMap_target.hasOwnProperty(stmt)) {
+      write_var_list = writeMap_target[stmt];
       for(var write_var of write_var_list){
         stmt_write_set.add(write_var);
       }
     }
 
     /// the stmt_tract read variable
-    if(readMap_attack.has(stmt) ){
-      read_var_list = readMap_attack.get(stmt);
+    if(readMap_attack.hasOwnProperty(stmt) ){
+      read_var_list = readMap_attack[stmt];
       for(var read_var of read_var_list){
         stmt_read_set.add(read_var);
       }
     }
-    else if (readMap_target.has(stmt)) {
-      read_var_list = readMap_target.get(stmt);
+    else if (readMap_target.hasOwnProperty(stmt)) {
+      read_var_list = readMap_target[stmt];
       for(var read_var of read_var_list){
         stmt_read_set.add(read_var);
       }
@@ -634,8 +659,8 @@ module.exports = {
     return byteToSrc
   },
 
-  buildTraceMap: function(ins_list, byteToSrc_attack, byteToSrc_target) {
-    var trace_list = byteToTrace(ins_list, byteToSrc_attack, byteToSrc_target);
+  buildTraceMap: function(ins_list, byteToSrc_attack, byteToSrc_target, attack_target) {
+    var trace_list = byteToTrace(ins_list, byteToSrc_attack, byteToSrc_target, attack_target);
     return trace_list;
   },
   

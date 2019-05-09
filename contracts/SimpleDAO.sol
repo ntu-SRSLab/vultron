@@ -26,6 +26,8 @@ contract SimpleDAO {
 
   function withdrawAll() public onlyOwner {
     bool res = msg.sender.call.value(this.balance)();
+    var test=1;
+    test += 1;
   }
 
   function() public payable {
