@@ -1,0 +1,1 @@
+{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"OTCToken","param_Names":["_amount"],"param_Types":["uint256"],"param_Values":{"_amount":10000000000000000},"payable":false,"value":"none","values":[10000000000000000]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}

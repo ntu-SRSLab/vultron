@@ -239,13 +239,51 @@ function generateInitialMigration(){
   }
 }
 
+function getArgsFromConf(contract_name){
+  if (fs.existsSync("./build/contracts/"+contract_name+".json")){
+    let len = 0;
+    let config = require("./build/contracts/"+contract_name+".json");
+    for (let f of config.abi){
+      if (f.type=="constructor"){
+          console.log(f.inputs);
+          len = f.inputs.length;
+      }
+    }
+      // console.log("getArgsFromConf...");
+    if (fs.existsSync("./configs/"+contract_name+".json")){
+      let config = require("./configs/"+contract_name+".json");
+      // console.log(config.contracts[0].values);
+      // let ret =  config.contracts[0].values==undefined?(plist.length?plist:[]):(config.contracts[0].values.length==plist.length?config.contracts[0].values:plist);
+      // console.log(ret);
+      // return ret;
+      if (len>0 && config.contracts[0].values && config.contracts[0].values.length==len)
+        return config.contracts[0].values;
+      else if (len==0)
+              return  [];
+           else
+              return  undefined;
+    }
+    if (len==0)
+            return  [];
+    else
+            return  undefined;
+  }
+  return undefined
+}
 
 function deploy(contracts, item) {
+  if (fs.existsSync("./build/contracts/"+item.name+".json")&&require("./build/contracts/"+item.name+".json").bytecode=="0x"){
+      item.deployed = true;
+      deploy_level -= 1;
+      return;
+  }
+  console.log(item);
   for(var lib of item.libs){
     let cntr_list = contracts.filter(obj => obj.name === lib);
+    // console.log(cntr_list);
     for(var cntr of cntr_list){
       if (!cntr.deployed) {
-        deploy(contracts, cntr);
+          deploy(contracts, cntr);
       }
     }
   }
@@ -255,6 +293,15 @@ function deploy(contracts, item) {
     libArgsValues = libArgsValues.concat(`, ${lib}.address`);
     return libArgsValues;
   });
+  if (nestingLevel == 0){
+    let args = getArgsFromConf(item.name);
+    if(args)
+        libArgs = args.length==0?``: `,...`+JSON.stringify(args);
+    else{
+        console.log("Error:undefined constructor");
+        return "Error:undefined constructor";
+    }
+  }
   /// the zero level, no return
   let putReturn = nestingLevel == 0 ? '\t' : '\t\treturn ';
   let putValue = item.name.indexOf('Attack_') !== -1 ? ', {value: web3.toWei(10000000000000, "ether")}' : '';
@@ -359,13 +406,24 @@ function compileContracts (target_name) {
 
 
 function fileDisplay(filePath){
+  // console.log(g_tokens);
   try{
-    var files = fs.readdirSync(filePath);
+    // var files = fs.readdirSync(filePath);
+    var files = g_tokens;
     var file_index = 0;
     var file_len = files.length;
     while(file_index < file_len){
       var filename = files[file_index];
+      /**
+       * filename ADCToken.sol -> ADCToken.json
+       */
+      filename = filename.split(".")[0]+".json"
       var filedir = path.join(filePath, filename);
+      // console.log(filedir);
+      if( !fs.existsSync(filedir) ){
+        file_index += 1;
+        continue;
+      }
       var stats = fs.statSync(filedir);
       var isFile = stats.isFile();
       var isDir = stats.isDirectory();
@@ -568,10 +626,16 @@ function delDir(dirPath){
 function compileFile(){
   var compile_cmd = `truffle compile`;
   var execSync = require('child_process').execSync;
-  execSync(compile_cmd);
+  execSync(compile_cmd,{stdio: 'inherit'});
+}
+let g_tokens;
+function get_token_names(token_dir){
+  g_tokens =  fs.readdirSync(token_dir);
+  return g_tokens;
 }
 
 
+get_token_names("./contracts/")
 /// clear the directory avoiding 
 delDir(jsonPath);
 delDir(migrPath);
