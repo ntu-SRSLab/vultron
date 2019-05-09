@@ -128,8 +128,8 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
 
-  /// find bookkeeping varirable
-  g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
+  /// find bookkeeping variable
+  // g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
 
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
@@ -175,7 +175,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
    target_abi: g_targetContract.abi
   };
 }
-  
+
 
 /// the seed for dynamic fuzzing
 async function seed() {
@@ -268,7 +268,43 @@ async function fuzz(txHash, ins_trace) {
     });     
   }
 }
-  
+
+async function find() {
+  if (g_targetContract === undefined) {
+    throw "Target contract is not loaded!";
+  }
+
+  let cand_bookkeeping = await findBookkeepingVars(g_targetContract.abi);
+  if (!cand_bookkeeping.length) {
+    throw "Cannot find any bookkeeping variables!";
+  }
+
+  // Retrieve the list of payable functions
+  let payableABI_list = await getPayableFuns(g_targetContract.abi);
+  try {
+    for (abi of payableABI_list) {
+      var abi_pair = [abi, g_targetContract.address];
+      let callFun = await gen_callFun(abi_pair);
+      console.log(callFun);
+      var abiName = abi.name || 'fallback';
+      console.log('Searching in ' + abiName + ' function');
+      await exec_callPayFun(callFun, cand_bookkeeping);
+      console.log(abi)
+      if (g_bookKeepingAbi) break;
+    }
+  }
+  catch (e) {
+    console.log(e);
+  }
+
+  var execResult_list = "successful!";
+  return {
+    execResults: execResult_list,
+    callFun: abiName,
+    bookkeepingVar: g_bookKeepingAbi.name
+  };
+}
+
 // async function reset() {
 //   if (g_targetContract === undefined) {
 //     throw "Target contract is not loaded!";
@@ -383,10 +419,10 @@ async function findCandSequence(target_abis, attack_abis){
   }
 }
 
-/// get the balacne of given address in the bookkeeping variable
-async function getBookBalance(acc_address){
+/// get the balance of given address in the bookkeeping variable
+async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
-  let encode = abiCoder.encodeFunctionCall(g_bookKeepingAbi, [acc_address]);
+  let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   await web3.eth.call({
                       to: g_targetContract.address,
                       data: encode},
@@ -401,15 +437,27 @@ async function getBookBalance(acc_address){
 }
 
 /// get the sum of bookkeeping variable
-async function getBookSum() {
+async function getBookSum(bookkeepingVar = g_bookKeepingAbi) {
   let sum = BigInt(0);
-  for (let account of g_account_list) { 
-    let account_bal = await getBookBalance(account);
+  for (let account of g_account_list) {
+    let account_bal = await getBookBalance(account, bookkeepingVar);
     /// only the BigInt can be added safely
     sum += BigInt(account_bal);
   }
   return sum;
 }
+
+// get the sum of each bookkeeping variable candidate
+async function getAllBooksSum (cand_bookkeeping) {
+  var books_sum = [];
+  for (book_var of cand_bookkeeping) {
+    var sum = await getBookSum(book_var);
+    books_sum.push({ name: book_var.name, value: sum });
+    console.log(book_var.name, sum);
+  }
+  return books_sum;
+}
+
 
 const writeExploit = (callSequen_cur) => {
   var call_str = "";
@@ -469,6 +517,54 @@ async function exec_callFun(call, callSequen_cur){
     writeExploit(callSequen_cur);
     return "Oracles are violated!";
   }
+}
+
+async function exec_callPayFun(call, cand_bookkeeping){
+  var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
+  var tx_value = 10e18;
+
+  let tx_hash;
+  try {
+    const transactionConfig = {
+      from: call.from,
+      to: call.to,
+      abi: call.abi,
+      gas: '1000000',
+      value: tx_value
+    };
+
+    if (call.param) {
+      transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
+    }
+
+    console.log(transactionConfig);
+    await web3.eth.sendTransaction(
+      transactionConfig,
+      function (error, hash) {
+        if (!error) {
+          tx_hash = hash;
+          console.log(hash)
+        } else {
+          console.log(error);
+        }
+      }
+    );
+  } catch(e) {
+    console.log(e);
+  }
+
+  var target_bal_sum_af = await getAllBooksSum(cand_bookkeeping);
+  console.log(target_bal_sum_af)
+  for (book_var_af of target_bal_sum_af) {
+    var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === book_var_af.name));
+    if (BigInt(book_var_af.value) - BigInt(book_var_bf.value) == BigInt(tx_value))
+    {
+      g_bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === book_var_af.name));
+      console.log('\nThe bookkeeping variable \'' + g_bookKeepingAbi.name +'\' is found');
+      return;
+    }
+  }
+  return 'No bookkeeping variables found!';
 }
 
 /// synthesize the initial call sequence
@@ -1301,10 +1397,37 @@ async function generateFunctionInputs_withdraw(abi) {
   return call;
 }
 
+async function getPayableFuns(abis) {
+  let cand_functions = [];
+  await abis.forEach(function(abi) {
+    /// abi.constant == true would not change state variables
+    if ((abi.type === 'function' || abi.type === 'fallback') && !abi.constant && abi.payable) {
+      if (!abi.inputs)
+        abi['inputs'] = [];
+      cand_functions.push(abi);
+    }
+  });
+  return cand_functions.sort((a, b) => a.type.localeCompare(b.type));
+}
+
+async function findBookkeepingVars(abis) {
+  let cand_bookkeeping = [];
+  for (var abi of abis) {
+    if (abi.type === 'function' && abi.constant &&
+      abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
+      abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
+      console.log("Added " + abi.name + " to bookkeeping candidates");
+      cand_bookkeeping.push(abi)
+    }
+  }
+  return cand_bookkeeping;
+}
+
 
 module.exports.fuzz = fuzz;
 module.exports.seed = seed;
 module.exports.load = load;
+module.exports.find = find;
 // module.exports.reset = reset;
 module.exports.setProvider = setProvider;
 module.exports.unlockAccount = unlockAccount;
