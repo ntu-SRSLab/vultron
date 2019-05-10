@@ -92,7 +92,7 @@ let g_fuzzing_finish = false;
 let g_from_account;
 
 let  g_fuzz_start_time = 0;
-const FUZZ_TIME_SCALE = 60*1000;
+const FUZZ_TIME_SCALE = 1*60*1000;
 
 function unlockAccount(){
   /// it is initialized by the blockchain, 
@@ -194,6 +194,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
 
 /// the seed for dynamic fuzzing
 async function seed() {
+  console.log("seed...");
   if (g_targetContract === undefined) {
     throw "Target contract is not deployed!";
   }
@@ -202,7 +203,7 @@ async function seed() {
   }
   // we only generate a call sequence
   let callFun_list = await seed_callSequence();
-
+  // console.log(callFun_list);
   // Execute the seed call sequence
   mutex.lock(async function() {
     try{
@@ -525,6 +526,7 @@ async function exec_callFun(call, callSequen_cur){
                                        gas: call.gas,                               
                                        data: abiCoder.encodeFunctionCall(call.abi, call.param)
                                      });
+    console.log(tx_hash);
     // await web3.eth.sendTransaction({ from: call.from,
     //                                  to: call.to, 
     //                                  gas: call.gas,                               
@@ -583,6 +585,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
       transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
     }
     tx_hash = await sendTransaction(transactionConfig);
+    console.log(tx_hash);
     // await web3.eth.sendTransaction(
     //   transactionConfig,
     //   function (error, hash) {
@@ -618,6 +621,8 @@ async function seed_callSequence() {
   var added_set = new Set();
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
+  console.log("sequence_index,sequence_len");
+  console.log(sequence_index,sequence_len);
   while (sequence_index < sequence_len){
     /// 0 <= call_index < g_cand_sequence.length
     var abi_index = randomNum(0, g_cand_sequence.length);
@@ -649,6 +654,7 @@ async function seed_callSequence() {
     sequence_index += 1;
   }
   /// we only generate a call sequence
+  // console.log(call_sequence);
   return call_sequence;
 }
 
@@ -1375,7 +1381,7 @@ async function determine_sequenMutation(){
   }
 }
 
-function print_callSequen_list(callSequen_list){
+function print_callSequen_list(calprint_callSequen_listlSequen_list){
   for(var callSequen of callSequen_list){
     var call_name = "";
     for(var call of callSequen){
@@ -1395,7 +1401,7 @@ function print_callSequen(callSequen){
 
 async function exec_sequence_call(){
   /// we can finish the fuzzing anytime
-  
+  console.log("exec_sequence_call");
   if(g_fuzzing_finish){
     return;
   }
@@ -1535,8 +1541,10 @@ module.exports.setStart_time = function(start_time){
 };
 module.exports.test_deployed = test_deployed;
 
-function check(){
-  while(true){
+module.exports.single_timeout = function(port){
+setInterval(function () { 
+  // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
+
   if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
     request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
       if (error) {
@@ -1547,6 +1555,6 @@ function check(){
       });
     return;
   }
-}
+},1000);
 }
 
