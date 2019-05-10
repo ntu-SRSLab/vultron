@@ -318,7 +318,7 @@ function getArgsFromConf(contract_name){
       // return ret;
       if (len>0 && config.contracts[0].values && config.contracts[0].values.length==len)
         return config.contracts[0].values;
-      else if (len==0)
+      else if (len==0&& config.contracts[0].values.length==len)
               return  [];
            else
               return  undefined;
