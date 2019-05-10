@@ -1,0 +1,1 @@
+{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"FartToken","param_Names":["initialGrant"],"param_Types":["uint256"],"param_Values":{"initialGrant":995},"payable":true,"value":"none","values":[995]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}
