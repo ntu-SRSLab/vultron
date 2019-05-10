@@ -63,3 +63,9 @@ typings/
 
 # Mac OS
 **/.DS_Store
+
+build/*
+migrations/*
+contracts/*
+
+
