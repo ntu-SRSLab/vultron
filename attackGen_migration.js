@@ -318,7 +318,7 @@ function getArgsFromConf(contract_name){
       // return ret;
       if (len>0 && config.contracts[0].values && config.contracts[0].values.length==len)
         return config.contracts[0].values;
-      else if (len==0)
+      else if (len==0 && config.contracts[0].values && config.contracts[0].values.length==len)
               return  [];
            else
               return  undefined;
@@ -332,11 +332,11 @@ function getArgsFromConf(contract_name){
 }
 
 function deploy(contracts, item) {
-  if (fs.existsSync("./build/contracts/"+item.name+".json")&&require("./build/contracts/"+item.name+".json").bytecode=="0x"){
-      item.deployed = true;
-      deploy_level -= 1;
-      return;
-  }
+  // if (fs.existsSync("./build/contracts/"+item.name+".json")&&require("./build/contracts/"+item.name+".json").bytecode=="0x"){
+  //     item.deployed = true;
+  //     deploy_level -= 1;
+  //     return;
+  // }
   console.log(item);
   for(var lib of item.libs){
     let cntr_list = contracts.filter(obj => obj.name === lib);
@@ -437,6 +437,18 @@ function generateMigration(attackersNum) {
       console.log(err);
     }
     contracts.forEach(function(item){
+      //contracts 
+      // [ token1,token2,....attack_Token101,attack_Token102... ]
+      //
+      for (let lib of item.libs){
+        let cntr_list = contracts.filter(obj => obj.name === lib);
+        for(var cntr of cntr_list){
+          if (!cntr.deployed) {
+            cntr.deployed = true;
+            deploy_level -= 1;
+          }
+      }
+     }
       if(!item.deployed)
         deploy(contracts, item);
     });
@@ -693,7 +705,6 @@ function get_token_names(token_dir){
   g_tokens =  fs.readdirSync(token_dir);
   return g_tokens;
 }
-
 
 get_token_names("./contracts/")
 /// clear the directory avoiding 
