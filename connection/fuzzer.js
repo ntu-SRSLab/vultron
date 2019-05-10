@@ -126,7 +126,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_account_list.push(g_attackContract.address);
 
   /// find bookkeeping variable
-  // g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
+  g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
 
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
@@ -428,6 +428,8 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
+  console.log(bookkeepingVar);
+  console.log(acc_address);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
   // await web3.eth.call({
@@ -440,10 +442,12 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   //       }
   //     }
   //   });
-  let balance  = await web3.eth.call({
+  let bal = await ethCall({
                       to: g_targetContract.address,
                       data: encode}
           );
+  balance += abiCoder.utils.toBN(bal);
+  console.log(bal);
   return BigInt(balance);
 }
 
