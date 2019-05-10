@@ -1,4 +1,7 @@
 #! /local/bin/babel-node
+const request = require("request");
+
+
 const AbiCoder = require('web3-eth-abi');
 const abiCoder = new AbiCoder.AbiCoder();
 
@@ -84,13 +87,17 @@ let g_fuzzing_finish = false;
 
 /// the account pools
 let g_from_account;
+
+let  g_fuzz_start_time = 0;
+const FUZZ_TIME_SCALE = 5*60*1000;
+
 function unlockAccount(){
   /// it is initialized by the blockchain, 
   /// for example, /home/hjwang/Tools/SCFuzzer/test_geth/data/keystore
   g_account_list = web3.eth.accounts;
   g_from_account = g_account_list[0];
   /// unlock initial user, which is also miner account
-  web3.personal.unlockAccount(g_from_account, "123", 200 * 60 * 60);
+  web3.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60);
 }
 
 function setProvider(httpRpcAddr){
@@ -1368,6 +1375,16 @@ function print_callSequen(callSequen){
 
 async function exec_sequence_call(){
   /// we can finish the fuzzing anytime
+  if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
+    request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log("Done.")
+      });
+    return;
+  }
   if(g_fuzzing_finish){
     return;
   }
@@ -1502,3 +1519,6 @@ module.exports.find = find;
 // module.exports.reset = reset;
 module.exports.setProvider = setProvider;
 module.exports.unlockAccount = unlockAccount;
+module.exports.setStart_time = function(start_time){
+  g_fuzz_start_time = start_time; 
+};

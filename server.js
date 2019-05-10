@@ -1,4 +1,6 @@
 const contract = require('truffle-contract');
+const request = require("request");
+const fs = require("fs");
 
 const express = require('express');
 const app = express();
@@ -10,6 +12,78 @@ const bodyParser = require('body-parser');
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
+
+let g_path_map = new Map()
+let g_keys_iterator;
+let g_key_cur;
+let g_value_cur;
+let g_value_cur_cursor;
+
+let g_bootstrap_build_target = '../build/contracts/SimpleDAO.json';
+let g_bootstrap_build_attack = '../build/contracts/Attack_SimpleDAO0.json';
+let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
+let g_bootstrap_source_target = './contracts/Attack_SimpleDAO0.sol';
+
+
+function init_g_path_map(){
+  let contracts =  fs.readdirSync("./build/contracts");
+  let tokens = new Array();
+  for(let item of contracts){
+    if (item.indexOf("Attack_")==-1){
+        tokens.push(item);
+    }
+  }
+  // console.log(tokens);
+  for (let token of tokens){
+      let value = new Array();
+      for (let item of contracts){
+        if (item.indexOf("Attack_")!=-1){
+            if (item.indexOf("Attack_"+token.split(".json")[0])!=-1){
+                 value.push(item);
+                //  console.log(token,item);
+            }
+         }   
+      }
+      if (value.length>0)
+        g_path_map.set(token,value);
+  }
+  g_keys_iterator = g_path_map.keys();
+  let cur = g_keys_iterator.next();
+  if(cur!=undefined){
+    g_key_cur = cur.value;
+    g_value_cur = g_path_map.get(g_key_cur);
+    g_value_cur_cursor = 0;
+    // console.log(g_key_cur);
+  }
+//  console.log(g_path_map);
+}
+
+function bootstrap(){
+    // console.log(g_value_cur);
+    if(g_value_cur.length>g_value_cur_cursor){
+      g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
+      g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
+      g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
+      g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
+      g_value_cur_cursor +=1;
+    }else{
+      let cur = g_keys_iterator.next();
+      if(cur){
+        g_key_cur = cur.value;
+        g_value_cur = g_path_map.get(g_key_cur);
+        g_value_cur_cursor = 0;
+        g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
+        g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
+        g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
+        g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
+        g_value_cur_cursor +=1;
+      }
+  }
+  
+}
+
+
+
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({limit: '50mb', extended: false}));
@@ -28,10 +102,10 @@ app.get('/', (req, res) => {
 app.get('/load', (req, res) => {
   console.log("**** GET /load ****");
  
-  truffle_connect.load('../build/contracts/SimpleDAO.json',
-                       '../build/contracts/Attack_SimpleDAO0.json',
-                       './contracts/SimpleDAO.sol',
-                       './contracts/Attack_SimpleDAO0.sol')
+  truffle_connect.load(g_bootstrap_build_target,
+                       g_bootstrap_build_attack,
+                       g_bootstrap_source_target,
+                       g_bootstrap_source_attack)
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
@@ -116,6 +190,37 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   // });
 });
 
+app.get('/bootstrap', (req, RES) => {
+  // mutex.lock(async function() {
+  console.log("**** GET /bootstrap ****");
+  truffle_connect.setStart_time(Date.now());
+  bootstrap();
+  // console.log(g_bootstrap_build_target);
+  // console.log(g_bootstrap_build_attack);
+  
+  request(`http://localhost:${port}/load`, (error, res, body) => {
+            if (error) {
+              console.error(error);
+              return;
+            }
+            request(`http://localhost:${port}/find`, (error, res, body) => {
+                if (error) {
+                  console.error(error);
+                  return;
+                }
+                request(`http://localhost:${port}/seed`, (error, res, body) => {
+                  if (error) {
+                    console.error(error);
+                    return;
+                  }
+                  console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_target);
+                  RES.send(g_bootstrap_build_target);
+                });
+            });
+   });
+
+});
+
 function parse_cmd() {
   let args = process.argv.slice(2,process.argv.length);
   let httpRpcAddr =  "http://127.0.0.1:8546";
@@ -132,7 +237,7 @@ function parse_cmd() {
   truffle_connect.setProvider(httpRpcAddr);
   truffle_connect.unlockAccount(); 
 }
-
+init_g_path_map();
 parse_cmd();
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);
