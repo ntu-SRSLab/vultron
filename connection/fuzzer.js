@@ -236,6 +236,7 @@ async function fuzz(txHash, ins_trace) {
         var attack_target = 0;
         /// ins_trace is the instrcution trace
         /// g_stmt_trace is list of line nunmber trace
+        console.log(g_callFun_cur);
         if(g_callFun_cur.to == g_targetContract.address){
           attack_target = 1;
         }
@@ -428,7 +429,7 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
-  console.log(bookkeepingVar);
+  console.log(g_bookKeepingAbi);
   console.log(acc_address);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
@@ -447,7 +448,7 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
                       data: encode}
           );
   balance += abiCoder.utils.toBN(bal);
-  console.log(bal);
+  console.log("balance:"+balance);
   return BigInt(balance);
 }
 
@@ -542,6 +543,7 @@ async function exec_callFun(call, callSequen_cur){
 }
 
 async function exec_callPayFun(call, cand_bookkeeping){
+  g_callFun_cur = call;
   var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
   var tx_value = 10e18;
 
