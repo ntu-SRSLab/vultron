@@ -236,7 +236,6 @@ async function fuzz(txHash, ins_trace) {
         var attack_target = 0;
         /// ins_trace is the instrcution trace
         /// g_stmt_trace is list of line nunmber trace
-        console.log(g_callFun_cur);
         if(g_callFun_cur.to == g_targetContract.address){
           attack_target = 1;
         }
@@ -251,8 +250,6 @@ async function fuzz(txHash, ins_trace) {
                                              g_staticDep_target);
         g_stmt_write_map[g_callIndex_cur -1] = WR_set[0];
         g_stmt_read_map[g_callIndex_cur -1] = WR_set[1];
-        console.log(WR_set[0]);
-        console.log(WR_set[1]);
 
         /// concate the transaction tract into sequence trace
         g_sequen_stmt_trace = g_sequen_stmt_trace.concat(g_trans_stmt_trace);
@@ -292,11 +289,8 @@ async function find() {
     for (abi of payableABI_list) {
       var abi_pair = [abi, g_targetContract.address];
       let callFun = await gen_callFun(abi_pair);
-      console.log(callFun);
       var abiName = abi.name || 'fallback';
-      console.log('Searching in ' + abiName + ' function');
       await exec_callPayFun(callFun, cand_bookkeeping);
-      console.log(abi)
       if (g_bookKeepingAbi) break;
     }
   }
@@ -429,10 +423,9 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
-  console.log(g_bookKeepingAbi);
-  console.log(acc_address);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
+  /// this is previous version
   // await web3.eth.call({
   //   to: g_targetContract.address,
   //   data: encode},
@@ -469,7 +462,6 @@ async function getAllBooksSum (cand_bookkeeping) {
   for (book_var of cand_bookkeeping) {
     var sum = await getBookSum(book_var);
     books_sum.push({ name: book_var.name, value: sum });
-    console.log(book_var.name, sum);
   }
   return books_sum;
 }
@@ -561,13 +553,11 @@ async function exec_callPayFun(call, cand_bookkeeping){
       transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
     }
 
-    console.log(transactionConfig);
     await web3.eth.sendTransaction(
       transactionConfig,
       function (error, hash) {
         if (!error) {
           tx_hash = hash;
-          console.log(hash)
         } else {
           console.log(error);
         }
@@ -578,7 +568,6 @@ async function exec_callPayFun(call, cand_bookkeeping){
   }
 
   var target_bal_sum_af = await getAllBooksSum(cand_bookkeeping);
-  console.log(target_bal_sum_af)
   for (book_var_af of target_bal_sum_af) {
     var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === book_var_af.name));
     if (BigInt(book_var_af.value) - BigInt(book_var_bf.value) == BigInt(tx_value))
@@ -1226,6 +1215,7 @@ async function mutate_callFun(lastCall_exec, callSequen_cur, lastCall_index) {
   for(let int_callSequen of int_callSequen_list){
     callSequen_new_list.push(int_callSequen);
   }  
+  print_callSequen_list(callSequen_new_list);
   return callSequen_new_list;
 }
 
@@ -1235,8 +1225,6 @@ async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur){
   var call_switch = callSequen_new[call_index];
   callSequen_new[call_index] = callSequen_new[callIndex_cur];
   callSequen_new[callIndex_cur] = call_switch;
-  console.log("switch order: ");
-  print_callSequen(callSequen_new);
   return callSequen_new;
 }
 
@@ -1380,8 +1368,6 @@ async function exec_sequence_call(){
       /// the call sequence for the next execution
       g_callSequen_cur = g_callSequen_list[0].slice();
 
-      console.log("executed call sequen: ");
-      print_callSequen(g_callSequen_cur);
       /// delete the first callSequen
       g_callSequen_list.splice(0, 1);
       /// the current index in g_callSequen_cur
@@ -1489,7 +1475,6 @@ async function findBookkeepingVars(abis) {
     if (abi.type === 'function' && abi.constant &&
       abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
       abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
-      console.log("Added " + abi.name + " to bookkeeping candidates");
       cand_bookkeeping.push(abi)
     }
   }
