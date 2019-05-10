@@ -441,7 +441,6 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
                             data: encode}
                           );
   balance += abiCoder.utils.toBN(bal);
-  console.log("balance:" + balance);
   return BigInt(balance);
 }
 
@@ -1056,7 +1055,9 @@ async function gen_callGasMax(){
 async function gen_callFun(abi_pair) {
   /// the first (0, undefined) for uint
   /// the second (undefined, undefined) for int
-  let parameters = await gen_callInput(abi_pair[0], 0, undefined, undefined, undefined);
+  /// 10000000000000000000  is 10 ether
+  /// we generate the meaningful value, it would be better
+  let parameters = await gen_callInput(abi_pair[0], 0, 10000000000000000000, -10000000, 10000000000000000000);
   let gasLimit = await gen_callGasMax();
   let callFun = {
     /// g_account_list[0] is the initial account, which is also a miner account
@@ -1215,6 +1216,7 @@ async function mutate_callFun(lastCall_exec, callSequen_cur, lastCall_index) {
   for(let int_callSequen of int_callSequen_list){
     callSequen_new_list.push(int_callSequen);
   }  
+  console.log("mutate input: " + callSequen_new_list.length);
   print_callSequen_list(callSequen_new_list);
   return callSequen_new_list;
 }
@@ -1338,8 +1340,8 @@ async function determine_sequenMutation(){
   }
 }
 
-async function print_callSequen_list(){
-  for(var callSequen of g_callSequen_list){
+function print_callSequen_list(callSequen_list){
+  for(var callSequen of callSequen_list){
     var call_name = "";
     for(var call of callSequen){
       call_name = call_name + "#" + call.abi.name;
@@ -1348,7 +1350,7 @@ async function print_callSequen_list(){
   }
 }
 
-async function print_callSequen(callSequen){
+function print_callSequen(callSequen){
   var call_name = "";
   for(var call of callSequen){
     call_name = call_name + "#" + call.abi.name;
@@ -1367,6 +1369,9 @@ async function exec_sequence_call(){
     if(g_callSequen_list.length != 0){
       /// the call sequence for the next execution
       g_callSequen_cur = g_callSequen_list[0].slice();
+
+      console.log("executed sequence: ");
+      print_callSequen(g_callSequen_cur);
 
       /// delete the first callSequen
       g_callSequen_list.splice(0, 1);
