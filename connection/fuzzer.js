@@ -286,11 +286,13 @@ async function find() {
   // Retrieve the list of payable functions
   let payableABI_list = await getPayableFuns(g_targetContract.abi);
   try {
+
     for (abi of payableABI_list) {
       var abi_pair = [abi, g_targetContract.address];
       let callFun = await gen_callFun(abi_pair);
       var abiName = abi.name || 'fallback';
       await exec_callPayFun(callFun, cand_bookkeeping);
+      console.log("exec...." + g_bookKeepingAbi);
       if (g_bookKeepingAbi) break;
     }
   }
@@ -423,6 +425,7 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
+  console.log(g_bookKeepingAbi);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
   /// this is previous version
@@ -534,6 +537,7 @@ async function exec_callFun(call, callSequen_cur){
 }
 
 async function exec_callPayFun(call, cand_bookkeeping){
+
   g_callFun_cur = call;
   var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
   var tx_value = 10e18;
@@ -569,6 +573,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
   var target_bal_sum_af = await getAllBooksSum(cand_bookkeeping);
   for (book_var_af of target_bal_sum_af) {
     var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === book_var_af.name));
+
     if (BigInt(book_var_af.value) - BigInt(book_var_bf.value) == BigInt(tx_value))
     {
       g_bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === book_var_af.name));
@@ -1087,6 +1092,9 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   let target_bal_sum = await getBookSum();
   dynamic_state_list.push(target_bal_sum);
   dynamic_state_list.sort(sortNumber);
+
+  console.log("contract state: ");
+  console.log(dynamic_state_list);
 
   let exec_index = 0;  
   let dyn_state_len = dynamic_state_list.length;
