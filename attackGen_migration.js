@@ -99,42 +99,102 @@ function generatePayFuns(targetFun) {
   return functionCode;
 }
 
+function gen_array(declare, input, default_val){
+  let actual_params;
+  let elem_type = input.type.slice(0,input.type.indexOf('['));
+  if (input.type.indexOf("[]")!==-1)
+        actual_params = `${declare}`;
+  else{
+      let left_index = input.type.indexOf('[');
+      let right_index = input.type.indexOf(']');
+      let value_num = parseInt(input.type.slice(left_index +1, right_index), 10);
+      let ret= [];
+      for (let i=0;i<value_num;i++)
+         ret.push(elem_type+"("+default_val+")");
+      actual_params = `${ret}`;
+    }
+  return actual_params;
+}
+
 /// generate the fallback function
 function generateFallbackFuns(targetFun) {
-  let fallbackCode;
-  if(targetFun.name === "revert"){
-    fallbackCode = `
+  let fallbackCode =  `
   function() public payable {
     revert();
   }
-} \n`;     
-  }
-  else{
+} \n`;     ;
+//   if(targetFun.name === "revert"){
+//     fallbackCode = `
+//   function() public payable {
+//     revert();
+//   }
+// } \n`;     
+//   }
+//   else{
+    if(targetFun.name != "revert"){
     let actual_params = "";
+    let declarations = "";
+    let number = 0;
     for(var input of targetFun.inputs){
-      if(actual_params === ""){
+       number += 1;
+       if(actual_params === ""){
         if(input.type === "address"){
-          actual_params = "this";
+          if(input.type.indexOf("[")!==-1){
+            if (input.type.indexOf("[]")){
+              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=this;` 
+            }
+            actual_params = gen_array(`a_${number}`,input,`this`); 
+          }else{
+            actual_params = "this";
+          }
         }
         else if(input.type.indexOf("uint") !== -1 || input.type.indexOf("int") !== -1){
-          actual_params = "10000";
+          if(input.type.indexOf("[")!==-1){
+            if (input.type.indexOf("[]")){
+              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=1000;` 
+              }
+              actual_params = gen_array(`a_${number}`,input,1000)
+          }else
+              actual_params = "10000";
+        }
+        else{
+          return fallbackCode;
         }
       }
       else{
         if(input.type === "address"){
-          actual_params = actual_params + ", "  + " this";
+          if(input.type.indexOf("[")!==-1){
+            if (input.type.indexOf("[]")){
+              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=this;` 
+            }
+            actual_params = actual_params + ", "  + gen_array(`a_${number}`,input,`this`);
+          }else{
+            /// `this` set to another account 
+            actual_params = actual_params + ", "  + " this";
+          }
         }
         else if(input.type.indexOf("uint") !== -1 || input.type.indexOf("int") !== -1){
-          actual_params = actual_params + ", "  + " 10000";
+          if(input.type.indexOf("[")!==-1){
+             if (input.type.indexOf("[]")){
+              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=1000;` 
+              }
+             actual_params = actual_params + ", "+gen_array(`a_${number}`,input,0x1000);
+          }else{
+              actual_params =actual_params + ", "  +  "1000";
+          }
+        }
+        else{
+          return fallbackCode;
         }
       } 
     }
     fallbackCode = `
-  function() public payable {
-    target_contract.${targetFun.name}(${actual_params});
-  }
-} \n`;    
-}
+      function() public payable {
+        ${declarations}
+        target_contract.${targetFun.name}(${actual_params});
+      }
+      } \n`;   
+  } 
   return fallbackCode;
 }
 
