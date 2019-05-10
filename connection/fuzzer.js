@@ -16,6 +16,9 @@ const locks = require('locks');
 const mutex = locks.createMutex();
 const async = require('async');
 
+
+
+
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
 
@@ -89,7 +92,7 @@ let g_fuzzing_finish = false;
 let g_from_account;
 
 let  g_fuzz_start_time = 0;
-const FUZZ_TIME_SCALE = 5*60*1000;
+const FUZZ_TIME_SCALE = 60*1000;
 
 function unlockAccount(){
   /// it is initialized by the blockchain, 
@@ -106,6 +109,12 @@ function setProvider(httpRpcAddr){
   assert(web3);
 }
 
+function test_deployed(artifact_path){
+  let artifact = require(artifact_path);
+  let network_id = Object.keys(artifact["networks"])[0];
+  return network_id!=undefined;
+}
+
 async function get_instance(artifact_path){
   let artifact = require(artifact_path);
   let network_id = Object.keys(artifact["networks"])[0];
@@ -117,6 +126,7 @@ async function get_instance(artifact_path){
     network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
     default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
   };
+  // console.log(conf);
   let MyContract = truffle_Contract(conf);
   MyContract.setProvider(Provider);
   let instance = await MyContract.deployed();
@@ -131,9 +141,8 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_target_artifact = require(targetPath);
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
-
   /// find bookkeeping variable
-  // g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
+  g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
 
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
@@ -164,6 +173,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   // { Read: { 'SimpleDAO.sol:17': [ 'credit' ] },
   //  Write: { 'SimpleDAO.sol:8': [ 'owner' ] },
   //  CDepen: { 'SimpleDAO.sol:21': [ 'SimpleDAO.sol:22' ] } }
+  // console.log("arriving here");
   g_staticDep_attack = await tracer.buildStaticDep(attackSolPath);
   g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
 
@@ -289,9 +299,10 @@ async function find() {
   if (!cand_bookkeeping.length) {
     throw "Cannot find any bookkeeping variables!";
   }
-
+  // console.log(cand_bookkeeping);
   // Retrieve the list of payable functions
   let payableABI_list = await getPayableFuns(g_targetContract.abi);
+  // console.log(payableABI_list);
   try {
 
     for (abi of payableABI_list) {
@@ -432,7 +443,7 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
-  console.log(g_bookKeepingAbi);
+  // console.log(bookkeepingVar);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
   /// this is previous version
@@ -493,6 +504,8 @@ const writeExploit = (callSequen_cur) => {
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
   /// used to identify the first statement is attack or target contract
+  const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
+
   g_callFun_cur = call;
 
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
@@ -507,19 +520,24 @@ async function exec_callFun(call, callSequen_cur){
 
   let tx_hash;
   try{
-    await web3.eth.sendTransaction({ from: call.from,
-                                     to: call.to, 
-                                     gas: call.gas,                               
-                                     data: abiCoder.encodeFunctionCall(call.abi, call.param)
-                                   },
-                                   function(error, hash) {                                                                     
-                                     if (!error) {
-                                      tx_hash = hash;
-                                     }
-                                     else{
-                                       console.log(error);
-                                      }
-                                  });
+    tx_hash = await sendTransaction({ from: call.from,
+                                       to: call.to, 
+                                       gas: call.gas,                               
+                                       data: abiCoder.encodeFunctionCall(call.abi, call.param)
+                                     });
+    // await web3.eth.sendTransaction({ from: call.from,
+    //                                  to: call.to, 
+    //                                  gas: call.gas,                               
+    //                                  data: abiCoder.encodeFunctionCall(call.abi, call.param)
+    //                                },
+    //                                function(error, hash) {                                                                     
+    //                                  if (!error) {
+    //                                   tx_hash = hash;
+    //                                  }
+    //                                  else{
+    //                                    console.log(error);
+    //                                   }
+    //                               });
   }catch(e){
     console.log(e);
   }
@@ -544,9 +562,11 @@ async function exec_callFun(call, callSequen_cur){
 }
 
 async function exec_callPayFun(call, cand_bookkeeping){
+  const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
 
   g_callFun_cur = call;
   var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
+  console.log(target_bal_sum_af);
   var tx_value = 10e18;
 
   let tx_hash;
@@ -562,17 +582,17 @@ async function exec_callPayFun(call, cand_bookkeeping){
     if (call.param) {
       transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
     }
-
-    await web3.eth.sendTransaction(
-      transactionConfig,
-      function (error, hash) {
-        if (!error) {
-          tx_hash = hash;
-        } else {
-          console.log(error);
-        }
-      }
-    );
+    tx_hash = await sendTransaction(transactionConfig);
+    // await web3.eth.sendTransaction(
+    //   transactionConfig,
+    //   function (error, hash) {
+    //     if (!error) {
+    //       tx_hash = hash;
+    //     } else {
+    //       console.log(error);
+    //     }
+    //   }
+    // );
   } catch(e) {
     console.log(e);
   }
@@ -1375,16 +1395,7 @@ function print_callSequen(callSequen){
 
 async function exec_sequence_call(){
   /// we can finish the fuzzing anytime
-  if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
-    request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
-      console.log("Done.")
-      });
-    return;
-  }
+  
   if(g_fuzzing_finish){
     return;
   }
@@ -1522,3 +1533,20 @@ module.exports.unlockAccount = unlockAccount;
 module.exports.setStart_time = function(start_time){
   g_fuzz_start_time = start_time; 
 };
+module.exports.test_deployed = test_deployed;
+
+function check(){
+  while(true){
+  if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
+    request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log("Done.")
+      });
+    return;
+  }
+}
+}
+
