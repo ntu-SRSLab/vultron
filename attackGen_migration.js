@@ -141,7 +141,7 @@ function generateFallbackFuns(targetFun) {
         if(input.type === "address"){
           if(input.type.indexOf("[")!==-1){
             if (input.type.indexOf("[]")){
-              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=this;` 
+              declarations = declarations +  `\n\t${input.type} storage a_${number} ;\n\ta_${number}.push(this);` 
             }
             actual_params = gen_array(`a_${number}`,input,`this`); 
           }else{
@@ -151,7 +151,7 @@ function generateFallbackFuns(targetFun) {
         else if(input.type.indexOf("uint") !== -1 || input.type.indexOf("int") !== -1){
           if(input.type.indexOf("[")!==-1){
             if (input.type.indexOf("[]")){
-              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=1000;` 
+              declarations = declarations +  `\n\t${input.type} storage a_${number};\n\ta_${number}.push(1000);` 
               }
               actual_params = gen_array(`a_${number}`,input,1000)
           }else
@@ -165,7 +165,7 @@ function generateFallbackFuns(targetFun) {
         if(input.type === "address"){
           if(input.type.indexOf("[")!==-1){
             if (input.type.indexOf("[]")){
-              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=this;` 
+              declarations = declarations +   `\n\t${input.type} storage a_${number} ;\n\ta_${number}.push(this);` 
             }
             actual_params = actual_params + ", "  + gen_array(`a_${number}`,input,`this`);
           }else{
@@ -176,7 +176,7 @@ function generateFallbackFuns(targetFun) {
         else if(input.type.indexOf("uint") !== -1 || input.type.indexOf("int") !== -1){
           if(input.type.indexOf("[")!==-1){
              if (input.type.indexOf("[]")){
-              declarations = declarations +  `\n\t${input.type} storage a_${number} = new ${input.type}(1);\n\ta_${number}[0]=1000;` 
+              declarations = declarations +   `\n\t${input.type} storage a_${number};\n\ta_${number}.push(1000);` 
               }
              actual_params = actual_params + ", "+gen_array(`a_${number}`,input,0x1000);
           }else{
