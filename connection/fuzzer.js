@@ -444,11 +444,11 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   //     }
   //   });
   let bal = await ethCall({
-                      to: g_targetContract.address,
-                      data: encode}
-          );
+                            to: g_targetContract.address,
+                            data: encode}
+                          );
   balance += abiCoder.utils.toBN(bal);
-  console.log("balance:"+balance);
+  console.log("balance:" + balance);
   return BigInt(balance);
 }
 
