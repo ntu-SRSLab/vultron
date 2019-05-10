@@ -126,7 +126,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_account_list.push(g_attackContract.address);
 
   /// find bookkeeping variable
-  g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
+  // g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
 
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
