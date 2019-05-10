@@ -1,6 +1,5 @@
 #! /local/bin/babel-node
 const AbiCoder = require('web3-eth-abi');
-console.log(AbiCoder);
 const abiCoder = new AbiCoder.AbiCoder();
 
 const Web3 = require('web3');
@@ -40,8 +39,6 @@ let g_targetIns_map;
 let g_staticDep_attack;
 let g_staticDep_target;
 
-/// the set of call that has been selected
-var g_added_set = new Set();
 /// the gas amount
 const gasMax = 8000000000;
 /// dynamci array
@@ -74,8 +71,8 @@ let g_sequen_depen_set = new Set();
 /// the set of all dynamic dependencies in this contract until now
 let g_contra_depen_set = new Set();
 
-/// the hash of previous transaction
-let g_pre_txHash = "0x0";
+/// the hash of previous transactions
+let g_pre_txHash_set = new Set();
 let g_startTime, g_endTime;
 let g_timeDiff;
 
@@ -154,6 +151,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
                                               g_target_artifact.deployedBytecode,
                                               g_target_artifact.deployedSourceMap,
                                               g_target_artifact.source);
+
   /// the static dependencies
   /// The form:
   // { Read: { 'SimpleDAO.sol:17': [ 'credit' ] },
@@ -213,6 +211,8 @@ async function seed() {
 
 /// it will be executed after each transaction is executed
 async function fuzz(txHash, ins_trace) {
+  const getTransaction = Promise.promisify(web3.eth.getTransaction);
+
   if (g_attackContract === undefined) {
     throw "Attack contract is not loaded!";
   }
@@ -221,11 +221,16 @@ async function fuzz(txHash, ins_trace) {
   }
 
   /// different transaction hash code, it is a string
-  if(txHash != g_pre_txHash){
+  if(!g_pre_txHash_set.has(txHash)){
     /// store current txHash as previous txHash
-    g_pre_txHash = txHash;
+    g_pre_txHash_set.add(txHash);
+
     mutex.lock(async function() {
       try{
+        /// this is used to get the input of transaction 
+        // let transObj = await getTransaction(txHash);
+        // console.log("receive: "+ transObj.input);
+     
         /// when attack_target == 0, it is on attack contract
         /// when attack_target == 1, it is on target contract
         var attack_target = 0;
@@ -238,7 +243,6 @@ async function fuzz(txHash, ins_trace) {
                                                         g_attackIns_map,
                                                         g_targetIns_map,
                                                         attack_target);
-
         /// the read/write variable in this transaction
         /// we use it to switch the order of sequence
         var WR_set = await tracer.buildWRSet(g_trans_stmt_trace,
@@ -246,6 +250,8 @@ async function fuzz(txHash, ins_trace) {
                                              g_staticDep_target);
         g_stmt_write_map[g_callIndex_cur -1] = WR_set[0];
         g_stmt_read_map[g_callIndex_cur -1] = WR_set[1];
+        console.log(WR_set[0]);
+        console.log(WR_set[1]);
 
         /// concate the transaction tract into sequence trace
         g_sequen_stmt_trace = g_sequen_stmt_trace.concat(g_trans_stmt_trace);
@@ -480,11 +486,18 @@ const writeExploit = (callSequen_cur) => {
 
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
+  /// used to identify the first statement is attack or target contract
   g_callFun_cur = call;
+
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
   let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_bf = await getBookSum();
+
+  console.log(call.abi.name);
+  /// use to get the input of sent transaction
+  /// compare to the received transaction in fuzz module
+  // console.log("send: " + abiCoder.encodeFunctionCall(call.abi, call.param));
 
   let tx_hash;
   try{
@@ -493,7 +506,7 @@ async function exec_callFun(call, callSequen_cur){
                                      gas: call.gas,                               
                                      data: abiCoder.encodeFunctionCall(call.abi, call.param)
                                    },
-                                   function(error, hash) {
+                                   function(error, hash) {                                                                     
                                      if (!error) {
                                       tx_hash = hash;
                                      }
@@ -504,7 +517,7 @@ async function exec_callFun(call, callSequen_cur){
   }catch(e){
     console.log(e);
   }
-
+ 
   let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
@@ -575,7 +588,8 @@ async function exec_callPayFun(call, cand_bookkeeping){
 /// synthesize the initial call sequence
 async function seed_callSequence() {
   var call_sequence = [];
-
+  /// the set of call that has been selected
+  var added_set = new Set();
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
   while (sequence_index < sequence_len){
@@ -583,7 +597,7 @@ async function seed_callSequence() {
     var abi_index = randomNum(0, g_cand_sequence.length);
     /// we select the function in call_sequence without duplicates
     var abi_index_orig = abi_index;
-    while(g_added_set.has(abi_index)){
+    while(added_set.has(abi_index)){
       if(abi_index >= g_cand_sequence.length){
         break;
       }
@@ -591,7 +605,7 @@ async function seed_callSequence() {
     }
     if(abi_index >= g_cand_sequence.length){
       abi_index = abi_index_orig -1;
-      while(g_added_set.has(abi_index)){
+      while(added_set.has(abi_index)){
         if(abi_index < 0){
           break;
         }
@@ -602,7 +616,7 @@ async function seed_callSequence() {
       break;
     }
     var abi_pair = g_cand_sequence[abi_index];
-    g_added_set.add(abi_index);
+    added_set.add(abi_index);
     var callFun = await gen_callFun(abi_pair);
     call_sequence.push(callFun);
 
@@ -1215,17 +1229,43 @@ async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur){
   var call_switch = callSequen_new[call_index];
   callSequen_new[call_index] = callSequen_new[callIndex_cur];
   callSequen_new[callIndex_cur] = call_switch;
+  console.log("switch order: ");
+  print_callSequen(callSequen_new);
   return callSequen_new;
+}
+
+/// we switch the order for the added call 
+async function mutate_callOrder_add(callSequen_cur, call_index, callIndex_cur){
+  /// we don't need to slice the callSequen_cur, because we doesn't keep the original
+  var call_switch = callSequen_cur[call_index];
+  callSequen_cur[call_index] = callSequen_cur[callIndex_cur];
+  callSequen_cur[callIndex_cur] = call_switch;
+  return callSequen_cur;
 }
 
 /// we add a function into call sequence
 async function mutate_callSequen(callSequen_cur){
   var callSequen_new = callSequen_cur.slice();
+
+  /// identify which candidate call has been added
+  var added_set = new Set();
+  var cand_call_index = 0;
+  var cand_call_len = g_cand_sequence.length;
+  while(cand_call_index < cand_call_len){
+    var cand_call = g_cand_sequence[cand_call_index][0];
+    for(var call_new of callSequen_new){
+      if(cand_call.name == call_new.abi.name){
+        added_set.add(cand_call_index);
+      }
+    }
+    cand_call_index++;
+  }
+
   /// 0 <= call_index < g_cand_sequence.length
   var abi_index = randomNum(0, g_cand_sequence.length);
   /// we select the function in call_sequence without duplicates
   var abi_index_orig = abi_index;
-  while(g_added_set.has(abi_index)){
+  while(added_set.has(abi_index)){
     if(abi_index >= g_cand_sequence.length){
       break;
     }
@@ -1233,7 +1273,7 @@ async function mutate_callSequen(callSequen_cur){
   }
   if(abi_index >= g_cand_sequence.length){
     abi_index = abi_index_orig -1;
-    while(g_added_set.has(abi_index)){
+    while(added_set.has(abi_index)){
       if(abi_index < 0){
         break;
       }
@@ -1245,12 +1285,11 @@ async function mutate_callSequen(callSequen_cur){
   }
 
   var abi_pair = g_cand_sequence[abi_index];
-  g_added_set.add(abi_index);
   var callFun = await gen_callFun(abi_pair);
   callSequen_new.push(callFun);
 
   var insert_index = randomNum(0, callSequen_new.length);
-  callSequen_new = mutate_callOrder(callSequen_new, insert_index, callSequen_new.length -1)
+  callSequen_new = mutate_callOrder_add(callSequen_new, insert_index, callSequen_new.length -1)
   return callSequen_new;
 }
 
@@ -1296,12 +1335,32 @@ async function determine_sequenMutation(){
   }
 
   /// we add more call function into this sequence
-  callSequen_new = await mutate_callSequen(g_callSequen_cur);
-  if(callSequen_new !== undefined){
-    g_callSequen_list.push(callSequen_new);
+  /// we only do it when previous call sequence has been finished
+  if(g_callSequen_start){
+    callSequen_new = await mutate_callSequen(g_callSequen_cur);
+    if(callSequen_new !== undefined){
+      g_callSequen_list.push(callSequen_new);
+    }
   }
 }
 
+async function print_callSequen_list(){
+  for(var callSequen of g_callSequen_list){
+    var call_name = "";
+    for(var call of callSequen){
+      call_name = call_name + "#" + call.abi.name;
+    }
+    console.log(call_name);
+  }
+}
+
+async function print_callSequen(callSequen){
+  var call_name = "";
+  for(var call of callSequen){
+    call_name = call_name + "#" + call.abi.name;
+  }
+  console.log(call_name);
+}
 
 async function exec_sequence_call(){
   /// we can finish the fuzzing anytime
@@ -1314,6 +1373,9 @@ async function exec_sequence_call(){
     if(g_callSequen_list.length != 0){
       /// the call sequence for the next execution
       g_callSequen_cur = g_callSequen_list[0].slice();
+
+      console.log("executed call sequen: ");
+      print_callSequen(g_callSequen_cur);
       /// delete the first callSequen
       g_callSequen_list.splice(0, 1);
       /// the current index in g_callSequen_cur
