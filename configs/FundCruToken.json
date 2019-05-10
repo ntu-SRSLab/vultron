@@ -1,1 +1,0 @@
-{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"FundCruToken","param_Names":["_blockTransfering"],"param_Types":["bool"],"param_Values":{"_blockTransfering":true},"payable":false,"value":"none","values":[true]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}

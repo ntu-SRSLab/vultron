@@ -419,15 +419,13 @@ const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target, attack_target
   	var ins = ins_list[ins_index];
     var attack_match = false;
     var target_match = false;
-    var tract_attack;
-    var trace_target;
     /// it may be matched with both attack and target contract
     if(byteToSrc_attack.hasOwnProperty(ins)){
-      trace_attack = byteToSrc_attack[ins];
+      var trace_attack = byteToSrc_attack[ins];
       attack_match = true;
     }
     if(byteToSrc_target.hasOwnProperty(ins)){
-      trace_target = byteToSrc_target[ins];
+      var trace_target = byteToSrc_target[ins];
       target_match = true;
     }
 
@@ -463,7 +461,7 @@ const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target, attack_target
 
     if(attack_match){
       /// we did not add the repetive trace
-      if(trace_target != undefined){
+      if(trace_attack != undefined){
         if(last_trace != trace_attack){
           trace_list.push(trace_attack);
         }
@@ -471,7 +469,7 @@ const byteToTrace = (ins_list, byteToSrc_attack, byteToSrc_target, attack_target
     }
     else{
       /// we did not add the repetive trace
-      if(trace_target == undefined){
+      if(trace_target != undefined){
         if(last_trace != trace_target){
           trace_list.push(trace_target);
         }
