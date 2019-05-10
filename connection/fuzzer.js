@@ -423,16 +423,21 @@ async function findCandSequence(target_abis, attack_abis){
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   let balance = BigInt(0);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
-  await web3.eth.call({
+  const ethCall = Promise.promisify(web3.eth.call);
+  // await web3.eth.call({
+  //   to: g_targetContract.address,
+  //   data: encode},
+  //   function(err, result) {
+  //     if (!err) {
+  //       if (abiCoder.utils.isHex(result)){
+  //         balance += abiCoder.utils.toBN(result);
+  //       }
+  //     }
+  //   });
+  let balance  = await web3.eth.call({
                       to: g_targetContract.address,
-                      data: encode},
-                      function(err, result) {
-                        if (!err) {
-                          if (abiCoder.utils.isHex(result)){
-                            balance += abiCoder.utils.toBN(result);
-                          }
-                        }
-                      });
+                      data: encode}
+          );
   return BigInt(balance);
 }
 
