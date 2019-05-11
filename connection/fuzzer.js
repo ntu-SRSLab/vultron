@@ -177,10 +177,10 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_staticDep_attack = await tracer.buildStaticDep(attackSolPath);
   g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
 
-  /// clear the exploit script
-  if(fs.existsSync(g_exploit_path)){
-    fs.unlinkSync(g_exploit_path);
-  }
+  // /// clear the exploit script
+  // if(fs.existsSync(g_exploit_path)){
+  //   fs.unlinkSync(g_exploit_path);
+  // }
 
   return {
    accounts: g_account_list,
@@ -387,7 +387,8 @@ async function findBookKeepingAbi(abis) {
 /// add all the functions into the g_cand_sequence, then use g_cand_sequence to generate the call sequence
 async function findCandSequence(target_abis, attack_abis){
   /// the switch to decide whether we add the functions in target/attack contracts into to g_cand_sequence
-  var attack_switch = true;
+  // var attack_switch = true;
+  var attack_switch = false;
   var target_switch = true;
 
   if(attack_switch){
@@ -548,7 +549,8 @@ async function exec_callFun(call, callSequen_cur){
   let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_af = await getBookSum();
-   
+  console.log("before:",target_bal_bf.toString(),target_bal_sum_bf);
+  console.log("after:",target_bal_af.toString(),target_bal_sum_af);
   try{ 
     if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
       throw "Balance invariant is not held....";
@@ -1546,12 +1548,12 @@ setInterval(function () {
   // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
 
   if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
+    console.log("Done.")
     request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
       if (error) {
         console.error(error);
         return;
       }
-      console.log("Done.")
       });
     return;
   }
