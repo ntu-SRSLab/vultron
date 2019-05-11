@@ -100,7 +100,7 @@ function unlockAccount(){
   g_account_list = web3.eth.accounts;
   g_from_account = g_account_list[0];
   /// unlock initial user, which is also miner account
-  web3.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60);
+  web3.personal.unlockAccount(g_from_account, "123", 200 * 60 * 60);
 }
 
 function setProvider(httpRpcAddr){

@@ -82,9 +82,6 @@ function bootstrap(){
   
 }
 
-
-
-
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({limit: '50mb', extended: false}));
 

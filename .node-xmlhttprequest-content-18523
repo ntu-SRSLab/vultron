@@ -1,0 +1,1 @@
+{"err":null,"data":{"statusCode":200,"headers":{"content-type":"application/json","vary":"Origin","date":"Sat, 11 May 2019 03:11:11 GMT","content-length":"39","connection":"close"},"text":"{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":true}\n"}}
