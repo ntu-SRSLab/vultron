@@ -19,10 +19,10 @@ let g_key_cur;
 let g_value_cur;
 let g_value_cur_cursor;
 
-let g_bootstrap_build_target = '../build/contracts/SimpleDAO.json';
-let g_bootstrap_build_attack = '../build/contracts/Attack_SimpleDAO0.json';
-let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
-let g_bootstrap_source_target = './contracts/Attack_SimpleDAO0.sol';
+let g_bootstrap_build_target = '../build/contracts/AICToken.json';
+let g_bootstrap_build_attack = '../build/contracts/Attack_AICToken0.json';
+let g_bootstrap_source_attack = './contracts/AICToken.sol';
+let g_bootstrap_source_target = './contracts/Attack_AICToken0.sol';
 
 
 function init_g_path_map(){
@@ -30,7 +30,8 @@ function init_g_path_map(){
   let tokens = new Array();
   for(let item of contracts){
     if (item.indexOf("Attack_")==-1){
-        tokens.push(item);
+        if (truffle_connect.test_deployed("../build/contracts/"+item))
+            tokens.push(item);
     }
   }
   // console.log(tokens);
@@ -200,20 +201,22 @@ app.get('/bootstrap', (req, RES) => {
               console.error(error);
               return;
             }
-            request(`http://localhost:${port}/find`, (error, res, body) => {
-                if (error) {
-                  console.error(error);
-                  return;
-                }
-                request(`http://localhost:${port}/seed`, (error, res, body) => {
+            // RES.send(g_bootstrap_build_target);
+            request(`http://localhost:${port}/seed`, (error, res, body) => {
                   if (error) {
                     console.error(error);
                     return;
                   }
-                  console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_target);
-                  RES.send(g_bootstrap_build_target);
+                  console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_attack);
+                  RES.send(g_bootstrap_build_target+"\n"+g_bootstrap_build_attack);
                 });
-            });
+            // request(`http://localhost:${port}/find`, (error, res, body) => {
+            //     if (error) {
+            //       console.error(error);
+            //       return;
+            //     }
+              
+            // });
    });
 
 });
@@ -236,6 +239,8 @@ function parse_cmd() {
 }
 init_g_path_map();
 parse_cmd();
+truffle_connect.setStart_time(Date.now());
+truffle_connect.single_timeout(port);
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);
 });
