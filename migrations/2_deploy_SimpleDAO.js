@@ -22,10 +22,10 @@ module.exports = function(deployer) {
 
 	deployer.deploy(SimpleDAO)
 	.then(function() {
-		return deployer.deploy(Attack_SimpleDAO0, SimpleDAO.address, {value: 10e18});
-	}).then(function() {
-		return deployer.deploy(Attack_SimpleDAO1, SimpleDAO.address, {value: 10e18});
-	}).then(function() {
-		return deployer.deploy(Attack_SimpleDAO2, SimpleDAO.address, {value: 10e18});
-	});
+    return deployer.deploy(Attack_SimpleDAO0, SimpleDAO.address, {value: web3.toWei(10000000000000, "ether")});
+  }).then(function() {
+    return deployer.deploy(Attack_SimpleDAO1, SimpleDAO.address, {value: web3.toWei(10000000000000, "ether")});
+  }).then(function() {
+    return deployer.deploy(Attack_SimpleDAO2, SimpleDAO.address, {value: web3.toWei(10000000000000, "ether")});
+  });
 }
