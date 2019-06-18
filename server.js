@@ -60,7 +60,7 @@ function init_g_path_map(){
 }
 
 function bootstrap(){
-    // console.log(g_value_cur);
+    console.log(g_value_cur);
     if(g_value_cur.length>g_value_cur_cursor){
       g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
       g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];

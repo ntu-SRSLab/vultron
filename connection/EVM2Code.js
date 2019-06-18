@@ -1,4 +1,5 @@
 var fs = require('fs');
+const readline = require('readline');
 var getLineFromPos = require('get-line-from-pos');
 
 var STOP =0x0,
@@ -638,6 +639,42 @@ const buildDynamicDep = (trace, staticDep_attack, staticDep_target) => {
   return dynamicDep;
 }
 
+
+const build_sendCall_set = (targetSolPath) => {
+  var send_call_set = new Set();
+  var srccode = fs.readFileSync(targetSolPath, "utf-8"); 
+  srccode = srccode.split('\r\n').join('\n');
+  srccode = srccode.split('\n\r').join('\n');
+  var code_list = srccode.split('\n');
+  var lineNum = 1;
+  for (var line of code_list){
+    if(line.indexOf("send(") != -1 || line.indexOf("send (") != -1 || line.indexOf("call.value") != -1){
+      var content =  targetSolPath + ":" + lineNum;
+      var lastIndex = content.lastIndexOf("/");
+      content = content.slice(lastIndex +1);
+      send_call_set.add(content);
+    }
+    lineNum++;
+  }
+  return send_call_set;
+}
+
+
+const  build_relevant_depen = (staticDep_target, send_call_set) => {
+  var send_call_found = new Set();
+
+  var write_target_map = staticDep_target["Write"];
+  var cd_target_map = staticDep_target["CDepen"];
+
+  for(var step of send_call_set){
+    if(!write_target_map.hasOwnProperty(step) && !cd_target_map.hasOwnProperty(step)){
+      send_call_found.add(step);
+    }
+  }
+
+  return send_call_found; 
+}
+
 module.exports = {
   buildStmtSet: function(fileName, srcmap, srccode) {
     var src_number = json_parse(fileName, srcmap, srccode);
@@ -678,6 +715,15 @@ module.exports = {
   buildDynDep: function(trace, staticDep_attack, staticDep_target){
     var dynamicDep = buildDynamicDep(trace, staticDep_attack, staticDep_target);
     return dynamicDep;
-  }
+  },
+
+  buildMoneySet: function(targetSolPath){
+    var send_call_set = build_sendCall_set(targetSolPath);
+    return send_call_set;
+  },
+  buildRelevantDepen: function(staticDep_target, send_call_set){
+    var send_call_found = build_relevant_depen(staticDep_target, send_call_set);
+    return send_call_found;
+  } 
 }
 

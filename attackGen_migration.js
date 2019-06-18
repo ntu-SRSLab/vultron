@@ -318,11 +318,7 @@ function getArgsFromConf(contract_name){
       // return ret;
       if (len>0 && config.contracts[0].values && config.contracts[0].values.length==len)
         return config.contracts[0].values;
-<<<<<<< HEAD
       else if (len==0 && config.contracts[0].values && config.contracts[0].values.length==len)
-=======
-      else if (len==0&& config.contracts[0].values.length==len)
->>>>>>> 3f34ed14f27004b26c2b76e7d4198111c82a4139
               return  [];
            else
               return  undefined;
@@ -368,7 +364,8 @@ function deploy(contracts, item) {
   }
   /// the zero level, no return
   let putReturn = nestingLevel == 0 ? '\t' : '\t\treturn ';
-  let putValue = item.name.indexOf('Attack_') !== -1 ? ', {value: web3.toWei(10000000000000, "ether")}' : '';
+  /// we both put value in attack and target contract
+  let putValue = item.name.indexOf('Attack_') !== -1 ? ', {value: web3.toWei(100000, "ether")}' : '';
   let putCommon = nestingLevel == 0 ? '' : ';';
   let putThen = nestingLevel == 0 ? '\t.then(function() {\n' : (nestingLevel !== deploy_level -1? '\t}).then(function() {\n' : '\t});\n');
 

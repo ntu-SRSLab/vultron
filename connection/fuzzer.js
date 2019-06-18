@@ -1,7 +1,6 @@
 #! /local/bin/babel-node
 const request = require("request");
 
-
 const AbiCoder = require('web3-eth-abi');
 const abiCoder = new AbiCoder.AbiCoder();
 
@@ -16,8 +15,7 @@ const locks = require('locks');
 const mutex = locks.createMutex();
 const async = require('async');
 
-
-
+var g_data_feedback = false;
 
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
@@ -90,9 +88,13 @@ let g_fuzzing_finish = false;
 
 /// the account pools
 let g_from_account;
+/// the send and call statements
+let g_send_call_set;
+/// whether it has static control dependencies or write variable
+let g_send_call_found;
 
 let  g_fuzz_start_time = 0;
-const FUZZ_TIME_SCALE = 1*60*1000;
+const FUZZ_TIME_SCALE = 10*60*1000;
 
 function unlockAccount(){
   /// it is initialized by the blockchain, 
@@ -143,7 +145,6 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_account_list.push(g_attackContract.address);
   /// find bookkeeping variable
   g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
-
   /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
   await findCandSequence(g_targetContract.abi, g_attackContract.abi);
@@ -177,6 +178,10 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_staticDep_attack = await tracer.buildStaticDep(attackSolPath);
   g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
 
+  g_send_call_set = await tracer.buildMoneySet(targetSolPath);
+  g_send_call_found = await tracer.buildRelevantDepen(g_staticDep_target, g_send_call_set);
+  console.log(g_send_call_found);
+
   // /// clear the exploit script
   // if(fs.existsSync(g_exploit_path)){
   //   fs.unlinkSync(g_exploit_path);
@@ -194,7 +199,6 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
 
 /// the seed for dynamic fuzzing
 async function seed() {
-  console.log("seed...");
   if (g_targetContract === undefined) {
     throw "Target contract is not deployed!";
   }
@@ -202,8 +206,13 @@ async function seed() {
     throw "Attack contract is not deployed!";
   }
   // we only generate a call sequence
-  let callFun_list = await seed_callSequence();
-  // console.log(callFun_list);
+  let callFun_list;
+  if(g_data_feedback){
+    callFun_list = await seed_callSequence();
+  }
+  else{
+    callFun_list = await seed_callSequence_withoutData();
+  }
   // Execute the seed call sequence
   mutex.lock(async function() {
     try{
@@ -238,12 +247,13 @@ async function fuzz(txHash, ins_trace) {
     throw "Target contract is not loaded!";
   }
 
-  /// different transaction hash code, it is a string
-  if(!g_pre_txHash_set.has(txHash)){
-    /// store current txHash as previous txHash
-    g_pre_txHash_set.add(txHash);
 
-    mutex.lock(async function() {
+
+  mutex.lock(async function() {
+    /// different transaction hash code, it is a string
+    if(!g_pre_txHash_set.has(txHash)){
+      /// store current txHash as previous txHash
+      g_pre_txHash_set.add(txHash);
       try{
         /// this is used to get the input of transaction 
         // let transObj = await getTransaction(txHash);
@@ -261,6 +271,14 @@ async function fuzz(txHash, ins_trace) {
                                                         g_attackIns_map,
                                                         g_targetIns_map,
                                                         attack_target);
+
+        // for(var stmt_trace of g_trans_stmt_trace){
+        //   if(g_send_call_found.has(stmt_trace)){
+        //     console.log(Date.now() - g_fuzz_start_time);
+        //     g_fuzzing_finish = true;
+        //     return "Oracles are violated!";
+        //   }
+        // }
         /// the read/write variable in this transaction
         /// we use it to switch the order of sequence
         var WR_set = await tracer.buildWRSet(g_trans_stmt_trace,
@@ -275,9 +293,18 @@ async function fuzz(txHash, ins_trace) {
         g_sequen_depen_set = await tracer.buildDynDep(g_sequen_stmt_trace,
                                                       g_staticDep_attack,
                                                       g_staticDep_target);
+
+
+
         /// before executing next transaction, we first mutate the just executed transaction
-        await determine_funMutation();
-        await determine_sequenMutation();
+        if(g_data_feedback){
+          await determine_funMutation();
+          await determine_sequenMutation();
+        }
+        else{
+          await determine_funMutation_withoutData();
+        }
+
         /// execute a function call
         await exec_sequence_call();
       }
@@ -287,8 +314,8 @@ async function fuzz(txHash, ins_trace) {
       finally{
         mutex.unlock();
       }
-    });     
-  }
+    }
+  });     
 }
 
 async function find() {
@@ -380,15 +407,14 @@ async function findBookKeepingAbi(abis) {
       return abi;
     }
   }
-  throw "Cannot find bookkeeping variable!";
+  console.log("Cannot find bookkeeping variable!");
   return;
 }
 
 /// add all the functions into the g_cand_sequence, then use g_cand_sequence to generate the call sequence
 async function findCandSequence(target_abis, attack_abis){
   /// the switch to decide whether we add the functions in target/attack contracts into to g_cand_sequence
-  // var attack_switch = true;
-  var attack_switch = false;
+  var attack_switch = true;
   var target_switch = true;
 
   if(attack_switch){
@@ -407,9 +433,12 @@ async function findCandSequence(target_abis, attack_abis){
           }
           input_index += 1;
         }
-        if(!notsupport){
-          var abi_pair = [abi, g_attackContract.address]
-          g_cand_sequence.push(abi_pair);
+        /// change to all functions, because we use 0 as parameters
+        if(!notsupport || notsupport){
+          if(abi.name.indexOf("terminate") == -1){
+            var abi_pair = [abi, g_attackContract.address]
+            g_cand_sequence.push(abi_pair);
+          }
         }
       }
     }); 
@@ -433,9 +462,12 @@ async function findCandSequence(target_abis, attack_abis){
           }
           input_index += 1;
         }
-        if(!notsupport){
-          var abi_pair = [abi, g_targetContract.address]
-          g_cand_sequence.push(abi_pair);
+        /// change to all functions, because we use 0 as parameters
+        if(!notsupport || notsupport){
+          if(abi.name.indexOf("terminate") == -1){
+            var abi_pair = [abi, g_targetContract.address]
+            g_cand_sequence.push(abi_pair);
+          }
         }
       }
     }); 
@@ -444,6 +476,9 @@ async function findCandSequence(target_abis, attack_abis){
 
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
+  if(bookkeepingVar == undefined){
+    return BigInt(0);
+  }
   let balance = BigInt(0);
   // console.log(bookkeepingVar);
   let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
@@ -469,6 +504,9 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
 
 /// get the sum of bookkeeping variable
 async function getBookSum(bookkeepingVar = g_bookKeepingAbi) {
+  if(bookkeepingVar == undefined){
+    return BigInt(0);
+  }
   let sum = BigInt(0);
   for (let account of g_account_list) {
     let account_bal = await getBookBalance(account, bookkeepingVar);
@@ -489,14 +527,11 @@ async function getAllBooksSum (cand_bookkeeping) {
 }
 
 
-const writeExploit = (callSequen_cur) => {
+const writeExploit = (callSequen) => {
   var call_str = "";
-  let call_index = 0;
-  /// g_callIndex_cur is current index in call sequence
-  while(call_index < g_callIndex_cur){
-    var call_cur = callSequen_cur[call_index];
-    call_str = call_str + call_cur.name + "  "; 
-    call_index += 1;
+  call_str = call_str + (Date.now() - g_fuzz_start_time) + ": ";
+  for(var call of callSequen){
+    call_str = call_str + "#" + call.abi.name;
   }
   call_str += "\n";
   fs.appendFileSync(g_exploit_path, call_str);
@@ -509,59 +544,84 @@ async function exec_callFun(call, callSequen_cur){
   const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
 
   g_callFun_cur = call;
-
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
   let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_bf = await getBookSum();
 
-  console.log(call.abi.name);
+  console.log(call.abi.name,call.param);
+  
+
+
+  if(call.to == g_targetContract.address){
+      await g_targetContract[call.abi.name](...call.param,{from:call.from,gas:call.gas});
+  }else{
+      await g_attackContract[call.abi.name](...call.param,{from:call.from,gas:call.gas});
+  }
+  // console.log(call.param);
   /// use to get the input of sent transaction
   /// compare to the received transaction in fuzz module
   // console.log("send: " + abiCoder.encodeFunctionCall(call.abi, call.param));
 
-  let tx_hash;
-  try{
-    tx_hash = await sendTransaction({ from: call.from,
-                                       to: call.to, 
-                                       gas: call.gas,                               
-                                       data: abiCoder.encodeFunctionCall(call.abi, call.param)
-                                     });
-    console.log(tx_hash);
-    // await web3.eth.sendTransaction({ from: call.from,
-    //                                  to: call.to, 
-    //                                  gas: call.gas,                               
-    //                                  data: abiCoder.encodeFunctionCall(call.abi, call.param)
-    //                                },
-    //                                function(error, hash) {                                                                     
-    //                                  if (!error) {
-    //                                   tx_hash = hash;
-    //                                  }
-    //                                  else{
-    //                                    console.log(error);
-    //                                   }
-    //                               });
-  }catch(e){
-    console.log(e);
-  }
- 
+  // let tx_hash;
+  // try{
+  //   // tx_hash = await sendTransaction({ from: call.from,
+  //   //                                    to: call.to, 
+  //   //                                    gas: call.gas,                               
+  //   //                                    data: abiCoder.encodeFunctionCall(call.abi, call.param)
+  //   //                                  });
+  //   await web3.eth.sendTransaction({ from: call.from,
+  //                                    to: call.to, 
+  //                                    gas: call.gas,                               
+  //                                    data: abiCoder.encodeFunctionCall(call.abi, call.param)
+  //                                  },
+  //                                  function(error, hash) {                                                                     
+  //                                    if (!error) {
+  //                                     tx_hash = hash;
+  //                                    }
+  //                                    else{
+  //                                      console.log(error);
+  //                                     }
+
+
+
+  //                                 });
+  // }catch(e){
+  //   console.log(e);
+  // }
+
   let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_af = await getBookSum();
-  console.log("before:",target_bal_bf.toString(),target_bal_sum_bf);
-  console.log("after:",target_bal_af.toString(),target_bal_sum_af);
-  try{ 
-    if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
-      throw "Balance invariant is not held....";
+
+
+  console.log("target balance ether/booking before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+  console.log("target after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+  console.log("attack ether balance after-before:" + attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+  console.log("attack booking balance before - after: " + attack_bal_acc_bf + "###" + attack_bal_acc_af);
+  if(g_bookKeepingAbi != undefined){
+    try{ 
+      // if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
+      //  console.log("Integer overflow....");
+      //  throw "Balance invariant is not held....";        
+      // }
+      // if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
+      //  console.log("Balance invariant is not held....");
+      //  throw "Balance invariant is not held....";
+      // }
+      // if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
+      //  console.log("Transaction invariant is not held....");
+      //  throw "Transaction invariant is not held....";
+      // }
     }
-    if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
-      throw "Transaction invariant is not held....";
+    catch(e){
+      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      console.log(callSequen_cur);
+      console.log(Date.now() - g_fuzz_start_time);
+      g_fuzzing_finish = true;
+      return "Oracles are violated!";
     }
-  }
-  catch(e){
-    writeExploit(callSequen_cur);
-    return "Oracles are violated!";
   }
 }
 
@@ -570,7 +630,6 @@ async function exec_callPayFun(call, cand_bookkeeping){
 
   g_callFun_cur = call;
   var target_bal_sum_bf = await getAllBooksSum(cand_bookkeeping);
-  console.log(target_bal_sum_af);
   var tx_value = 10e18;
 
   let tx_hash;
@@ -587,7 +646,6 @@ async function exec_callPayFun(call, cand_bookkeeping){
       transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
     }
     tx_hash = await sendTransaction(transactionConfig);
-    console.log(tx_hash);
     // await web3.eth.sendTransaction(
     //   transactionConfig,
     //   function (error, hash) {
@@ -621,10 +679,11 @@ async function seed_callSequence() {
   var call_sequence = [];
   /// the set of call that has been selected
   var added_set = new Set();
+
+  /// for select
+  // var sequence_len = g_cand_sequence.length;
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
-  console.log("sequence_index,sequence_len");
-  console.log(sequence_index,sequence_len);
   while (sequence_index < sequence_len){
     /// 0 <= call_index < g_cand_sequence.length
     var abi_index = randomNum(0, g_cand_sequence.length);
@@ -1046,7 +1105,7 @@ async function modify_input_point(lastCall_exec, num) {
   while(input_index < input_len){
     let param = lastCall_exec.abi.inputs[input_index];
     if (param.type.indexOf('uint') == 0){
-      if(num >= 0){
+      if(num == undefined || num >= 0){
         /// it generate the num number
         let uint_param = gen_uint(param.type, num, num);
         param_list.push(uint_param);
@@ -1332,6 +1391,296 @@ async function mutate_callSequen(callSequen_cur){
   return callSequen_new;
 }
 
+
+function gen_int_withoutData(int_type, num_min, num_max){
+  var intMin = gen_intMin(int_type);
+  if(num_min === undefined){
+    /// num_min is undefined, we use the default minimum value
+    num_min = intMin; 
+  }
+  else{
+    if(intMin > num_max){
+      num_min = intMin;
+    }
+  }   
+  var intMax = gen_intMax(int_type);
+  if(num_max === undefined){
+    /// num_max is undefined, we use the default maximum value
+    num_max = intMax/10; 
+  }
+  else{
+    if(intMax < num_max){
+      num_max = intMax/10;
+    }
+  } 
+  if(int_type.indexOf('[') == -1){
+    /// primitive type
+    let value_int = randomNum(num_min, num_max);
+    let value = uintToString(value_int);
+    return value;
+  }
+  else if(int_type.indexOf('[]') != -1){
+    /// dynamic array
+    let value_list = [];
+    let value_num = randomNum(dyn_array_min, dyn_array_max);
+    let value_index = 0;
+    while(value_index < value_num){
+      let value_int = randomNum(num_min, num_max);
+      let value = uintToString(value_int);;      
+      value_list.push(value);
+      value_index += 1;
+    }
+    return value_list;
+  }
+  else{
+    /// static array
+    let value_list = [];
+    let left_index = uint_type.indexOf('[');
+    let right_index = uint_type.indexOf(']');
+    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_index = 0;
+    while(value_index < value_num){
+      let value_int = randomNum(num_min, num_max);
+      let value = uintToString(value_int);
+      value_list.push(value);
+      value_index += 1;
+    }
+    return value_list;
+  }
+}
+
+/// generate an unsigned integer
+/// unum_min is defined, in most case it is 0
+/// unum_max may not be defined, e.g., undefined
+function gen_uint_withoutData(uint_type, unum_min, unum_max){
+  var uintMax = gen_uintMax(uint_type);
+  if(unum_min == undefined){
+    unum_min = uintMax/1000;
+  }
+  else{
+    if(unum_min < 0){
+      unum_min = 0;
+    }
+  }
+  if(unum_max == undefined){
+    /// unum_max is undefined, we use the default maximum value
+    unum_max = uintMax/1000; 
+  }
+  else{
+    if(uintMax < unum_max){
+      unum_max = uintMax/1000;
+    }
+  } 
+  if(uint_type.indexOf('[') == -1){
+    /// primitive type
+    let value_int = randomNum(unum_min, unum_max);
+    let value = uintToString(value_int);
+    return value;
+  }
+  else if(uint_type.indexOf('[]') != -1){
+    /// dynamic array
+    let value_list = [];
+    let value_num = randomNum(dyn_array_min, dyn_array_max);
+    let value_index = 0;
+    while(value_index < value_num){
+      let value_int = randomNum(unum_min, unum_max);
+      let value = uintToString(value_int);;      
+      value_list.push(value);
+      value_index += 1;
+    }
+    return value_list;
+  }
+  else{
+    /// static array
+    let value_list = [];
+    let left_index = uint_type.indexOf('[');
+    let right_index = uint_type.indexOf(']');
+    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_index = 0;
+    while(value_index < value_num){
+      let value_int = randomNum(unum_min, unum_max);
+      let value = uintToString(value_int);
+      value_list.push(value);
+      value_index += 1;
+    }
+    return value_list;
+  }
+}
+
+
+async function gen_callInput_withoutData(abi, unum_min, unum_max, num_min, num_max) {
+  let param_list = [];  
+  await abi.inputs.forEach(function(param) {
+    if (param.type.indexOf('address') == 0) {
+      let adds_param = gen_address(param.type);
+      param_list.push(adds_param);
+    }
+    else if (param.type.indexOf('uint') == 0){
+      /// uint type, its minimu is '0'
+      let uint_param = gen_uint_withoutData(param.type, unum_min, unum_max);
+      param_list.push(uint_param);
+    }
+    else if(param.type.indexOf('int') == 0){
+      /// int type
+      let int_param = gen_int_withoutData(param.type, num_min, num_max);
+      param_list.push(int_param);
+    }
+    else {      
+      // default parameter
+      console.log("not support data type...");
+      param_list.push(0);
+    }
+  });
+  return param_list;
+}
+
+
+async function gen_callFun_withoutData(abi_pair) {
+  /// the first (0, undefined) for uint
+  /// the second (undefined, undefined) for int
+  /// 10000000000000000000  is 10 ether
+  /// we generate the meaningful value, it would be better
+  let parameters = await gen_callInput(abi_pair[0], 0, undefined, undefined, undefined);
+  let gasLimit = await gen_callGasMax();
+  let callFun = {
+    /// g_account_list[0] is the initial account, which is also a miner account
+    from: g_account_list[0],
+    to: abi_pair[1],
+    abi: abi_pair[0],
+    gas: gasLimit,
+    param: parameters
+  }
+  return callFun;
+}
+
+async function seed_callSequence_withoutData() {
+  var call_sequence = [];
+  /// the set of call that has been selected
+  var added_set = new Set();
+
+  /// for select
+  // var sequence_len = g_cand_sequence.length;
+  var sequence_len = randomNum(1, sequence_maxLen);
+  var sequence_index = 0;
+  while (sequence_index < sequence_len){
+    /// 0 <= call_index < g_cand_sequence.length
+    var abi_index = randomNum(0, g_cand_sequence.length);
+    /// we select the function in call_sequence without duplicates
+    var abi_index_orig = abi_index;
+    while(added_set.has(abi_index)){
+      if(abi_index >= g_cand_sequence.length){
+        break;
+      }
+      abi_index = abi_index +1;
+    }
+    if(abi_index >= g_cand_sequence.length){
+      abi_index = abi_index_orig -1;
+      while(added_set.has(abi_index)){
+        if(abi_index < 0){
+          break;
+        }
+        abi_index = abi_index -1;
+      }
+    }
+    if(abi_index < 0){
+      break;
+    }
+    var abi_pair = g_cand_sequence[abi_index];
+    added_set.add(abi_index);
+    var callFun = await gen_callFun_withoutData(abi_pair);
+    call_sequence.push(callFun);
+
+    sequence_index += 1;
+  }
+  /// we only generate a call sequence
+  // console.log(call_sequence);
+  return call_sequence;
+}
+
+
+
+
+/// we add a function into call sequence
+async function mutate_callSequen_withoutData(callSequen_cur){
+  var callSequen_new = callSequen_cur.slice();
+
+  /// 0 <= call_index < g_cand_sequence.length
+  var abi_index = randomNum(0, g_cand_sequence.length);
+  var abi_pair = g_cand_sequence[abi_index];
+  let parameters = await gen_callInput(abi_pair[0], 0, undefined, undefined, undefined);
+  let gasLimit = await gen_callGasMax();
+  let callFun = {
+    /// g_account_list[0] is the initial account, which is also a miner account
+    from: g_account_list[0],
+    to: abi_pair[1],
+    abi: abi_pair[0],
+    gas: gasLimit,
+    param: parameters
+  }
+  callSequen_new.push(callFun);
+  return callSequen_new;
+}
+
+async function mutate_callFun_withoutData(lastCall_exec, callSequen_cur, lastCall_index) {
+  let callSequen_new_list = [];
+
+  let parameters = await gen_callInput(lastCall_exec.abi, 0, undefined, undefined, undefined);
+  let callFun = {
+    from: lastCall_exec.from,
+    to: lastCall_exec.to,
+    abi: lastCall_exec.abi,
+    gas: lastCall_exec.gas,
+    param: parameters
+  }
+  callSequen_new = callSequen_cur.slice();
+  callSequen_new[lastCall_index] = callFun;
+  callSequen_new_list.push(callSequen_new);
+
+  // callSequen_new = await mutate_callSequen_withoutData(g_callSequen_cur);
+  // if(callSequen_new !== undefined){
+  //   g_callSequen_list.push(callSequen_new);
+  // }
+
+  return callSequen_new_list;
+}
+
+/// use to mutate input of a function
+async function determine_funMutation_withoutData(){
+  var depen_new_found = false;
+  for(var sequen_depen of g_sequen_depen_set){
+    if(!g_contra_depen_set.has(sequen_depen)){
+      g_contra_depen_set.add(sequen_depen);
+      depen_new_found = true;
+    }
+  }
+
+  if(depen_new_found){
+    /// mutate the input of last call
+    let callSequen_new_list = await mutate_callFun_withoutData(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur -1);
+    for(let callSequen_new of callSequen_new_list){
+      g_callSequen_list.push(callSequen_new);
+    }  
+  }
+  else{
+    callSequen_new = await mutate_callSequen_withoutData(g_callSequen_cur);
+    if(callSequen_new !== undefined){
+      g_callSequen_list.push(callSequen_new);
+    }
+    // let parameters = await gen_callInput(g_lastCall_exec.abi, 0, undefined, undefined, undefined);
+    // let callFun = {
+    //   from: g_lastCall_exec.from,
+    //   to: g_lastCall_exec.to,
+    //   abi: g_lastCall_exec.abi,
+    //   gas: g_lastCall_exec.gas,
+    //   param: parameters
+    // }
+    // callSequen_new = g_callSequen_cur.slice();
+    // callSequen_new[g_callIndex_cur -1] = callFun;
+    // g_callSequen_list.push(callSequen_new);
+  }
+}
+
+
 /// use to mutate input of a function
 async function determine_funMutation(){
   var depen_new_found = false;
@@ -1378,12 +1727,12 @@ async function determine_sequenMutation(){
   if(g_callSequen_start){
     callSequen_new = await mutate_callSequen(g_callSequen_cur);
     if(callSequen_new !== undefined){
-      g_callSequen_list.push(callSequen_new);
+      g_callSequen_list.unshift(callSequen_new);
     }
   }
 }
 
-function print_callSequen_list(calprint_callSequen_listlSequen_list){
+function print_callSequen_list(callSequen_list){
   for(var callSequen of callSequen_list){
     var call_name = "";
     for(var call of callSequen){
@@ -1403,7 +1752,6 @@ function print_callSequen(callSequen){
 
 async function exec_sequence_call(){
   /// we can finish the fuzzing anytime
-  console.log("exec_sequence_call");
   if(g_fuzzing_finish){
     return;
   }
@@ -1416,6 +1764,7 @@ async function exec_sequence_call(){
 
       console.log("executed sequence: ");
       print_callSequen(g_callSequen_cur);
+      writeExploit(g_callSequen_cur);
 
       /// delete the first callSequen
       g_callSequen_list.splice(0, 1);
