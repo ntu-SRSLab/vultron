@@ -30,7 +30,7 @@ module.exports = {
             from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
 	},
 	SCFuzzer: {
-        host: "172.21.176.77",
+            host: "127.0.0.1",
 	    port: 8546,
 	    network_id: "*",
 	}
