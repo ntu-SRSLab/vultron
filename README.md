@@ -11,3 +11,4 @@ node server.js              # Note: if encountering password error, go to connec
 ```
 
 The benchmark used in the ContraMaster experiments is available under ```./benchmark```.
+The discovered exploits are in ```exploit_<N>.txt```.
