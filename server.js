@@ -19,10 +19,10 @@ let g_key_cur;
 let g_value_cur;
 let g_value_cur_cursor;
 
-let g_bootstrap_build_target = '../build/contracts/AICToken.json';
-let g_bootstrap_build_attack = '../build/contracts/Attack_AICToken0.json';
-let g_bootstrap_source_attack = './contracts/AICToken.sol';
-let g_bootstrap_source_target = './contracts/Attack_AICToken0.sol';
+let g_bootstrap_build_target = '../build/contracts/SimpleDAO.json';
+let g_bootstrap_build_attack = '../build/contracts/AttackDAO.json';
+let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
+let g_bootstrap_source_target = './contracts/AttackDAO.sol';
 
 
 function init_g_path_map(){
@@ -61,7 +61,7 @@ function init_g_path_map(){
 
 function bootstrap(){
     console.log(g_value_cur);
-    if(g_value_cur.length>g_value_cur_cursor){
+    if(g_value_cur.length > g_value_cur_cursor){
       g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
       g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
       g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
@@ -237,6 +237,7 @@ function parse_cmd() {
   truffle_connect.setProvider(httpRpcAddr);
   truffle_connect.unlockAccount(); 
 }
+
 init_g_path_map();
 parse_cmd();
 truffle_connect.setStart_time(Date.now());

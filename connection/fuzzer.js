@@ -1,12 +1,11 @@
 #! /local/bin/babel-node
 const request = require("request");
 
-const AbiCoder = require('web3-eth-abi');
-const abiCoder = new AbiCoder.AbiCoder();
-
 const Web3 = require('web3');
+//const AbiCoder = require('web3-eth-abi');
+
 const Promise = require("bluebird");
-const truffle_Contract = require('truffle-contract');
+const truffle_contract = require('truffle-contract');
 const assert = require('assert');
 const tracer = require('./EVM2Code');
 const fs = require('fs');
@@ -30,7 +29,7 @@ let g_attackContract;
 // web3 abstractions
 let web3;
 let Provider;
-let g_account_list;
+let g_account_list = [];
 /// the bookkeeping variable abi
 let g_bookKeepingAbi;
 
@@ -99,15 +98,20 @@ const FUZZ_TIME_SCALE = 10*60*1000;
 function unlockAccount(){
   /// it is initialized by the blockchain, 
   /// for example, /home/hjwang/Tools/SCFuzzer/test_geth/data/keystore
-  g_account_list = web3.eth.accounts;
-  g_from_account = g_account_list[0];
-  /// unlock initial user, which is also miner account
-  web3.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60);
+  var g_from_account;
+  web3.eth.getAccounts().then(e => {
+    g_from_account = e[0];
+    console.log("Account[0]: " + g_from_account);
+  }).then(() => {
+    /// unlock initial user, which is also miner account
+    web3.eth.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60)
+      .then(console.log('Account unlocked!'));
+  });
 }
 
 function setProvider(httpRpcAddr){
   Provider = new Web3.providers.HttpProvider(httpRpcAddr);
-  web3  =  new Web3(new Web3.providers.HttpProvider(httpRpcAddr));
+  web3 = new Web3(new Web3.providers.HttpProvider(httpRpcAddr));
   assert(web3);
 }
 
@@ -119,23 +123,25 @@ function test_deployed(artifact_path){
 
 async function get_instance(artifact_path){
   let artifact = require(artifact_path);
-  let network_id = Object.keys(artifact["networks"])[0];
-  let conf = {
-    contract_name:artifact["contractName"],
-    abi:  artifact["abi"],                     // Array; required.  Application binary interface.
-    unlinked_binary: artifact["bytecode"],       // String; optional. Binary without resolve library links.
-    address: artifact["networks"][network_id]["address"],               // String; optional. Deployed address of contract.
-    network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
-    default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
-  };
-  // console.log(conf);
-  let MyContract = truffle_Contract(conf);
+  //let network_id = Object.keys(artifact["networks"])[0];
+  // let conf = {
+  //   contract_name:artifact["contractName"],
+  //   abi:  artifact["abi"],                     // Array; required.  Application binary interface.
+  //   unlinked_binary: artifact["bytecode"],       // String; optional. Binary without resolve library links.
+  //   address: artifact["networks"][network_id]["address"],               // String; optional. Deployed address of contract.
+  //   network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
+  //   default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
+  // };
+  //console.log(conf);
+  let MyContract = truffle_contract(artifact);
+  //console.log(MyContract);
   MyContract.setProvider(Provider);
   let instance = await MyContract.deployed();
+  //console.log("instance: " + instance);
   return instance;
 }
 
-/// load some static information for the dynamic analysis.e.g., fuzzing
+/// load some static information for the dynamic analysis. e.g., fuzzing
 async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
@@ -481,7 +487,7 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   }
   let balance = BigInt(0);
   // console.log(bookkeepingVar);
-  let encode = abiCoder.encodeFunctionCall(bookkeepingVar, [acc_address]);
+  let encode = web3.eth.abi.encodeFunctionCall(bookkeepingVar, [acc_address]);
   const ethCall = Promise.promisify(web3.eth.call);
   /// this is previous version
   // await web3.eth.call({
@@ -495,10 +501,9 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   //     }
   //   });
   let bal = await ethCall({
-                            to: g_targetContract.address,
-                            data: encode}
-                          );
-  balance += abiCoder.utils.toBN(bal);
+    to: g_targetContract.address,
+    data: encode});
+  balance += web3.utils.toBN(bal);
   return BigInt(balance);
 }
 
@@ -643,7 +648,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
     };
 
     if (call.param) {
-      transactionConfig['data'] =  abiCoder.encodeFunctionCall(call.abi, call.param);
+      transactionConfig['data'] =  web3.eth.abi.encodeFunctionCall(call.abi, call.param);
     }
     tx_hash = await sendTransaction(transactionConfig);
     // await web3.eth.sendTransaction(

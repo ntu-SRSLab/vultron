@@ -1,15 +1,15 @@
 {
-	"name": "soliditytest",
+	"name": "Vultron",
 	"version": "0.0.1",
 	"author": "刘晔",
-	"description": "第一个node.js程序",
+	"description": "Vulnerability Detection for Smart Contracts",
 	"keywords": [
 		"node.js",
 		"javascript"
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://path/to/url"
+		"url": "https://github.com/ntu-SRSLab/vultron.git"
 	},
 	"license": "MIT",
 	"contributors": [
@@ -29,8 +29,8 @@
 		"get-line-from-pos": "^1.0.0",
 		"locks": "^0.2.2",
 		"power-assert": "^1.6.1",
-		"web3": "^0.20.1",
-		"web3-eth-abi": "^1.0.0-beta.54"
+		"web3": "^1.2.2",
+		"web3-eth-abi": "^1.2.2"
 	},
 	"devDependencies": {
 		"babel-core": "^6.22.1",
@@ -39,7 +39,7 @@
 		"babel-preset-power-assert": "^1.0.0",
 		"babel-preset-stage-2": "^6.18.0",
 		"babel-preset-stage-3": "^6.17.0",
-		"truffle": "^2.1.1",
-		"truffle-contract": "^2.0.0"
+		"truffle": "^5.0.42",
+		"truffle-contract": "^4.0.31"
 	}
 }
