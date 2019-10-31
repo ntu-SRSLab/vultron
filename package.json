@@ -1,7 +1,7 @@
 {
 	"name": "Vultron",
 	"version": "0.0.1",
-	"author": "刘晔",
+	"author": "NTU-SRS Lab",
 	"description": "Vulnerability Detection for Smart Contracts",
 	"keywords": [
 		"node.js",
@@ -14,8 +14,12 @@
 	"license": "MIT",
 	"contributors": [
 		{
-			"name": "刘晔",
+			"name": "Ye Liu",
 			"email": "liuye5@live.com"
+		},
+		{
+			"name": "Yi Li",
+			"email": "yi_li@ntu.edu.sg"
 		}
 	],
 	"scripts": {
@@ -30,7 +34,9 @@
 		"locks": "^0.2.2",
 		"power-assert": "^1.6.1",
 		"web3": "^1.2.2",
-		"web3-eth-abi": "^1.2.2"
+		"web3-eth-abi": "^1.2.2",
+		"truffle": "^5.0.42",
+		"truffle-contract": "^4.0.31"
 	},
 	"devDependencies": {
 		"babel-core": "^6.22.1",
@@ -38,8 +44,6 @@
 		"babel-preset-es2017": "^6.22.0",
 		"babel-preset-power-assert": "^1.0.0",
 		"babel-preset-stage-2": "^6.18.0",
-		"babel-preset-stage-3": "^6.17.0",
-		"truffle": "^5.0.42",
-		"truffle-contract": "^4.0.31"
+		"babel-preset-stage-3": "^6.17.0"
 	}
 }
