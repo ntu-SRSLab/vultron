@@ -105,7 +105,12 @@ function unlockAccount(){
   }).then(() => {
     /// unlock initial user, which is also miner account
     web3.eth.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60)
-      .then(console.log('Account unlocked!'));
+      .then(console.log('Account unlocked!'))
+      .catch(() => {
+        console.log('Account unlock failed!');
+      });
+  }).catch(() => {
+    console.log('Cannot read account info!');
   });
 }
 

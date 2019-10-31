@@ -59,9 +59,9 @@ function init_g_path_map(){
 //  console.log(g_path_map);
 }
 
-function bootstrap(){
+function bootstrap() {
     console.log(g_value_cur);
-    if(g_value_cur.length > g_value_cur_cursor){
+    if(g_value_cur.length > g_value_cur_cursor) {
       g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
       g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
       g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
@@ -69,7 +69,7 @@ function bootstrap(){
       g_value_cur_cursor +=1;
     }else{
       let cur = g_keys_iterator.next();
-      if(cur){
+      if (cur){
         g_key_cur = cur.value;
         g_value_cur = g_path_map.get(g_key_cur);
         g_value_cur_cursor = 0;
@@ -79,8 +79,7 @@ function bootstrap(){
         g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
         g_value_cur_cursor +=1;
       }
-  }
-  
+  }  
 }
 
 // parse application/x-www-form-urlencoded
@@ -197,51 +196,51 @@ app.get('/bootstrap', (req, RES) => {
   // console.log(g_bootstrap_build_attack);
   
   request(`http://localhost:${port}/load`, (error, res, body) => {
-            if (error) {
-              console.error(error);
-              return;
-            }
-            // RES.send(g_bootstrap_build_target);
-            request(`http://localhost:${port}/seed`, (error, res, body) => {
-                  if (error) {
-                    console.error(error);
-                    return;
-                  }
-                  console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_attack);
-                  RES.send(g_bootstrap_build_target+"\n"+g_bootstrap_build_attack);
-                });
-            // request(`http://localhost:${port}/find`, (error, res, body) => {
-            //     if (error) {
-            //       console.error(error);
-            //       return;
-            //     }
-              
-            // });
-   });
-
+    if (error) {
+      console.error(error);
+      return;
+    }
+    // RES.send(g_bootstrap_build_target);
+    request(`http://localhost:${port}/seed`, (error, res, body) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_attack);
+      RES.send(g_bootstrap_build_target+"\n"+g_bootstrap_build_attack);
+    });
+    // request(`http://localhost:${port}/find`, (error, res, body) => {
+    //     if (error) {
+    //       console.error(error);
+    //       return;
+    //     }
+    // });
+  });
 });
 
 function parse_cmd() {
-  let args = process.argv.slice(2,process.argv.length);
+  let args = process.argv.slice(2, process.argv.length);
   let httpRpcAddr =  "http://127.0.0.1:8546";
-  if (args.length==2){
-      let i=0;
-      while(i<2){
-         if (args[i].indexOf("--gethrpcport")==0){
-          httpRpcAddr = args[i+1]; 
-          console.log(httpRpcAddr);
-        }
-        i += 2;
+
+  if (args.length == 2) {
+    let i = 0;
+    while(i < 2) {
+      if (args[i].indexOf("--gethrpcport") == 0) {
+        httpRpcAddr = args[i+1]; 
+        console.log(httpRpcAddr);
       }
+      i += 2;
+    }
   }
   truffle_connect.setProvider(httpRpcAddr);
-  truffle_connect.unlockAccount(); 
+  truffle_connect.unlockAccount();
 }
 
 init_g_path_map();
 parse_cmd();
 truffle_connect.setStart_time(Date.now());
 truffle_connect.single_timeout(port);
+
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);
 });
