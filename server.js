@@ -107,7 +107,7 @@ app.get('/', (req, res) => {
   res.render('index.ejs');
 });
 
-app.get('/load', (req, res) => {
+app.get('/load-default', (req, res) => {
   console.log("**** GET /load ****");
  
   truffle_connect.load(g_bootstrap_build_target,
@@ -182,7 +182,7 @@ app.get('/reset', (req, res) => {
     });
 });
 
-app.post('/load-contract', upload.array('contract', 4), (req, res) => {
+app.post('/load', upload.array('contract', 4), (req, res) => {
   console.log("**** POST /load-contract ****");
   // console.log(req.files);
   

@@ -556,7 +556,6 @@ const writeExploit = (callSequen) => {
 async function exec_callFun(call, callSequen_cur){
   /// used to identify the first statement is attack or target contract
   // const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
-  console.log('exec_callFun');
   
   g_callFun_cur = call;
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
