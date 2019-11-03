@@ -18,6 +18,14 @@ npm install;                # Install dependencies
 node server.js              # Note: if encountering password error, go to connection/fuzzer.js and replace '123456' with your account password in the function 'unlockAccount')
 ```
 
+#### Usage Steps
+
+1. Deploy target and attack contracts to the test network.
+1. Load contract source (.sol) and compiled (.json) code via the user interface.
+1. Run seed tests (without feedback) and observe the results
+
+Vultron (ContraMaster) can also be run under the batch mode, with appropriate commandline options.
+
 ### Benchmark
 
 The benchmark used in the **ContraMaster** experiments is available under ```./benchmark```.
