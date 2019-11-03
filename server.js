@@ -7,13 +7,24 @@ const app = express();
 const port = 3000 || process.env.PORT;
 const Web3 = require('web3');
 const truffle_connect = require('./connection/fuzzer.js');
+
 const bodyParser = require('body-parser');
+const multer  = require('multer');
+var storage = multer.diskStorage({
+  // destination: function (req, file, cb) {
+  //   cb(null, './uploads')
+  // },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '_' + file.originalname)
+  }
+})
+var upload = multer({ storage: storage });
 
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
 
-let g_path_map = new Map()
+let g_path_map = new Map();
 let g_keys_iterator;
 let g_key_cur;
 let g_value_cur;
@@ -67,9 +78,9 @@ function bootstrap() {
       g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
       g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
       g_value_cur_cursor +=1;
-    }else{
+    } else {
       let cur = g_keys_iterator.next();
-      if (cur){
+      if (cur) {
         g_key_cur = cur.value;
         g_value_cur = g_path_map.get(g_key_cur);
         g_value_cur_cursor = 0;
@@ -146,7 +157,7 @@ app.get('/seed', (req, res) => {
   truffle_connect.seed()
     .then((answer) => {
       if (typeof answer.callFuns === 'undefined')
-        throw "Error running seed";
+        throw "Error running seed.";
       
       res.render('seeds.ejs', {
         callFuns : answer.callFuns,
@@ -167,6 +178,37 @@ app.get('/reset', (req, res) => {
     }).catch((e) => {
       res.render('error.ejs', {
 	      message: e
+      });
+    });
+});
+
+app.post('/load-contract', upload.array('contract', 4), (req, res) => {
+  console.log("**** POST /load-contract ****");
+  // console.log(req.files);
+  
+  var source_target = req.files[0].path;
+  var source_attack = req.files[1].path;
+  var build_target = req.files[2].path;
+  var build_attack = req.files[3].path;
+  
+  truffle_connect.load(build_target,
+                       build_attack,
+                       source_target,
+                       source_attack)
+    .then((answer) => {
+      if (typeof answer.accounts === 'undefined')
+        throw "Error loading contracts";
+      // console.log(JSON.stringify(answer));
+      res.render('contracts.ejs', {
+        accounts: answer.accounts,
+        target_adds: answer.target_adds,
+        attack_adds: answer.attack_adds,
+        target_abi: JSON.stringify(answer.target_abi),
+        attack_abi: JSON.stringify(answer.attack_abi)
+      });
+    }).catch(e => {
+      res.render('error.ejs', {
+        message: e
       });
     });
 });

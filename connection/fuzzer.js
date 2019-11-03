@@ -1,5 +1,6 @@
 #! /local/bin/babel-node
 const request = require("request");
+const path = require('path');
 
 const Web3 = require('web3');
 //const AbiCoder = require('web3-eth-abi');
@@ -93,7 +94,7 @@ let g_send_call_set;
 let g_send_call_found;
 
 let  g_fuzz_start_time = 0;
-const FUZZ_TIME_SCALE = 10*60*1000;
+const FUZZ_TIME_SCALE = 10 * 60 * 1000;
 
 function unlockAccount(){
   /// it is initialized by the blockchain, 
@@ -101,11 +102,14 @@ function unlockAccount(){
   var g_from_account;
   web3.eth.getAccounts().then(e => {
     g_from_account = e[0];
+    g_account_list.push(e[0]);
     console.log("Account[0]: " + g_from_account);
   }).then(() => {
     /// unlock initial user, which is also miner account
     web3.eth.personal.unlockAccount(g_from_account, "123456", 200 * 60 * 60)
-      .then(console.log('Account unlocked!'))
+      .then(() => {
+        console.log('Account unlocked!');
+      })
       .catch(() => {
         console.log('Account unlock failed!');
       });
@@ -127,7 +131,8 @@ function test_deployed(artifact_path){
 }
 
 async function get_instance(artifact_path){
-  let artifact = require(artifact_path);
+  // console.log(artifact_path);
+  let artifact = require(path.relative("connection", artifact_path));
   //let network_id = Object.keys(artifact["networks"])[0];
   // let conf = {
   //   contract_name:artifact["contractName"],
@@ -137,7 +142,7 @@ async function get_instance(artifact_path){
   //   network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
   //   default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
   // };
-  //console.log(conf);
+  //console.log(artifact);
   let MyContract = truffle_contract(artifact);
   //console.log(MyContract);
   MyContract.setProvider(Provider);
@@ -147,11 +152,12 @@ async function get_instance(artifact_path){
 }
 
 /// load some static information for the dynamic analysis. e.g., fuzzing
-async function load(targetPath, attackPath, targetSolPath, attackSolPath) {
+async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
-  g_attack_artifact = require(attackPath);
-  g_target_artifact = require(targetPath);
+  g_attack_artifact = require(path.relative("connection", attackPath));
+  g_target_artifact = require(path.relative("connection", targetPath));
+  
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
   /// find bookkeeping variable
@@ -257,8 +263,6 @@ async function fuzz(txHash, ins_trace) {
   if (g_targetContract === undefined) {
     throw "Target contract is not loaded!";
   }
-
-
 
   mutex.lock(async function() {
     /// different transaction hash code, it is a string
@@ -551,24 +555,34 @@ const writeExploit = (callSequen) => {
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
   /// used to identify the first statement is attack or target contract
-  const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
-
+  // const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
+  console.log('exec_callFun');
+  
   g_callFun_cur = call;
   let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
   let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_bf = await getBookSum();
 
-  console.log(call.abi.name,call.param);
-  
+  //console.log(attack_bal_acc_bf);
+  console.log(call.abi.name, call.param);
+  //console.log(call);
 
-
-  if(call.to == g_targetContract.address){
-      await g_targetContract[call.abi.name](...call.param,{from:call.from,gas:call.gas});
-  }else{
-      await g_attackContract[call.abi.name](...call.param,{from:call.from,gas:call.gas});
+  try{
+    if(call.to == g_targetContract.address){
+      await g_targetContract[call.abi.name](...call.param,
+                                            {from: call.from,
+                                             gas: call.gas});
+    }else{
+      await g_attackContract[call.abi.name](...call.param,
+                                            {from: call.from,
+                                             gas: call.gas});
+    }
+  }catch(e){
+    console.log(e);
   }
-  // console.log(call.param);
+
+  
   /// use to get the input of sent transaction
   /// compare to the received transaction in fuzz module
   // console.log("send: " + abiCoder.encodeFunctionCall(call.abi, call.param));
@@ -605,11 +619,11 @@ async function exec_callFun(call, callSequen_cur){
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_af = await getBookSum();
 
-
   console.log("target balance ether/booking before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
   console.log("target after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
   console.log("attack ether balance after-before:" + attack_bal_af.toString() + "###" + attack_bal_bf.toString());
   console.log("attack booking balance before - after: " + attack_bal_acc_bf + "###" + attack_bal_acc_af);
+
   if(g_bookKeepingAbi != undefined){
     try{ 
       // if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
@@ -1903,19 +1917,20 @@ module.exports.setStart_time = function(start_time){
 module.exports.test_deployed = test_deployed;
 
 module.exports.single_timeout = function(port){
-setInterval(function () { 
-  // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
-
-  if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
-    console.log("Done.")
-    request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
+  setInterval(function () { 
+    // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
+    
+    if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
+      console.log("Done.")
+      request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
+        if (error) {
+          console.error(error);
+          return;
+        }
       });
-    return;
-  }
-},1000);
+      return;
+    }
+  },1000);
+
 }
 

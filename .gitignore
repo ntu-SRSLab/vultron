@@ -71,3 +71,4 @@ typings/
 build/*
 migrations/*
 contracts/*
+uploads/*
