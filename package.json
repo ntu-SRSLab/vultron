@@ -39,6 +39,9 @@
 		"truffle": "^5.0.42",
 		"truffle-contract": "^4.0.31"
 	},
+	"optionalDependencies": {
+		"nodejs-sdk": "FISCO-BCOS/nodejs-sdk#master"
+	},
 	"devDependencies": {
 		"babel-core": "^6.22.1",
 		"babel-preset-es2015": "^6.22.0",

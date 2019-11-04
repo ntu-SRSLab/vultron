@@ -6,7 +6,7 @@ const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
 const Web3 = require('web3');
-const truffle_connect = require('./connection/fuzzer.js');
+const fuzzer = require('./connection/ethereum/fuzzer.js');
 
 const bodyParser = require('body-parser');
 const multer  = require('multer');
@@ -30,8 +30,8 @@ let g_key_cur;
 let g_value_cur;
 let g_value_cur_cursor;
 
-let g_bootstrap_build_target = '../build/contracts/SimpleDAO.json';
-let g_bootstrap_build_attack = '../build/contracts/AttackDAO.json';
+let g_bootstrap_build_target = './build/contracts/SimpleDAO.json';
+let g_bootstrap_build_attack = './build/contracts/AttackDAO.json';
 let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
 let g_bootstrap_source_target = './contracts/AttackDAO.sol';
 
@@ -41,7 +41,7 @@ function init_g_path_map(){
   let tokens = new Array();
   for(let item of contracts){
     if (item.indexOf("Attack_")==-1){
-        if (truffle_connect.test_deployed("../build/contracts/"+item))
+        if (fuzzer.test_deployed("./build/contracts/"+item))
             tokens.push(item);
     }
   }
@@ -73,8 +73,8 @@ function init_g_path_map(){
 function bootstrap() {
     console.log(g_value_cur);
     if(g_value_cur.length > g_value_cur_cursor) {
-      g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
-      g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
+      g_bootstrap_build_target = "./build/contracts/"+g_key_cur;
+      g_bootstrap_build_attack = "./build/contracts/"+g_value_cur[g_value_cur_cursor];
       g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
       g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
       g_value_cur_cursor +=1;
@@ -84,8 +84,8 @@ function bootstrap() {
         g_key_cur = cur.value;
         g_value_cur = g_path_map.get(g_key_cur);
         g_value_cur_cursor = 0;
-        g_bootstrap_build_target = "../build/contracts/"+g_key_cur;
-        g_bootstrap_build_attack = "../build/contracts/"+g_value_cur[g_value_cur_cursor];
+        g_bootstrap_build_target = "./build/contracts/"+g_key_cur;
+        g_bootstrap_build_attack = "./build/contracts/"+g_value_cur[g_value_cur_cursor];
         g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
         g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
         g_value_cur_cursor +=1;
@@ -110,10 +110,10 @@ app.get('/', (req, res) => {
 app.get('/load-default', (req, res) => {
   console.log("**** GET /load ****");
  
-  truffle_connect.load(g_bootstrap_build_target,
-                       g_bootstrap_build_attack,
-                       g_bootstrap_source_target,
-                       g_bootstrap_source_attack)
+  fuzzer.load(g_bootstrap_build_target,
+              g_bootstrap_build_attack,
+              g_bootstrap_source_target,
+              g_bootstrap_source_attack)
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
@@ -134,8 +134,8 @@ app.get('/load-default', (req, res) => {
 
 app.get('/find', (req, res) => {
   console.log("**** GET /find ****");
-  truffle_connect.find('../build/contracts/SimpleDAO.json',
-    './contracts/SimpleDAO.sol')
+  fuzzer.find('./build/contracts/SimpleDAO.json',
+              './contracts/SimpleDAO.sol')
     .then((answer) => {
       if (typeof answer.callFun === 'undefined')
         throw "Error finding the bookkeeping variables";
@@ -154,7 +154,7 @@ app.get('/find', (req, res) => {
 
 app.get('/seed', (req, res) => {
   console.log("**** GET /seed ****");
-  truffle_connect.seed()
+  fuzzer.seed()
     .then((answer) => {
       if (typeof answer.callFuns === 'undefined')
         throw "Error running seed.";
@@ -172,7 +172,7 @@ app.get('/seed', (req, res) => {
 
 app.get('/reset', (req, res) => {
   console.log("**** GET /reset ****");
-  truffle_connect.reset()
+  fuzzer.reset()
     .then((answer) => {
       res.send(answer);
     }).catch((e) => {
@@ -191,7 +191,7 @@ app.post('/load', upload.array('contract', 4), (req, res) => {
   var build_target = req.files[2].path;
   var build_attack = req.files[3].path;
   
-  truffle_connect.load(build_target,
+  fuzzer.load(build_target,
                        build_attack,
                        source_target,
                        source_attack)
@@ -219,8 +219,8 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
   var txHash = req.body.hash;
   var trace = req.body.trace;
   /// cannot filter the hash here,
-  /// we must call truffle_connect.fuzz, otherwise will be blocked
-  truffle_connect.fuzz(txHash, trace)
+  /// we must call fuzzer.fuzz, otherwise will be blocked
+  fuzzer.fuzz(txHash, trace)
     .then((answer) => {
       res.send(answer);
     }).catch((e) => {
@@ -232,7 +232,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
 app.get('/bootstrap', (req, RES) => {
   // mutex.lock(async function() {
   console.log("**** GET /bootstrap ****");
-  truffle_connect.setStart_time(Date.now());
+  fuzzer.setStart_time(Date.now());
   bootstrap();
   // console.log(g_bootstrap_build_target);
   // console.log(g_bootstrap_build_attack);
@@ -274,14 +274,14 @@ function parse_cmd() {
       i += 2;
     }
   }
-  truffle_connect.setProvider(httpRpcAddr);
-  truffle_connect.unlockAccount();
+  fuzzer.setProvider(httpRpcAddr);
+  fuzzer.unlockAccount();
 }
 
 init_g_path_map();
 parse_cmd();
-truffle_connect.setStart_time(Date.now());
-truffle_connect.single_timeout(port);
+fuzzer.setStart_time(Date.now());
+fuzzer.single_timeout(port);
 
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);

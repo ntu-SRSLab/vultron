@@ -8,13 +8,14 @@ const Web3 = require('web3');
 const Promise = require("bluebird");
 const truffle_contract = require('truffle-contract');
 const assert = require('assert');
-const tracer = require('./EVM2Code');
+const tracer = require('../EVM2Code');
 const fs = require('fs');
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
 const async = require('async');
 
+const g_cwd = "connection/ethereum";
 var g_data_feedback = false;
 
 /// the file that used to keep exploit script
@@ -22,7 +23,7 @@ const g_exploit_path = "./exploit.txt";
 
 /// json file
 let g_target_artifact;
-let g_attack_artifact
+let g_attack_artifact;
 // truffle-contract abstractions
 let g_targetContract;
 let g_attackContract;
@@ -125,14 +126,14 @@ function setProvider(httpRpcAddr){
 }
 
 function test_deployed(artifact_path){
-  let artifact = require(artifact_path);
+  let artifact = require(path.relative(g_cwd, artifact_path));
   let network_id = Object.keys(artifact["networks"])[0];
   return network_id!=undefined;
 }
 
 async function get_instance(artifact_path){
   // console.log(artifact_path);
-  let artifact = require(path.relative("connection", artifact_path));
+  let artifact = require(path.relative(g_cwd, artifact_path));
   //let network_id = Object.keys(artifact["networks"])[0];
   // let conf = {
   //   contract_name:artifact["contractName"],
@@ -155,8 +156,8 @@ async function get_instance(artifact_path){
 async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
-  g_attack_artifact = require(path.relative("connection", attackPath));
-  g_target_artifact = require(path.relative("connection", targetPath));
+  g_attack_artifact = require(path.relative(g_cwd, attackPath));
+  g_target_artifact = require(path.relative(g_cwd, targetPath));
   
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
@@ -168,23 +169,23 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
 
   /// the set of statements, which may be used for computing experimental results
   g_attackStmt_set = await tracer.buildStmtSet(g_attack_artifact.sourcePath,
-                                                g_attack_artifact.deployedSourceMap,
-                                                g_attack_artifact.source);
+                                               g_attack_artifact.deployedSourceMap,
+                                               g_attack_artifact.source);
   g_targetStmt_set = await tracer.buildStmtSet(g_target_artifact.sourcePath,
-                                                g_target_artifact.deployedSourceMap,
-                                                g_target_artifact.source);     
+                                               g_target_artifact.deployedSourceMap,
+                                               g_target_artifact.source);     
   
   /// the map that the instruction corresponds to the statement 
   /// the form: [ '239JUMPI', 'Attack_SimpleDAO0.sol:1' ]
   /// where 239 is the offset, JUMPI is the instruction
   g_attackIns_map = await tracer.buildInsMap(g_attack_artifact.sourcePath,
-                                              g_attack_artifact.deployedBytecode,
-                                              g_attack_artifact.deployedSourceMap,
-                                              g_attack_artifact.source);
+                                             g_attack_artifact.deployedBytecode,
+                                             g_attack_artifact.deployedSourceMap,
+                                             g_attack_artifact.source);
   g_targetIns_map = await tracer.buildInsMap(g_target_artifact.sourcePath,
-                                              g_target_artifact.deployedBytecode,
-                                              g_target_artifact.deployedSourceMap,
-                                              g_target_artifact.source);
+                                             g_target_artifact.deployedBytecode,
+                                             g_target_artifact.deployedSourceMap,
+                                             g_target_artifact.source);
 
   /// the static dependencies
   /// The form:
