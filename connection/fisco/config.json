@@ -1,0 +1,19 @@
+{
+    "privateKey": {
+        "type": "pem",
+        "value": "./0x144d5ca47de35194b019b6f11a56028b964585c9.pem"
+    },
+    "nodes": [
+        {
+            "ip": "127.0.0.1",
+            "port": "20200"
+        }
+    ],
+    "authentication": {
+        "key": "/Users/liyi/Documents/pkg/fisco/nodes/127.0.0.1/sdk/sdk.key",
+        "cert": "/Users/liyi/Documents/pkg/fisco/nodes/127.0.0.1/sdk/sdk.crt",
+        "ca": "/Users/liyi/Documents/pkg/fisco/nodes/cert/ca.crt"
+    },
+    "groupID": 1,
+    "timeout": 10000
+}

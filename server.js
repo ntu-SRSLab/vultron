@@ -7,6 +7,7 @@ const app = express();
 const port = 3000 || process.env.PORT;
 const Web3 = require('web3');
 const fuzzer = require('./connection/ethereum/fuzzer.js');
+const fisco_fuzzer = require('./connection/fisco/fuzzer.js');
 
 const bodyParser = require('body-parser');
 const multer  = require('multer');
@@ -105,6 +106,12 @@ app.set('view engine', 'ejs');
 app.get('/', (req, res) => {
   console.log("**** GET / ****");
   res.render('index.ejs');
+});
+
+app.get('/fisco', (req, res) => {
+  if (fisco_fuzzer.test_deployed()) {
+    console.log('success');
+  }
 });
 
 app.get('/load-default', (req, res) => {

@@ -37,10 +37,8 @@
 		"web3": "^1.2.2",
 		"web3-eth-abi": "^1.2.2",
 		"truffle": "^5.0.42",
-		"truffle-contract": "^4.0.31"
-	},
-	"optionalDependencies": {
-		"nodejs-sdk": "FISCO-BCOS/nodejs-sdk#master"
+		"truffle-contract": "^4.0.31",
+		"web3j-api": "file:connection/fisco/web3j-api"
 	},
 	"devDependencies": {
 		"babel-core": "^6.22.1",

@@ -1,4 +1,9 @@
-const Fisco = require('nodejs-sdk');
+const path = require('path');
+const web3j = require('web3j-api/web3j');
+const Web3jService = new web3j.Web3jService();
+const Configuration = require('web3j-api/common/configuration').Configuration;
+
+Configuration.setConfig(path.join(__dirname, './config.json'));
 
 const truffle_contract = require('truffle-contract');
 
@@ -129,5 +134,13 @@ async function seed() {
   };
 }
 
-module.exports.load = load;
-module.exports.seed = seed;
+//module.exports.load = load;
+//module.exports.seed = seed;
+
+module.exports.test_deployed = function test_deployed() {
+  Web3jService.getBlockNumber().then((res) => {
+    console.log(res);
+  }).catch((e) => {
+    console.log(e);
+  });
+}
