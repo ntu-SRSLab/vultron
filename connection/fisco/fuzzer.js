@@ -1,5 +1,5 @@
 const path = require('path');
-const Web3jService = require('web3j-api/web3j').Web3jService();
+const Web3jService = require('web3j-api/web3j').Web3jService;
 const web3j = new Web3jService();
 const Configuration = require('web3j-api/common/configuration').Configuration;
 
