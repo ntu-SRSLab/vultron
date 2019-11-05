@@ -36,29 +36,28 @@ let g_bootstrap_build_attack = './build/contracts/AttackDAO.json';
 let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
 let g_bootstrap_source_target = './contracts/AttackDAO.sol';
 
-
 function init_g_path_map(){
   let contracts =  fs.readdirSync("./build/contracts");
   let tokens = new Array();
   for(let item of contracts){
-    if (item.indexOf("Attack_")==-1){
-        if (fuzzer.test_deployed("./build/contracts/"+item))
-            tokens.push(item);
+    if (item.indexOf("Attack_") == -1){
+      if (fuzzer.test_deployed("./build/contracts/" + item))
+        tokens.push(item);
     }
   }
   // console.log(tokens);
   for (let token of tokens){
-      let value = new Array();
-      for (let item of contracts){
-        if (item.indexOf("Attack_")!=-1){
-            if (item.indexOf("Attack_"+token.split(".json")[0])!=-1){
-                 value.push(item);
-                //  console.log(token,item);
-            }
-         }   
-      }
-      if (value.length>0)
-        g_path_map.set(token,value);
+    let value = new Array();
+    for (let item of contracts){
+      if (item.indexOf("Attack_")!=-1){
+        if (item.indexOf("Attack_"+token.split(".json")[0])!=-1){
+          value.push(item);
+          //  console.log(token,item);
+        }
+      }   
+    }
+    if (value.length>0)
+      g_path_map.set(token,value);
   }
   g_keys_iterator = g_path_map.keys();
   let cur = g_keys_iterator.next();
@@ -68,29 +67,29 @@ function init_g_path_map(){
     g_value_cur_cursor = 0;
     // console.log(g_key_cur);
   }
-//  console.log(g_path_map);
-}
+  //  console.log(g_path_map);
+getBlockNumber}
 
 function bootstrap() {
-    console.log(g_value_cur);
-    if(g_value_cur.length > g_value_cur_cursor) {
-      g_bootstrap_build_target = "./build/contracts/"+g_key_cur;
-      g_bootstrap_build_attack = "./build/contracts/"+g_value_cur[g_value_cur_cursor];
-      g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
-      g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
-      g_value_cur_cursor +=1;
-    } else {
-      let cur = g_keys_iterator.next();
-      if (cur) {
-        g_key_cur = cur.value;
-        g_value_cur = g_path_map.get(g_key_cur);
-        g_value_cur_cursor = 0;
-        g_bootstrap_build_target = "./build/contracts/"+g_key_cur;
-        g_bootstrap_build_attack = "./build/contracts/"+g_value_cur[g_value_cur_cursor];
-        g_bootstrap_source_target = "./contracts/"+g_key_cur.split(".json")[0]+".sol";
-        g_bootstrap_source_attack = "./contracts/"+g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
-        g_value_cur_cursor +=1;
-      }
+  console.log(g_value_cur);
+  if(g_value_cur.length > g_value_cur_cursor) {
+    g_bootstrap_build_target = "./build/contracts/" + g_key_cur;
+    g_bootstrap_build_attack = "./build/contracts/" + g_value_cur[g_value_cur_cursor];
+    g_bootstrap_source_target = "./contracts/" + g_key_cur.split(".json")[0]+".sol";
+    g_bootstrap_source_attack = "./contracts/" + g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
+    g_value_cur_cursor += 1;
+  } else {
+    let cur = g_keys_iterator.next();
+    if (cur) {
+      g_key_cur = cur.value;
+      g_value_cur = g_path_map.get(g_key_cur);
+      g_value_cur_cursor = 0;
+      g_bootstrap_build_target = "./build/contracts/" + g_key_cur;
+      g_bootstrap_build_attack = "./build/contracts/" + g_value_cur[g_value_cur_cursor];
+      g_bootstrap_source_target = "./contracts/" + g_key_cur.split(".json")[0]+".sol";
+      g_bootstrap_source_attack = "./contracts/" + g_value_cur[g_value_cur_cursor].split(".json")[0]+".sol";
+      g_value_cur_cursor += 1;
+    }
   }  
 }
 
@@ -115,7 +114,7 @@ app.get('/fisco', (req, res) => {
 });
 
 app.get('/load-default', (req, res) => {
-  console.log("**** GET /load ****");
+  console.log("**** GET /load-default ****");
  
   fuzzer.load(g_bootstrap_build_target,
               g_bootstrap_build_attack,
@@ -190,7 +189,7 @@ app.get('/reset', (req, res) => {
 });
 
 app.post('/load', upload.array('contract', 4), (req, res) => {
-  console.log("**** POST /load-contract ****");
+  console.log("**** POST /load ****");
   // console.log(req.files);
   
   var source_target = req.files[0].path;
@@ -199,9 +198,9 @@ app.post('/load', upload.array('contract', 4), (req, res) => {
   var build_attack = req.files[3].path;
   
   fuzzer.load(build_target,
-                       build_attack,
-                       source_target,
-                       source_attack)
+              build_attack,
+              source_target,
+              source_attack)
     .then((answer) => {
       if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
@@ -244,7 +243,7 @@ app.get('/bootstrap', (req, RES) => {
   // console.log(g_bootstrap_build_target);
   // console.log(g_bootstrap_build_attack);
   
-  request(`http://localhost:${port}/load`, (error, res, body) => {
+  request(`http://localhost:${port}/load-default`, (error, res, body) => {
     if (error) {
       console.error(error);
       return;
@@ -255,8 +254,10 @@ app.get('/bootstrap', (req, RES) => {
         console.error(error);
         return;
       }
-      console.log("Fuzzing...:",g_bootstrap_build_target,g_bootstrap_build_attack);
-      RES.send(g_bootstrap_build_target+"\n"+g_bootstrap_build_attack);
+      console.log("Fuzzing...:",
+                  g_bootstrap_build_target,
+                  g_bootstrap_build_attack);
+      RES.send(g_bootstrap_build_target + "\n" + g_bootstrap_build_attack);
     });
     // request(`http://localhost:${port}/find`, (error, res, body) => {
     //     if (error) {
@@ -267,9 +268,11 @@ app.get('/bootstrap', (req, RES) => {
   });
 });
 
+// default RPC address
+let httpRpcAddr = "http://127.0.0.1:8546";
+
 function parse_cmd() {
   let args = process.argv.slice(2, process.argv.length);
-  let httpRpcAddr =  "http://127.0.0.1:8546";
 
   if (args.length == 2) {
     let i = 0;
@@ -280,15 +283,16 @@ function parse_cmd() {
       }
       i += 2;
     }
+
+    init_g_path_map();
+    fuzzer.setStart_time(Date.now());
+    fuzzer.single_timeout(port);
   }
-  fuzzer.setProvider(httpRpcAddr);
-  fuzzer.unlockAccount();
 }
 
-init_g_path_map();
 parse_cmd();
-fuzzer.setStart_time(Date.now());
-fuzzer.single_timeout(port);
+fuzzer.setProvider(httpRpcAddr);
+fuzzer.unlockAccount();
 
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);

@@ -1,6 +1,6 @@
 const path = require('path');
-const web3j = require('web3j-api/web3j');
-const Web3jService = new web3j.Web3jService();
+const Web3jService = require('web3j-api/web3j').Web3jService();
+const web3j = new Web3jService();
 const Configuration = require('web3j-api/common/configuration').Configuration;
 
 Configuration.setConfig(path.join(__dirname, './config.json'));
@@ -13,7 +13,6 @@ const locks = require('locks');
 const mutex = locks.createMutex();
 const async = require('async');
 
-const g_cwd = "connection/fisco";
 var g_data_feedback = false;
 
 /// json file
@@ -137,10 +136,11 @@ async function seed() {
 //module.exports.load = load;
 //module.exports.seed = seed;
 
-module.exports.test_deployed = function test_deployed() {
-  Web3jService.getBlockNumber().then((res) => {
+module.exports.test_deployed = function() {
+  web3j.getBlockNumber().then((res) => {
     console.log(res);
   }).catch((e) => {
     console.log(e);
   });
+  return true;
 }

@@ -15,7 +15,6 @@ const locks = require('locks');
 const mutex = locks.createMutex();
 const async = require('async');
 
-const g_cwd = "connection/ethereum";
 var g_data_feedback = false;
 
 /// the file that used to keep exploit script
@@ -125,15 +124,9 @@ function setProvider(httpRpcAddr){
   assert(web3);
 }
 
-function test_deployed(artifact_path){
-  let artifact = require(path.relative(g_cwd, artifact_path));
-  let network_id = Object.keys(artifact["networks"])[0];
-  return network_id!=undefined;
-}
-
 async function get_instance(artifact_path){
   // console.log(artifact_path);
-  let artifact = require(path.relative(g_cwd, artifact_path));
+  let artifact = require(path.relative(__dirname, artifact_path));
   //let network_id = Object.keys(artifact["networks"])[0];
   // let conf = {
   //   contract_name:artifact["contractName"],
@@ -156,8 +149,8 @@ async function get_instance(artifact_path){
 async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
-  g_attack_artifact = require(path.relative(g_cwd, attackPath));
-  g_target_artifact = require(path.relative(g_cwd, targetPath));
+  g_attack_artifact = require(path.relative(__dirname, attackPath));
+  g_target_artifact = require(path.relative(__dirname, targetPath));
   
   /// add the attack contract address
   g_account_list.push(g_attackContract.address);
@@ -552,7 +545,6 @@ const writeExploit = (callSequen) => {
   fs.appendFileSync(g_exploit_path, call_str);
 }
 
-
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
   /// used to identify the first statement is attack or target contract
@@ -565,8 +557,8 @@ async function exec_callFun(call, callSequen_cur){
   let target_bal_sum_bf = await getBookSum();
 
   //console.log(attack_bal_acc_bf);
-  console.log(call.abi.name, call.param);
-  //console.log(call);
+  //console.log(call.abi.name, call.param);
+  console.log(call);
 
   try{
     if(call.to == g_targetContract.address){
@@ -581,7 +573,6 @@ async function exec_callFun(call, callSequen_cur){
   }catch(e){
     console.log(e);
   }
-
   
   /// use to get the input of sent transaction
   /// compare to the received transaction in fuzz module
@@ -1821,10 +1812,8 @@ async function exec_sequence_call(){
     if(g_callIndex_cur == g_callSequen_cur.length){
       g_callSequen_start = true;
     }
-  }
- 
+  } 
 }
-
 
 async function generateFunctionInputs_donate(abi) {
   let parameters = [];  
@@ -1911,16 +1900,22 @@ module.exports.find = find;
 // module.exports.reset = reset;
 module.exports.setProvider = setProvider;
 module.exports.unlockAccount = unlockAccount;
+
 module.exports.setStart_time = function(start_time){
   g_fuzz_start_time = start_time; 
 };
-module.exports.test_deployed = test_deployed;
+
+module.exports.test_deployed = function(artifact_path){
+  let artifact = require(path.relative(__dirname, artifact_path));
+  let network_id = Object.keys(artifact["networks"])[0];
+  return network_id != undefined;
+};
 
 module.exports.single_timeout = function(port){
   setInterval(function () { 
     // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
     
-    if((Date.now() - g_fuzz_start_time) >FUZZ_TIME_SCALE){
+    if((Date.now() - g_fuzz_start_time) > FUZZ_TIME_SCALE){
       console.log("Done.")
       request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
         if (error) {
@@ -1930,7 +1925,5 @@ module.exports.single_timeout = function(port){
       });
       return;
     }
-  },1000);
-
-}
-
+  }, 1000);  
+};
