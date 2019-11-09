@@ -6,8 +6,10 @@ const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
 const Web3 = require('web3');
-const fuzzer = require('./connection/ethereum/fuzzer.js');
-const fisco_fuzzer = require('./connection/fisco/fuzzer.js');
+const ethereum_fuzzer = require('./connection/ethereum/fuzzer.js');
+
+const FiscoFuzzer = require('./connection/fisco/fuzzer.js').FiscoFuzzer;
+let fiscoFuzzer = new FiscoFuzzer(0);
 
 const bodyParser = require('body-parser');
 const multer  = require('multer');
@@ -36,6 +38,14 @@ let g_bootstrap_build_attack = './build/contracts/AttackDAO.json';
 let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
 let g_bootstrap_source_target = './contracts/AttackDAO.sol';
 
+let default_option = {
+	fuzzer: fiscoFuzzer,
+	server: "",
+        port: "",
+        directory: "",
+	file: "",
+	configuration: null
+};
 function init_g_path_map(){
   let contracts =  fs.readdirSync("./build/contracts");
   let tokens = new Array();
@@ -108,9 +118,69 @@ app.get('/', (req, res) => {
 });
 
 app.get('/fisco', (req, res) => {
-  if (fisco_fuzzer.test_deployed()) {
-    console.log('success');
+  console.log("**** GET /fisco ****");
+  fiscoFuzzer.test().then((success)=>{
+    res.send("connection success");
+  });
+});
+let contract_path = "./benchmark/fisco/HelloWorld.sol"
+app.get('/fisco-deploy', (req, res) => {
+  console.log("**** GET /fisco-deploy ****");
+  fiscoFuzzer.deploy_contract(contract_path).then((answer)=> {
+    console.log(answer);
+    res.send(contract_path+" was deployed with address "+ answer);
   }
+).catch( e=> {
+     console.log(e);
+     res.render('error.ejs', {
+        message: e
+     });
+}
+);
+});
+let compiled_dir = "./deployed_contract/wecredit";
+app.get('/fisco-deploy-precompiled', (req, res) => {
+  console.log("**** GET /fisco-deploy ****");
+  fiscoFuzzer.deploy_contract_compiled(contract_path,compiled_dir).then((answer)=> {
+    console.log(answer);
+    res.send(contract_path+" was deployed with address "+ answer);
+  }
+).catch( e=> {
+     console.log(e);
+     res.render('error.ejs', {
+        message: e
+     });
+}
+);
+});
+
+app.get('/fisco-call', (req, res) => {
+  console.log("**** GET /fisco-call ****");
+  fiscoFuzzer.call_contract(contract_path, "get()", null).then((answer)=> {
+    console.log(answer);
+    res.send(contract_path+" was called with address "+ JSON.stringify(answer));
+  }
+).catch( e=> {
+     console.log(e);
+     console.trace();
+     res.render('error.ejs', {
+        message: e
+     });
+}
+);
+});
+app.get('/fisco-get', (req, res) => {
+  console.log("**** GET /fisco-get ****");
+  fiscoFuzzer.get_instance(contract_path).then((instances)=> {
+    res.send(contract_path+" was instantialized with "+ instances.length + " entities:" + JSON.stringify(instances));
+  }
+).catch( e=> {
+     console.log(e);
+     res.render('error.ejs', {
+        message: e
+     });
+}
+);
 });
 
 app.get('/load-default', (req, res) => {
@@ -291,9 +361,10 @@ function parse_cmd() {
 }
 
 parse_cmd();
-fuzzer.setProvider(httpRpcAddr);
-fuzzer.unlockAccount();
+//fuzzer.setProvider(httpRpcAddr);
+//fuzzer.unlockAccount();
 
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);
 });
+

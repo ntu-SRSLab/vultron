@@ -10,9 +10,9 @@
         }
     ],
     "authentication": {
-        "key": "/Users/liyi/Documents/pkg/fisco/nodes/127.0.0.1/sdk/sdk.key",
-        "cert": "/Users/liyi/Documents/pkg/fisco/nodes/127.0.0.1/sdk/sdk.crt",
-        "ca": "/Users/liyi/Documents/pkg/fisco/nodes/cert/ca.crt"
+        "key": "/home/liuye/Webank/fisco/nodes/127.0.0.1/sdk/sdk.key",
+        "cert":"/home/liuye/Webank/fisco/nodes/127.0.0.1/sdk/sdk.crt",
+        "ca":  "/home/liuye/Webank/fisco/nodes/cert/ca.crt"
     },
     "groupID": 1,
     "timeout": 10000

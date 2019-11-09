@@ -1,5 +1,4 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
+/* * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -425,6 +424,28 @@ class Web3jService extends ServiceBase {
 
         let contractName = path.basename(contractPath, '.sol');
         let contractBin = fs.readFileSync(path.join(outputDir, contractName + '.bin'), 'utf-8');
+        let blockNumberResult = await this.getBlockNumber();
+        let blockNumber = parseInt(blockNumberResult.result, '16');
+        let signTx = web3Sync.getSignDeployTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, blockNumber + 500);
+        return this.sendRawTransaction(signTx);
+    }
+    async deploy_compiled(contractPath, compileDir) {
+        if (!fs.existsSync(compileDir)) {
+            fs.mkdirSync(compileDir);
+        }
+
+        if (!path.isAbsolute(compileDir)) {
+            outputDir = path.join(process.cwd(), compileDir);
+        }
+
+        if (!path.isAbsolute(contractPath)) {
+            contractPath = path.join(process.cwd(), contractPath);
+        }
+
+//        await utils.compile(contractPath, outputDir, this.config.solc);
+
+        let contractName = path.basename(contractPath, '.sol');
+        let contractBin = fs.readFileSync(path.join(compileDir+"/bin", contractName + '.bin'), 'utf-8');
         let blockNumberResult = await this.getBlockNumber();
         let blockNumber = parseInt(blockNumberResult.result, '16');
         let signTx = web3Sync.getSignDeployTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, blockNumber + 500);

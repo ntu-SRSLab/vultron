@@ -147,7 +147,14 @@ function Transaction(data) {
             default: Buffer.from([])
         }];
     }
-
+    ethjsUtil.defineProperties(this, fields, data);
+    //  console.log(data);
+    if (data.randomid.search("0x")==-1){
+	data.randomid =  "0x" + data.randomid;
+    }
+    if (data.extraData.search("0x")==-1)	
+	data.extraData = "0x" + data.extraData;
+    //  console.log(data);
     ethjsUtil.defineProperties(this, fields, data);
 
     /*

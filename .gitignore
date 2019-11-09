@@ -73,3 +73,9 @@ build/*
 migrations/*
 contracts/*
 uploads/*
+
+**/*.sw*
+*.*.js.sw*
+*.js.sw*
+.gitignore.sw*
+deployed_contract/

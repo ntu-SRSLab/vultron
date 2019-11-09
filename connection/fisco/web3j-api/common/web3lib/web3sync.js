@@ -38,6 +38,7 @@ function genRandomID() {
  */
 function signTransaction(txData, privKey, callback) {
     let tx = new Transaction(txData);
+    console.log(privKey);
     let privateKey = Buffer.from(privKey, 'hex');
     tx.sign(privateKey);
 
@@ -57,8 +58,10 @@ function signTransaction(txData, privKey, callback) {
  * @return {String} transaction data
  */
 function getTxData(func, params) {
+    console.log("getTxData", func, params);
     let r = /^\w+\((.*)\)$/g.exec(func);
-    let types = [];
+    let types = []; 
+    console.log(r);
     if (r[1]) {
         types = r[1].split(',');
     }
