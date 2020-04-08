@@ -429,20 +429,39 @@ class Web3jService extends ServiceBase {
         let signTx = web3Sync.getSignDeployTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, blockNumber + 500);
         return this.sendRawTransaction(signTx);
     }
-    async deploy_compiled(contractPath, compileDir) {
+    async deploy_precompiled_params(contractPath, compileDir, func, params) {
         if (!fs.existsSync(compileDir)) {
             fs.mkdirSync(compileDir);
         }
 
         if (!path.isAbsolute(compileDir)) {
-            outputDir = path.join(process.cwd(), compileDir);
+            compileDir  = path.join(process.cwd(), compileDir);
         }
 
         if (!path.isAbsolute(contractPath)) {
             contractPath = path.join(process.cwd(), contractPath);
         }
 
-//        await utils.compile(contractPath, outputDir, this.config.solc);
+        let contractName = path.basename(contractPath, '.sol');
+        let contractBin = fs.readFileSync(path.join(compileDir+"/bin", contractName + '.bin'), 'utf-8');
+        let blockNumberResult = await this.getBlockNumber();
+        let blockNumber = parseInt(blockNumberResult.result, '16');
+        let signTx = web3Sync.getSignDeployArgsTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, func, params, blockNumber + 500);
+        return this.sendRawTransaction(signTx);
+    }
+
+    async deploy_precompiled(contractPath, compileDir) {
+        if (!fs.existsSync(compileDir)) {
+            fs.mkdirSync(compileDir);
+        }
+
+        if (!path.isAbsolute(compileDir)) {
+            compileDir = path.join(process.cwd(), compileDir);
+        }
+
+        if (!path.isAbsolute(contractPath)) {
+            contractPath = path.join(process.cwd(), contractPath);
+        }
 
         let contractName = path.basename(contractPath, '.sol');
         let contractBin = fs.readFileSync(path.join(compileDir+"/bin", contractName + '.bin'), 'utf-8');

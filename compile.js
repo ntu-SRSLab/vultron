@@ -7,7 +7,8 @@ var input = {
     'Account.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/Account.sol', 'utf8'),
     'AccountMap.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/AccountMap.sol', 'utf8'),
     'AccountController.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/AccountController.sol', 'utf8'),
-	    'CommonLib.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CommonLib.sol', 'utf8'),
+    'CommonLib.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CommonLib.sol', 'utf8'),
+    'CreditController.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CreditController.sol', 'utf8'),
 };
 let compiledContract = solc.compile({sources: input}, 1);
 //console.log(compiledContract);

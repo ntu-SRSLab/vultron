@@ -74,6 +74,11 @@ Both the contract source code and the migration (deployment) scripts are provide
    npm install
 ```
 
+3. Compile wecredit contracts
+```
+   node compile.js
+```
+
 #### Getting Started
 
 1. Start the server:
@@ -88,4 +93,7 @@ Both the contract source code and the migration (deployment) scripts are provide
 ```
   http://localhost:3000/fisco-deploy 
 ```
-
+3. Deploy wecredit contract
+```
+  http://localhost:3000/fisco-deploy-wecredit 
+```

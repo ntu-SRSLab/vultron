@@ -123,12 +123,16 @@ app.get('/fisco', (req, res) => {
     res.send("connection success");
   });
 });
-let contract_path = "./benchmark/fisco/HelloWorld.sol"
+let hello_contract_path = "./Vultron-Fisco/fisco/HelloWorld.sol"
+let contract_path = "./Vultron-Fisco/fisco/wecredit/Account.sol"
+let compiled_dir = "./deployed_contract/wecredit";
+let accountcontroller = "./Vultron-Fisco/fisco/wecredit/AccountController.sol";
+let creditcontroller = "./Vultron-Fisco/fisco/wecredit/CreditController.sol"
 app.get('/fisco-deploy', (req, res) => {
   console.log("**** GET /fisco-deploy ****");
-  fiscoFuzzer.deploy_contract(contract_path).then((answer)=> {
+  fiscoFuzzer.deploy_contract(hello_contract_path).then((answer)=> {
     console.log(answer);
-    res.send(contract_path+" was deployed with address "+ answer);
+    res.send(hello_contract_path+" was deployed with address "+ answer);
   }
 ).catch( e=> {
      console.log(e);
@@ -138,15 +142,37 @@ app.get('/fisco-deploy', (req, res) => {
 }
 );
 });
-let compiled_dir = "./deployed_contract/wecredit";
+app.get('/fisco-deploy-wecredit', (req, res) => {
+  console.log("**** GET /fisco-deploy-wecredit ****");
+  fiscoFuzzer.deploy_contract_precompiled(accountcontroller,compiled_dir)
+		.then((address)=> {
+		    console.log(accountcontroller, address);
+		    let info =accountcontroller+" was deployed with address "+ address;
+		    fiscoFuzzer.deploy_contract_precompiled_params(creditcontroller,compiled_dir,"CreditController(address)",[address])
+				.then((address)=>{
+				    console.log(creditcontroller,address);
+				    res.send(info+"</br>"+creditcontroller+" was deployed with address "+ address);
+   				 })
+  }).catch( e=> {
+     console.log(e);
+     console.trace();
+     res.render('error.ejs', {
+        message: e
+     });
+}
+);
+});
 app.get('/fisco-deploy-precompiled', (req, res) => {
-  console.log("**** GET /fisco-deploy ****");
-  fiscoFuzzer.deploy_contract_compiled(contract_path,compiled_dir).then((answer)=> {
-    console.log(answer);
-    res.send(contract_path+" was deployed with address "+ answer);
+  console.log("**** GET /fisco-deploy-precompiled ****");
+  fiscoFuzzer.deploy_contract_precompiled_params(contract_path,compiled_dir, 
+		                             'Account(bytes32,bytes32,bytes32,string)',["0x12","0x2","0x1", "0x43424efe34"]).
+		then((answer)=> {
+   		    console.log(answer);
+		    res.send(contract_path+" was deployed with address "+ answer);
   }
 ).catch( e=> {
      console.log(e);
+     console.trace();
      res.render('error.ejs', {
         message: e
      });

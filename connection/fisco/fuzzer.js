@@ -84,13 +84,27 @@ class FiscoFuzzer extends Web3jService{
      let contract_file_name = contract_path.split("/")[contract_path.split("/").length-1];
      this.contract_name = contract_file_name.split(".")[0];
      let instance = await this.deploy(contract_path,this.outputdir+"/"+this.contract_name);
+//     console.log(instance);
      write2file(this.outputdir+"/"+this.contract_name+"/"+instance.contractAddress, JSON.stringify(instance));
      return instance.contractAddress;
    }
-   async deploy_contract_compiled(contract_path, compiled_dir){
+   async deploy_contract_precompiled(contract_path, compiled_dir){
      let contract_file_name = contract_path.split("/")[contract_path.split("/").length-1];
      this.contract_name = contract_file_name.split(".")[0];
-     let instance = await this.deploy_compiled(contract_path,compiled_dir+"/"+this.contract_name);
+     let instance = await this.deploy_precompiled(contract_path,compiled_dir);
+ //    console.log(instance);
+     if (!fs.existsSync(this.outputdir+"/"+this.contract_name))
+	     fs.mkdirSync(this.outputdir+"/"+this.contract_name);
+     write2file(this.outputdir+"/"+this.contract_name+"/"+instance.contractAddress, JSON.stringify(instance));
+     return instance.contractAddress;
+   }
+   async deploy_contract_precompiled_params(contract_path, compiled_dir, func, params){
+     let contract_file_name = contract_path.split("/")[contract_path.split("/").length-1];
+     this.contract_name = contract_file_name.split(".")[0];
+     let instance = await this.deploy_precompiled_params(contract_path,compiled_dir, func, params);
+  //   console.log(instance);
+     if (!fs.existsSync(this.outputdir+"/"+this.contract_name))
+	     fs.mkdirSync(this.outputdir+"/"+this.contract_name);
      write2file(this.outputdir+"/"+this.contract_name+"/"+instance.contractAddress, JSON.stringify(instance));
      return instance.contractAddress;
    }

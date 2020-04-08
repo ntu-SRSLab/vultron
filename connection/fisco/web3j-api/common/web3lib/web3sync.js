@@ -17,7 +17,7 @@
 const uuidv4 = require('uuid/v4');
 const utils = require('./utils');
 const Transaction = require('./transactionObject').Transaction;
-
+const ethjsUtil = require('ethjs-util');
 /**
  * Generate a random number via UUID
  * @return {Number} random number
@@ -38,7 +38,7 @@ function genRandomID() {
  */
 function signTransaction(txData, privKey, callback) {
     let tx = new Transaction(txData);
-    console.log(privKey);
+//    console.log("tx to send:",tx);
     let privateKey = Buffer.from(privKey, 'hex');
     tx.sign(privateKey);
 
@@ -58,16 +58,30 @@ function signTransaction(txData, privKey, callback) {
  * @return {String} transaction data
  */
 function getTxData(func, params) {
-    console.log("getTxData", func, params);
+ //   console.log("getTxData", func, params);
     let r = /^\w+\((.*)\)$/g.exec(func);
     let types = []; 
-    console.log(r);
     if (r[1]) {
         types = r[1].split(',');
     }
     return utils.encodeTxData(func, types, params);
 }
 
+/**
+ * get construction parameter data
+ * @param {String} constructor function name
+ * @param {Array} params params
+ * @return {String} transaction data
+ */
+function getParamsData(func, params) {
+//    console.log("getParamsData", func, params);
+    let r = /^\w+\((.*)\)$/g.exec(func);
+    let types = []; 
+    if (r[1]) {
+        types = r[1].split(',');
+    }
+    return utils.encodeParams(types, params);
+}
 /**
  * get signed transaction data
  * @param {Number} groupId
@@ -124,6 +138,39 @@ function getSignDeployTx(groupId, account, privateKey, bin, blockLimit) {
     return signTransaction(postdata, privateKey, null);
 }
 
+/**
+ * get signed deploy tx with params
+ * @param {Number} groupId
+ * @param {Buffer} account user account
+ * @param {Buffer} privateKey private key
+ * @param {Buffer} bin contract bin
+ * @param {Number} blockLimit block limit
+ * @return {String} signed deploy transaction data
+ */
+function getSignDeployArgsTx(groupId, account, privateKey, bin, func, params, blockLimit) {
+    let txData = bin.indexOf('0x') === 0 ? bin : ('0x' + bin);
+    txData +=  ethjsUtil.stripHexPrefix(getParamsData(func, params));
+//    console.log("txdata:", txData);
+    let postdata = {
+        data: txData,
+        from: account,
+        to: null,
+        gas: 1000000,
+        randomid: genRandomID(),
+        blockLimit: blockLimit,
+        chainId: 1,
+        groupId: groupId,
+        extraData: ''
+    };
+
+    return signTransaction(postdata, privateKey, null);
+}
+
+module.exports.getSignDeployArgsTx = getSignDeployArgsTx;
+module.exports.getSignDeployTx = getSignDeployTx;
+module.exports.signTransaction = signTransaction;
+module.exports.getSignTx = getSignTx;
+module.exports.getTxData = getTxData;
 module.exports.getSignDeployTx = getSignDeployTx;
 module.exports.signTransaction = signTransaction;
 module.exports.getSignTx = getSignTx;
