@@ -91,9 +91,17 @@ Both the contract source code and the migration (deployment) scripts are provide
 ```
 3. Test BCOS deploy:
 ```
-  http://localhost:3000/fisco-deploy 
+  http://localhost:3000/fisco/deploy 
 ```
 3. Deploy wecredit contract
 ```
-  http://localhost:3000/fisco-deploy-wecredit 
+  http://localhost:3000/fisco/deploy/wecredit 
+```
+4. Load wecredit contract
+```
+  http://localhost:3000/fisco/load/wecredit 
+```
+5. Bootstrap wecredit contract
+```
+  http://localhost:3000/fisco/bootstrap/wecredit 
 ```

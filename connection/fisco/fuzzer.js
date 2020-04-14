@@ -340,18 +340,18 @@ async function gen_callInput(abi, unum_min, unum_max, num_min, num_max) {
         } else {
             // default parameter
             console.log(param.type, "not support data type...");
-	    let arrayRegex = /\[([0-9]+)\]/;
-	    const match = param.type.match(arrayRegex);
-	    if (match){
-	    	console.log(match);
-		let size = match[1];
-		let arr = [];
-		for(let i=0; i<size; i++)
-		    arr.push('0x0');
-		param_list.push(arr);
-	    }else{
-		param_list.push('0x0');
-	    }
+            let arrayRegex = /\[([0-9]+)\]/;
+            const match = param.type.match(arrayRegex);
+            if (match) {
+                console.log(match);
+                let size = match[1];
+                let arr = [];
+                for (let i = 0; i < size; i++)
+                    arr.push('0x0');
+                param_list.push(arr);
+            } else {
+                param_list.push('0x0');
+            }
         }
     });
     return param_list;
@@ -591,6 +591,7 @@ class FiscoFuzzer extends Web3jService {
         //	console.log(g_send_call_found);
         this.loadContract = true;
         let ret = {
+            accounts: [UserAccount],
             target_adds: g_targetContract.address,
             target_abi: g_targetContract.abi
         };
@@ -649,18 +650,30 @@ class FiscoFuzzer extends Web3jService {
         if (!fs.existsSync(this.outputdir + "/" + this.contract_name))
             fs.mkdirSync(this.outputdir + "/" + this.contract_name);
         write2file(this.outputdir + "/" + this.contract_name + "/" + instance.contractAddress, JSON.stringify(instance));
-        return instance.contractAddress;
+        return {
+            path: contract_path,
+            name: this.contract_name,
+            address: instance.contractAddress,
+            constructor: this.contract_name+"()",
+            construcotrparam:"" 
+        };
     }
     async deploy_contract_precompiled_params(contract_path, compiled_dir, func, params) {
         let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
         this.contract_name = contract_file_name.split(".")[0];
         let instance = await this.deploy_precompiled_params(contract_path, compiled_dir, func, params);
-        //   console.log(instance);
+        console.log(instance);
         if (!fs.existsSync(this.outputdir + "/" + this.contract_name))
             fs.mkdirSync(this.outputdir + "/" + this.contract_name);
         write2file(this.outputdir + "/" + this.contract_name + "/" + instance.contractAddress, JSON.stringify(instance));
 
-        return instance.contractAddress;
+        return {
+            path: contract_path,
+            name: this.contract_name,
+            address: instance.contractAddress,
+            constructor: func,
+            construcotrparam: params
+        };
     }
     async call_contract(contract_path, function_name, argv) {
         let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
@@ -713,10 +726,10 @@ class FiscoFuzzer extends Web3jService {
         let callFun_list = this.g_callsequence_list[this.cursor];
         this.cursor = +1;
         for (let fun of callFun_list) {
-	    console.log(fun);
-	    console.log(fun.abi.name + "(" + types(fun.abi.inputs) + ")");
-            let receipt = await this.sendRawTransaction(fun.to, fun.abi.name + "(" + types(fun.abi.inputs) + ")", 
-			fun.param);
+            console.log(fun);
+            console.log(fun.abi.name + "(" + types(fun.abi.inputs) + ")");
+            let receipt = await this.sendRawTransaction(fun.to, fun.abi.name + "(" + types(fun.abi.inputs) + ")",
+                fun.param);
             console.log(fun, receipt);
         }
     }
@@ -770,20 +783,3 @@ module.exports.test_deployed = function() {
   });
   return true;
 }*/
-let fuzzer = new FiscoFuzzer(0, "CreditController");
-async function test() {
-    await fuzzer.test();
-    await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
-        "/home/liuye/Webank/vultron/deployed_contract/CreditController",
-        "/home/liuye/Webank/vultron/Vultron-Fisco/fisco/wecredit/CreditController.sol");
-
-    await fuzzer.bootstrap();
-}
-
-test().then(() => {
-            console.log("success");
-            })
-        .catch((e) => {
-            console.log(e);
-            console.trace();
-        });

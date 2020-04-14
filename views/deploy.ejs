@@ -22,16 +22,22 @@
   <div class="container">
     <div class="list-group">
       <%
-	callFuns.forEach(function(call) { %>
+	contracts.forEach(function(contract) { %>
         <h4 class="list-group-item-heading">
-	  Function:&nbsp; <%= call.func %> <%= call.abi.name %>
+	  Path:&nbsp; <%= contract.path %> 
+	</h4>
+        <h4 class="list-group-item-heading">
+	  Contract:&nbsp; <%= contract.name %> 
+	</h4>
+        <h4 class="list-group-item-heading">
+	  Address:&nbsp; <%= contract.address %> 
 	</h4>
 	<p class="list-group-item-text">
-	  Param:&nbsp; <%= JSON.stringify(call.param) %>
+	  Constructor Function:&nbsp; <%= contract.constructor %>
  	  </p> 
 	<p class="list-group-item-text">
-	  Gas:&nbsp; <%= call.gas %>
- 	</p> 
+	  Constructor Param:&nbsp; <%= contract.constructorparam %>
+ 	  </p> 
       <% });
          %>
     </div>
