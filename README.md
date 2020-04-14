@@ -19,7 +19,6 @@ npm install;                # Install dependencies
 
 node server.js              # Note: if encountering password error, go to connection/fuzzer.js and replace '123456' with your account password in the function 'unlockAccount')
 ```
-
 #### Usage Steps
 
 1. Deploy target and attack contracts to the test network.
@@ -74,7 +73,11 @@ Both the contract source code and the migration (deployment) scripts are provide
    npm install
 ```
 
-3. Compile wecredit contracts
+3. Prerequisites: Install solc and Pull Vultron-Fisco git repo 
+```
+  ./prerequisites.sh 
+```
+4. Compile wecredit contracts
 ```
    node compile.js
 ```
