@@ -26,6 +26,7 @@
 		}
 	],
 	"dependencies": {
+		"abi-decoder": "^2.3.0",
 		"async": "^2.6.3",
 		"body-parser": "^1.19.0",
 		"ejs": "^2.7.1",

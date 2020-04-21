@@ -1,3 +1,4 @@
+const abiDecoder = require('abi-decoder');
 const path = require('path');
 const Web3jService = require('web3j-api/web3j').Web3jService;
 const web3j = new Web3jService();
@@ -590,6 +591,7 @@ class FiscoFuzzer extends Web3jService {
         //	console.log(g_send_call_set);
         //	console.log(g_send_call_found);
         this.loadContract = true;
+	abiDecoder.addABI(g_targetContract.abi);
         let ret = {
             accounts: [UserAccount],
             target_adds: g_targetContract.address,
@@ -694,10 +696,12 @@ class FiscoFuzzer extends Web3jService {
                         console.log("argv is null or undefined");
                         ret = await this.sendRawTransaction(dirent.name, function_name, "");
                         console.log(ret);
+			console.log("events:", JSON.stringify(abiDecoder.decodeLogs(ret.logs)));
                     } else {
                         console.log(argv);
                         ret = await this.sendRawTransaction(dirent.name, function_name, argv);
                         console.log(ret);
+			console.log("events:", JSON.stringify(abiDecoder.decodeLogs(ret.logs)));
                     }
                     console.log("hello call contract");
                     answer += JSON.stringify(ret) + "\n</br>";
@@ -731,6 +735,7 @@ class FiscoFuzzer extends Web3jService {
             let receipt = await this.sendRawTransaction(fun.to, fun.abi.name + "(" + types(fun.abi.inputs) + ")",
                 fun.param);
             console.log(fun, receipt);
+	    console.log("events:", JSON.stringify(abiDecoder.decodeLogs(receipt.logs)));
         }
     }
     // initiate a transaction to target contract

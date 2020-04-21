@@ -3,13 +3,13 @@ const fs=require("fs");
 const solc=require("solc");
 const path = require('path');
 var input = {
-    'Credit.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/Credit.sol', 'utf8'),
-    'CreditMap.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CreditMap.sol', 'utf8'),
-    'Account.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/Account.sol', 'utf8'),
-    'AccountMap.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/AccountMap.sol', 'utf8'),
-    'AccountController.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/AccountController.sol', 'utf8'),
-    'CommonLib.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CommonLib.sol', 'utf8'),
-    'CreditController.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CreditController.sol', 'utf8'),
+    'Credit.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/Credit.sol', 'utf8'),
+    'CreditMap.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/CreditMap.sol', 'utf8'),
+    'Account.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/Account.sol', 'utf8'),
+    'AccountMap.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/AccountMap.sol', 'utf8'),
+    'AccountController.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/AccountController.sol', 'utf8'),
+    'CommonLib.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/CommonLib.sol', 'utf8'),
+    'CreditController.sol': fs.readFileSync('./Vultron-Fisco-State/fisco/wecredit/CreditController.sol', 'utf8'),
 };
 function write2File(dir, file_name, content){
 	     if (!fs.existsSync(dir)){

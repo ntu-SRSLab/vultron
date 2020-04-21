@@ -79,3 +79,4 @@ uploads/*
 *.js.sw*
 .gitignore.sw*
 deployed_contract/
+Vultron-Fisco-State/
