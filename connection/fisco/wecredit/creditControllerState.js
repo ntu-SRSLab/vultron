@@ -15,7 +15,7 @@ class CreditInterface {
     createCredit(raw_tx) {
         return {
             target: tcredit
-	}
+        }
     }
     transferCredit(raw_tx) {
         return {
@@ -120,5 +120,65 @@ class CreditControllerState {
         //...
         //postCondition
         return ret.target;
+    }
+}
+class CreditStateMachine() {
+    constructor() {
+        this.machine = {
+	    current_state: undefined,
+            initial_state: "null",
+            terminate_state: ["expired", "closed", "cleared"],
+            transitions: [{
+                    start: "null",
+                    next: [{
+                        action: "create",
+                        end: "created"
+                    }]
+                },
+                {
+                    start: "create",
+                    next: [{
+                        action: "transfer",
+                        end: "created"
+                    }, {
+                        action: "discount",
+                        end: "discounted"
+                    }, {
+                        action: "expire",
+                        end: "expired"
+                    }, {
+                        action: "close",
+                        end: "closed"
+                    }, {
+                        action: "clear",
+                        end: "cleared"
+                    }]
+                },
+                {
+                    start: "discounted",
+                    next: [{
+                        action: "transfer",
+                        end: "discounted"
+                    }, {
+                        action: "expire",
+                        end: "expired"
+                    }, {
+                        action: "close",
+                        end: "closed"
+                    }, {
+                        action: "clear",
+                        end: "cleared"
+                    }]
+
+                }
+            ]
+        }
+        this.machine.current_state = this.machine.initial_state;
+    }
+    next() {
+        return this.machine.transitions.filter(transijjjjjjtion=>transition.start=this.machine.current_state);
+    }
+    isTerminate(){
+	return this.machine.terminate_state.includes(this.machine.current_state);
     }
 }
