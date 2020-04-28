@@ -9,6 +9,7 @@ const Web3 = require('web3');
 const ethereum_fuzzer = require('./connection/ethereum/fuzzer.js');
 
 const FiscoFuzzer = require('./connection/fisco/fuzzer.js').FiscoFuzzer;
+const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
 let fiscoFuzzer = new FiscoFuzzer(0);
 
 const bodyParser = require('body-parser');
@@ -152,14 +153,27 @@ app.get('/fisco/deploy/wecredit', (req, res) => {
     fiscoFuzzer.deploy_contract_precompiled(accountcontroller, compiled_dir)
         .then((AccountCtr) => {
             console.log(accountcontroller, AccountCtr.address);
-            fiscoFuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
-                .then((CreditCtr) => {
-                    console.log(creditcontroller, CreditCtr.address);
-                    res.render("deploy.ejs", {
-			    contracts: [AccountCtr, CreditCtr],
-                        status: "success"
-                    });
-                })
+            fiscoFuzzer._send_tx({
+                to: AccountCtr.address,
+                fun: "registeAccount(bytes32,bytes32,bytes32,string)",
+                param: ["0x0", "0x0", "0x0", "0xcaffee"]
+            }, "./deployed_contract/AccountController/AccountController.abi").then((receipt) => {
+                console.log(receipt);
+                fiscoFuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
+                    .then((CreditCtr) => {
+                        console.log(creditcontroller, CreditCtr.address);
+                        res.render("deploy.ejs", {
+                            contracts: [AccountCtr, CreditCtr],
+                            status: "success"
+                        });
+                    })
+            }).catch(e => {
+                console.log(e);
+                console.trace();
+                res.render('error.ejs', {
+                    message: e
+                });
+            });
         }).catch(e => {
             console.log(e);
             console.trace();
@@ -167,9 +181,8 @@ app.get('/fisco/deploy/wecredit', (req, res) => {
                 message: e
             });
         });
-});
 
-app.get('/fisco/load/wecredit', (req, res) => {
+}); app.get('/fisco/load/wecredit', (req, res) => {
     let fuzzer = new FiscoFuzzer(0, "CreditController");
     async function test() {
         await fuzzer.test();
@@ -203,7 +216,8 @@ app.get('/fisco/load/wecredit', (req, res) => {
 });
 
 app.get('/fisco/bootstrap/wecredit', (req, res) => {
-    let fuzzer = new FiscoFuzzer(0, "CreditController");
+    //  let fuzzer = new FiscoFuzzer(0, "CreditController");
+    let fuzzer = FiscoStateMachineFuzzer.getInstance(0, "CreditController", __dirname);
     async function test() {
         await fuzzer.test();
         await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
