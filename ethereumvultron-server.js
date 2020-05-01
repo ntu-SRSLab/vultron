@@ -1,4 +1,3 @@
-const contract = require('truffle-contract');
 const request = require("request");
 const fs = require("fs");
 
@@ -212,6 +211,8 @@ app.post('/load', upload.array('contract', 4), (req, res) => {
                 attack_abi: JSON.stringify(answer.attack_abi)
             });
         }).catch(e => {
+	    console.trace();
+	    console.log(e);
             res.render('error.ejs', {
                 message: e
             });

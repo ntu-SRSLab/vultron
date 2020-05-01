@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/osboxes/vultron/contracts/BountyHunt.sol";
+import "/home/liuye/Webank/vultron/contracts/BountyHunt.sol";
 
 contract Attack_BountyHunt0 {
 

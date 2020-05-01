@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/osboxes/vultron/contracts/ETH_VAULT.sol";
+import "/home/liuye/Webank/vultron/contracts/ETH_VAULT.sol";
 
 contract Attack_ETH_VAULT1 {
 

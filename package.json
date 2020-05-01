@@ -26,6 +26,7 @@
 		}
 	],
 	"dependencies": {
+		"@truffle/contract": "^4.1.10",
 		"@xstate/test": "^0.4.0",
 		"abi-decoder": "^2.3.0",
 		"async": "^2.6.3",
@@ -38,9 +39,9 @@
 		"power-assert": "^1.6.1",
 		"sha3": "^2.1.2",
 		"solc": "^0.4",
-		"truffle": "^5.1.24",
-		"truffle-contract": "^4.0.31",
-		"web3": "^1.2.2",
+		"truffle": "^4.1.10",
+		"truffle-contract": "^3.0.7",
+		"web3": "^0.20.6",
 		"web3-eth-abi": "^1.2.2",
 		"web3j-api": "file:connection/fisco/web3j-api",
 		"xstate": "^4.9.1"

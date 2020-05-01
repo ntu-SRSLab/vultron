@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/osboxes/vultron/contracts/PIGGY_BANK.sol";
+import "/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol";
 
 contract Attack_PIGGY_BANK1 {
 

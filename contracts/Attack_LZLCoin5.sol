@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/osboxes/vultron/contracts/LZLCoin.sol";
+import "/home/liuye/Webank/vultron/contracts/LZLCoin.sol";
 
 contract Attack_LZLCoin5 {
 

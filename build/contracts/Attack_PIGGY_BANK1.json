@@ -68,14 +68,14 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x608060405260405160208061036a83398101806040528101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506102f4806100766000396000f300608060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806318b506071461005c578063574ffc3114610086578063c474e3d2146100dd575b600080fd5b610084600480360381019080803590602001909291908035906020019092919050505061011d565b005b34801561009257600080fd5b5061009b6101ca565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61011b60048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101ef565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16633fe4382283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506000604051808303818588803b1580156101ad57600080fd5b505af11580156101c1573d6000803e3d6000fd5b50505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e5b5fe7283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506000604051808303818588803b1580156102ab57600080fd5b505af11580156102bf573d6000803e3d6000fd5b505050505050505600a165627a7a72305820f4e83e2d97b1614b39ba6099b1f89dabc03508c33891c2fefdd5646f4429487f0029",
-  "deployedBytecode": "0x608060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806318b506071461005c578063574ffc3114610086578063c474e3d2146100dd575b600080fd5b610084600480360381019080803590602001909291908035906020019092919050505061011d565b005b34801561009257600080fd5b5061009b6101ca565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61011b60048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101ef565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16633fe4382283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506000604051808303818588803b1580156101ad57600080fd5b505af11580156101c1573d6000803e3d6000fd5b50505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e5b5fe7283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506000604051808303818588803b1580156102ab57600080fd5b505af11580156102bf573d6000803e3d6000fd5b505050505050505600a165627a7a72305820f4e83e2d97b1614b39ba6099b1f89dabc03508c33891c2fefdd5646f4429487f0029",
-  "sourceMap": "84:523:16:-;;;155:126;;;;;;;;;;;;;;;;;;;;;;;;;;;;260:15;231;;:45;;;;;;;;;;;;;;;;;;155:126;84:523;;;;;;",
-  "deployedSourceMap": "84:523:16:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;592:8;;;418:137;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;117:33;;8:9:-1;5:2;;;30:1;27;20:12;5:2;117:33:16;;;;;;;;;;;;;;;;;;;;;;;;;;;286:127;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;418:137;500:15;;;;;;;;;;;:23;;;530:14;546:3;500:50;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;500:50:16;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;500:50:16;;;;;418:137;;:::o;117:33::-;;;;;;;;;;;;;:::o;286:127::-;363:15;;;;;;;;;;;:19;;;389:14;405:2;363:45;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;363:45:16;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;363:45:16;;;;;286:127;;:::o",
-  "source": "pragma solidity ^0.4.19;\n\nimport \"/home/osboxes/vultron/contracts/PIGGY_BANK.sol\";\n\ncontract Attack_PIGGY_BANK1 {\n\n  PIGGY_BANK public target_contract;\n\n  function Attack_PIGGY_BANK1(address _targetContract) public payable {\n      target_contract = PIGGY_BANK(_targetContract);\n  } \n\n  function vultron_Put(uint256 vultron_amount, address to) public payable{\n    target_contract.Put.value(vultron_amount)(to);\n  } \n\n  function vultron_Collect(uint256 vultron_amount, uint256 _am) public payable{\n    target_contract.Collect.value(vultron_amount)(_am);\n  } \n\n  function() public payable {\n    revert();\n  }\n} \n",
-  "sourcePath": "/home/osboxes/vultron/contracts/Attack_PIGGY_BANK1.sol",
+  "bytecode": "0x608060405260405160208061036a83398101806040528101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506102f4806100766000396000f300608060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806318b506071461005c578063574ffc3114610086578063c474e3d2146100dd575b600080fd5b610084600480360381019080803590602001909291908035906020019092919050505061011d565b005b34801561009257600080fd5b5061009b6101ca565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61011b60048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101ef565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16633fe4382283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506000604051808303818588803b1580156101ad57600080fd5b505af11580156101c1573d6000803e3d6000fd5b50505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e5b5fe7283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506000604051808303818588803b1580156102ab57600080fd5b505af11580156102bf573d6000803e3d6000fd5b505050505050505600a165627a7a7230582044f570dc6936b7cabd14b48e760612cc3c9b7e9c882f7d08f9d84df76e7b3edb0029",
+  "deployedBytecode": "0x608060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806318b506071461005c578063574ffc3114610086578063c474e3d2146100dd575b600080fd5b610084600480360381019080803590602001909291908035906020019092919050505061011d565b005b34801561009257600080fd5b5061009b6101ca565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61011b60048036038101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101ef565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16633fe4382283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506000604051808303818588803b1580156101ad57600080fd5b505af11580156101c1573d6000803e3d6000fd5b50505050505050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e5b5fe7283836040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506000604051808303818588803b1580156102ab57600080fd5b505af11580156102bf573d6000803e3d6000fd5b505050505050505600a165627a7a7230582044f570dc6936b7cabd14b48e760612cc3c9b7e9c882f7d08f9d84df76e7b3edb0029",
+  "sourceMap": "89:523:16:-;;;160:126;;;;;;;;;;;;;;;;;;;;;;;;;;;;265:15;236;;:45;;;;;;;;;;;;;;;;;;160:126;89:523;;;;;;",
+  "deployedSourceMap": "89:523:16:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;597:8;;;423:137;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;122:33;;8:9:-1;5:2;;;30:1;27;20:12;5:2;122:33:16;;;;;;;;;;;;;;;;;;;;;;;;;;;291:127;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;423:137;505:15;;;;;;;;;;;:23;;;535:14;551:3;505:50;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;505:50:16;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;505:50:16;;;;;423:137;;:::o;122:33::-;;;;;;;;;;;;;:::o;291:127::-;368:15;;;;;;;;;;;:19;;;394:14;410:2;368:45;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;368:45:16;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;368:45:16;;;;;291:127;;:::o",
+  "source": "pragma solidity ^0.4.19;\n\nimport \"/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol\";\n\ncontract Attack_PIGGY_BANK1 {\n\n  PIGGY_BANK public target_contract;\n\n  function Attack_PIGGY_BANK1(address _targetContract) public payable {\n      target_contract = PIGGY_BANK(_targetContract);\n  } \n\n  function vultron_Put(uint256 vultron_amount, address to) public payable{\n    target_contract.Put.value(vultron_amount)(to);\n  } \n\n  function vultron_Collect(uint256 vultron_amount, uint256 _am) public payable{\n    target_contract.Collect.value(vultron_amount)(_am);\n  } \n\n  function() public payable {\n    revert();\n  }\n} \n",
+  "sourcePath": "/home/liuye/Webank/vultron/contracts/Attack_PIGGY_BANK1.sol",
   "ast": {
-    "absolutePath": "/home/osboxes/vultron/contracts/Attack_PIGGY_BANK1.sol",
+    "absolutePath": "/home/liuye/Webank/vultron/contracts/Attack_PIGGY_BANK1.sol",
     "exportedSymbols": {
       "Attack_PIGGY_BANK1": [
         1417
@@ -96,13 +96,13 @@
         "src": "0:24:16"
       },
       {
-        "absolutePath": "/home/osboxes/vultron/contracts/PIGGY_BANK.sol",
-        "file": "/home/osboxes/vultron/contracts/PIGGY_BANK.sol",
+        "absolutePath": "/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol",
+        "file": "/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol",
         "id": 1359,
         "nodeType": "ImportDirective",
         "scope": 1418,
-        "sourceUnit": 3131,
-        "src": "26:56:16",
+        "sourceUnit": 3188,
+        "src": "26:61:16",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -125,11 +125,11 @@
             "name": "target_contract",
             "nodeType": "VariableDeclaration",
             "scope": 1417,
-            "src": "117:33:16",
+            "src": "122:33:16",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
               "typeString": "contract PIGGY_BANK"
             },
             "typeName": {
@@ -137,10 +137,10 @@
               "id": 1360,
               "name": "PIGGY_BANK",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 3075,
-              "src": "117:10:16",
+              "referencedDeclaration": 3132,
+              "src": "122:10:16",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                 "typeString": "contract PIGGY_BANK"
               }
             },
@@ -151,7 +151,7 @@
             "body": {
               "id": 1372,
               "nodeType": "Block",
-              "src": "223:58:16",
+              "src": "228:58:16",
               "statements": [
                 {
                   "expression": {
@@ -168,9 +168,9 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 1361,
-                      "src": "231:15:16",
+                      "src": "236:15:16",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                         "typeString": "contract PIGGY_BANK"
                       }
                     },
@@ -186,7 +186,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1363,
-                          "src": "260:15:16",
+                          "src": "265:15:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
@@ -204,10 +204,10 @@
                         "name": "PIGGY_BANK",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3075,
-                        "src": "249:10:16",
+                        "referencedDeclaration": 3132,
+                        "src": "254:10:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_PIGGY_BANK_$3075_$",
+                          "typeIdentifier": "t_type$_t_contract$_PIGGY_BANK_$3132_$",
                           "typeString": "type(contract PIGGY_BANK)"
                         }
                       },
@@ -219,21 +219,21 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "249:27:16",
+                      "src": "254:27:16",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                         "typeString": "contract PIGGY_BANK"
                       }
                     },
-                    "src": "231:45:16",
+                    "src": "236:45:16",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                      "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                       "typeString": "contract PIGGY_BANK"
                     }
                   },
                   "id": 1371,
                   "nodeType": "ExpressionStatement",
-                  "src": "231:45:16"
+                  "src": "236:45:16"
                 }
               ]
             },
@@ -255,7 +255,7 @@
                   "name": "_targetContract",
                   "nodeType": "VariableDeclaration",
                   "scope": 1373,
-                  "src": "183:23:16",
+                  "src": "188:23:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -266,7 +266,7 @@
                     "id": 1362,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "183:7:16",
+                    "src": "188:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -276,17 +276,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "182:25:16"
+              "src": "187:25:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1365,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:16"
+              "src": "228:0:16"
             },
             "scope": 1417,
-            "src": "155:126:16",
+            "src": "160:126:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -295,7 +295,7 @@
             "body": {
               "id": 1390,
               "nodeType": "Block",
-              "src": "357:56:16",
+              "src": "362:56:16",
               "statements": [
                 {
                   "expression": {
@@ -308,7 +308,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1377,
-                        "src": "405:2:16",
+                        "src": "410:2:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -330,7 +330,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1375,
-                          "src": "389:14:16",
+                          "src": "394:14:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -353,9 +353,9 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 1361,
-                            "src": "363:15:16",
+                            "src": "368:15:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                               "typeString": "contract PIGGY_BANK"
                             }
                           },
@@ -366,8 +366,8 @@
                           "lValueRequested": false,
                           "memberName": "Put",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 3014,
-                          "src": "363:19:16",
+                          "referencedDeclaration": 3071,
+                          "src": "368:19:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_address_$returns$__$",
                             "typeString": "function (address) payable external"
@@ -381,7 +381,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "363:25:16",
+                        "src": "368:25:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_address_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (address) payable external)"
@@ -395,7 +395,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "363:41:16",
+                      "src": "368:41:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_address_$returns$__$value",
                         "typeString": "function (address) payable external"
@@ -409,7 +409,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "363:45:16",
+                    "src": "368:45:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -417,7 +417,7 @@
                   },
                   "id": 1389,
                   "nodeType": "ExpressionStatement",
-                  "src": "363:45:16"
+                  "src": "368:45:16"
                 }
               ]
             },
@@ -439,7 +439,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 1391,
-                  "src": "307:22:16",
+                  "src": "312:22:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -450,7 +450,7 @@
                     "id": 1374,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "307:7:16",
+                    "src": "312:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -465,7 +465,7 @@
                   "name": "to",
                   "nodeType": "VariableDeclaration",
                   "scope": 1391,
-                  "src": "331:10:16",
+                  "src": "336:10:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -476,7 +476,7 @@
                     "id": 1376,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "331:7:16",
+                    "src": "336:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -486,17 +486,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "306:36:16"
+              "src": "311:36:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1379,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "357:0:16"
+              "src": "362:0:16"
             },
             "scope": 1417,
-            "src": "286:127:16",
+            "src": "291:127:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -505,7 +505,7 @@
             "body": {
               "id": 1408,
               "nodeType": "Block",
-              "src": "494:61:16",
+              "src": "499:61:16",
               "statements": [
                 {
                   "expression": {
@@ -518,7 +518,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1395,
-                        "src": "546:3:16",
+                        "src": "551:3:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -540,7 +540,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1393,
-                          "src": "530:14:16",
+                          "src": "535:14:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -563,9 +563,9 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 1361,
-                            "src": "500:15:16",
+                            "src": "505:15:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                               "typeString": "contract PIGGY_BANK"
                             }
                           },
@@ -576,8 +576,8 @@
                           "lValueRequested": false,
                           "memberName": "Collect",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 3065,
-                          "src": "500:23:16",
+                          "referencedDeclaration": 3122,
+                          "src": "505:23:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_uint256_$returns$__$",
                             "typeString": "function (uint256) payable external"
@@ -591,7 +591,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "500:29:16",
+                        "src": "505:29:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_uint256_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (uint256) payable external)"
@@ -605,7 +605,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "500:45:16",
+                      "src": "505:45:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_uint256_$returns$__$value",
                         "typeString": "function (uint256) payable external"
@@ -619,7 +619,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "500:50:16",
+                    "src": "505:50:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -627,7 +627,7 @@
                   },
                   "id": 1407,
                   "nodeType": "ExpressionStatement",
-                  "src": "500:50:16"
+                  "src": "505:50:16"
                 }
               ]
             },
@@ -649,7 +649,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 1409,
-                  "src": "443:22:16",
+                  "src": "448:22:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -660,7 +660,7 @@
                     "id": 1392,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "443:7:16",
+                    "src": "448:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -675,7 +675,7 @@
                   "name": "_am",
                   "nodeType": "VariableDeclaration",
                   "scope": 1409,
-                  "src": "467:11:16",
+                  "src": "472:11:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -686,7 +686,7 @@
                     "id": 1394,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "467:7:16",
+                    "src": "472:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -696,17 +696,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "442:37:16"
+              "src": "447:37:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1397,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "494:0:16"
+              "src": "499:0:16"
             },
             "scope": 1417,
-            "src": "418:137:16",
+            "src": "423:137:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -715,7 +715,7 @@
             "body": {
               "id": 1415,
               "nodeType": "Block",
-              "src": "586:19:16",
+              "src": "591:19:16",
               "statements": [
                 {
                   "expression": {
@@ -727,11 +727,11 @@
                       "name": "revert",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        3150,
-                        3151
+                        3207,
+                        3208
                       ],
-                      "referencedDeclaration": 3150,
-                      "src": "592:6:16",
+                      "referencedDeclaration": 3207,
+                      "src": "597:6:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_revert_pure$__$returns$__$",
                         "typeString": "function () pure"
@@ -745,7 +745,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "592:8:16",
+                    "src": "597:8:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -753,7 +753,7 @@
                   },
                   "id": 1414,
                   "nodeType": "ExpressionStatement",
-                  "src": "592:8:16"
+                  "src": "597:8:16"
                 }
               ]
             },
@@ -769,30 +769,30 @@
               "id": 1410,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "568:2:16"
+              "src": "573:2:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1411,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "586:0:16"
+              "src": "591:0:16"
             },
             "scope": 1417,
-            "src": "560:45:16",
+            "src": "565:45:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
         "scope": 1418,
-        "src": "84:523:16"
+        "src": "89:523:16"
       }
     ],
-    "src": "0:609:16"
+    "src": "0:614:16"
   },
   "legacyAST": {
-    "absolutePath": "/home/osboxes/vultron/contracts/Attack_PIGGY_BANK1.sol",
+    "absolutePath": "/home/liuye/Webank/vultron/contracts/Attack_PIGGY_BANK1.sol",
     "exportedSymbols": {
       "Attack_PIGGY_BANK1": [
         1417
@@ -813,13 +813,13 @@
         "src": "0:24:16"
       },
       {
-        "absolutePath": "/home/osboxes/vultron/contracts/PIGGY_BANK.sol",
-        "file": "/home/osboxes/vultron/contracts/PIGGY_BANK.sol",
+        "absolutePath": "/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol",
+        "file": "/home/liuye/Webank/vultron/contracts/PIGGY_BANK.sol",
         "id": 1359,
         "nodeType": "ImportDirective",
         "scope": 1418,
-        "sourceUnit": 3131,
-        "src": "26:56:16",
+        "sourceUnit": 3188,
+        "src": "26:61:16",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -842,11 +842,11 @@
             "name": "target_contract",
             "nodeType": "VariableDeclaration",
             "scope": 1417,
-            "src": "117:33:16",
+            "src": "122:33:16",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
               "typeString": "contract PIGGY_BANK"
             },
             "typeName": {
@@ -854,10 +854,10 @@
               "id": 1360,
               "name": "PIGGY_BANK",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 3075,
-              "src": "117:10:16",
+              "referencedDeclaration": 3132,
+              "src": "122:10:16",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                 "typeString": "contract PIGGY_BANK"
               }
             },
@@ -868,7 +868,7 @@
             "body": {
               "id": 1372,
               "nodeType": "Block",
-              "src": "223:58:16",
+              "src": "228:58:16",
               "statements": [
                 {
                   "expression": {
@@ -885,9 +885,9 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 1361,
-                      "src": "231:15:16",
+                      "src": "236:15:16",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                         "typeString": "contract PIGGY_BANK"
                       }
                     },
@@ -903,7 +903,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1363,
-                          "src": "260:15:16",
+                          "src": "265:15:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
@@ -921,10 +921,10 @@
                         "name": "PIGGY_BANK",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3075,
-                        "src": "249:10:16",
+                        "referencedDeclaration": 3132,
+                        "src": "254:10:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_PIGGY_BANK_$3075_$",
+                          "typeIdentifier": "t_type$_t_contract$_PIGGY_BANK_$3132_$",
                           "typeString": "type(contract PIGGY_BANK)"
                         }
                       },
@@ -936,21 +936,21 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "249:27:16",
+                      "src": "254:27:16",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                        "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                         "typeString": "contract PIGGY_BANK"
                       }
                     },
-                    "src": "231:45:16",
+                    "src": "236:45:16",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                      "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                       "typeString": "contract PIGGY_BANK"
                     }
                   },
                   "id": 1371,
                   "nodeType": "ExpressionStatement",
-                  "src": "231:45:16"
+                  "src": "236:45:16"
                 }
               ]
             },
@@ -972,7 +972,7 @@
                   "name": "_targetContract",
                   "nodeType": "VariableDeclaration",
                   "scope": 1373,
-                  "src": "183:23:16",
+                  "src": "188:23:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -983,7 +983,7 @@
                     "id": 1362,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "183:7:16",
+                    "src": "188:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -993,17 +993,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "182:25:16"
+              "src": "187:25:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1365,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:16"
+              "src": "228:0:16"
             },
             "scope": 1417,
-            "src": "155:126:16",
+            "src": "160:126:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -1012,7 +1012,7 @@
             "body": {
               "id": 1390,
               "nodeType": "Block",
-              "src": "357:56:16",
+              "src": "362:56:16",
               "statements": [
                 {
                   "expression": {
@@ -1025,7 +1025,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1377,
-                        "src": "405:2:16",
+                        "src": "410:2:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1047,7 +1047,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1375,
-                          "src": "389:14:16",
+                          "src": "394:14:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -1070,9 +1070,9 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 1361,
-                            "src": "363:15:16",
+                            "src": "368:15:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                               "typeString": "contract PIGGY_BANK"
                             }
                           },
@@ -1083,8 +1083,8 @@
                           "lValueRequested": false,
                           "memberName": "Put",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 3014,
-                          "src": "363:19:16",
+                          "referencedDeclaration": 3071,
+                          "src": "368:19:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_address_$returns$__$",
                             "typeString": "function (address) payable external"
@@ -1098,7 +1098,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "363:25:16",
+                        "src": "368:25:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_address_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (address) payable external)"
@@ -1112,7 +1112,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "363:41:16",
+                      "src": "368:41:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_address_$returns$__$value",
                         "typeString": "function (address) payable external"
@@ -1126,7 +1126,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "363:45:16",
+                    "src": "368:45:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1134,7 +1134,7 @@
                   },
                   "id": 1389,
                   "nodeType": "ExpressionStatement",
-                  "src": "363:45:16"
+                  "src": "368:45:16"
                 }
               ]
             },
@@ -1156,7 +1156,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 1391,
-                  "src": "307:22:16",
+                  "src": "312:22:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1167,7 +1167,7 @@
                     "id": 1374,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "307:7:16",
+                    "src": "312:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1182,7 +1182,7 @@
                   "name": "to",
                   "nodeType": "VariableDeclaration",
                   "scope": 1391,
-                  "src": "331:10:16",
+                  "src": "336:10:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1193,7 +1193,7 @@
                     "id": 1376,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "331:7:16",
+                    "src": "336:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
@@ -1203,17 +1203,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "306:36:16"
+              "src": "311:36:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1379,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "357:0:16"
+              "src": "362:0:16"
             },
             "scope": 1417,
-            "src": "286:127:16",
+            "src": "291:127:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -1222,7 +1222,7 @@
             "body": {
               "id": 1408,
               "nodeType": "Block",
-              "src": "494:61:16",
+              "src": "499:61:16",
               "statements": [
                 {
                   "expression": {
@@ -1235,7 +1235,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 1395,
-                        "src": "546:3:16",
+                        "src": "551:3:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
@@ -1257,7 +1257,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 1393,
-                          "src": "530:14:16",
+                          "src": "535:14:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
                             "typeString": "uint256"
@@ -1280,9 +1280,9 @@
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 1361,
-                            "src": "500:15:16",
+                            "src": "505:15:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3075",
+                              "typeIdentifier": "t_contract$_PIGGY_BANK_$3132",
                               "typeString": "contract PIGGY_BANK"
                             }
                           },
@@ -1293,8 +1293,8 @@
                           "lValueRequested": false,
                           "memberName": "Collect",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 3065,
-                          "src": "500:23:16",
+                          "referencedDeclaration": 3122,
+                          "src": "505:23:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_payable$_t_uint256_$returns$__$",
                             "typeString": "function (uint256) payable external"
@@ -1308,7 +1308,7 @@
                         "memberName": "value",
                         "nodeType": "MemberAccess",
                         "referencedDeclaration": null,
-                        "src": "500:29:16",
+                        "src": "505:29:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_setvalue_nonpayable$_t_uint256_$returns$_t_function_external_payable$_t_uint256_$returns$__$value_$",
                           "typeString": "function (uint256) returns (function (uint256) payable external)"
@@ -1322,7 +1322,7 @@
                       "lValueRequested": false,
                       "names": [],
                       "nodeType": "FunctionCall",
-                      "src": "500:45:16",
+                      "src": "505:45:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_payable$_t_uint256_$returns$__$value",
                         "typeString": "function (uint256) payable external"
@@ -1336,7 +1336,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "500:50:16",
+                    "src": "505:50:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1344,7 +1344,7 @@
                   },
                   "id": 1407,
                   "nodeType": "ExpressionStatement",
-                  "src": "500:50:16"
+                  "src": "505:50:16"
                 }
               ]
             },
@@ -1366,7 +1366,7 @@
                   "name": "vultron_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 1409,
-                  "src": "443:22:16",
+                  "src": "448:22:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1377,7 +1377,7 @@
                     "id": 1392,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "443:7:16",
+                    "src": "448:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1392,7 +1392,7 @@
                   "name": "_am",
                   "nodeType": "VariableDeclaration",
                   "scope": 1409,
-                  "src": "467:11:16",
+                  "src": "472:11:16",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1403,7 +1403,7 @@
                     "id": 1394,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "467:7:16",
+                    "src": "472:7:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1413,17 +1413,17 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "442:37:16"
+              "src": "447:37:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1397,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "494:0:16"
+              "src": "499:0:16"
             },
             "scope": 1417,
-            "src": "418:137:16",
+            "src": "423:137:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
@@ -1432,7 +1432,7 @@
             "body": {
               "id": 1415,
               "nodeType": "Block",
-              "src": "586:19:16",
+              "src": "591:19:16",
               "statements": [
                 {
                   "expression": {
@@ -1444,11 +1444,11 @@
                       "name": "revert",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        3150,
-                        3151
+                        3207,
+                        3208
                       ],
-                      "referencedDeclaration": 3150,
-                      "src": "592:6:16",
+                      "referencedDeclaration": 3207,
+                      "src": "597:6:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_revert_pure$__$returns$__$",
                         "typeString": "function () pure"
@@ -1462,7 +1462,7 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "592:8:16",
+                    "src": "597:8:16",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
@@ -1470,7 +1470,7 @@
                   },
                   "id": 1414,
                   "nodeType": "ExpressionStatement",
-                  "src": "592:8:16"
+                  "src": "597:8:16"
                 }
               ]
             },
@@ -1486,33 +1486,33 @@
               "id": 1410,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "568:2:16"
+              "src": "573:2:16"
             },
             "payable": true,
             "returnParameters": {
               "id": 1411,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "586:0:16"
+              "src": "591:0:16"
             },
             "scope": 1417,
-            "src": "560:45:16",
+            "src": "565:45:16",
             "stateMutability": "payable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
         "scope": 1418,
-        "src": "84:523:16"
+        "src": "89:523:16"
       }
     ],
-    "src": "0:609:16"
+    "src": "0:614:16"
   },
   "compiler": {
     "name": "solc",
-    "version": "0.4.25+commit.59dbf8f1.Emscripten.clang"
+    "version": "0.4.26+commit.4563c3fc.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "2.0.1",
-  "updatedAt": "2019-09-13T09:06:31.310Z"
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2020-05-01T07:32:40.486Z"
 }
