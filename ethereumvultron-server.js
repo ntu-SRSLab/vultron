@@ -6,11 +6,7 @@ const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
 const Web3 = require('web3');
-const ethereum_fuzzer = require('./connection/ethereum/fuzzer.js');
-
-const FiscoFuzzer = require('./connection/fisco/fuzzer.js').FiscoFuzzer;
-const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
-let fiscoFuzzer = new FiscoFuzzer(0);
+const fuzzer = require('./connection/ethereum/fuzzer.js');
 
 const bodyParser = require('body-parser');
 const multer = require('multer');
@@ -39,14 +35,6 @@ let g_bootstrap_build_attack = './build/contracts/AttackDAO.json';
 let g_bootstrap_source_attack = './contracts/SimpleDAO.sol';
 let g_bootstrap_source_target = './contracts/AttackDAO.sol';
 
-let default_option = {
-    fuzzer: fiscoFuzzer,
-    server: "",
-    port: "",
-    directory: "",
-    file: "",
-    configuration: null
-};
 
 function init_g_path_map() {
     let contracts = fs.readdirSync("./build/contracts");
@@ -124,167 +112,6 @@ app.get('/', (req, res) => {
     console.log("**** GET / ****");
     res.render('index.ejs');
 });
-
-app.get('/fisco', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.test().then((success) => {
-        res.send("connection success");
-    });
-});
-let hello_contract_path = "./Vultron-Fisco/fisco/HelloWorld.sol"
-let contract_path = "./Vultron-Fisco/fisco/wecredit/Account.sol"
-let compiled_dir = "./deployed_contract/wecredit";
-let accountcontroller = "./Vultron-Fisco/fisco/wecredit/AccountController.sol";
-let creditcontroller = "./Vultron-Fisco/fisco/wecredit/CreditController.sol"
-app.get('/fisco/deploy', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.deploy_contract(hello_contract_path).then((answer) => {
-        console.log(answer);
-        res.send(hello_contract_path + " was deployed with address " + answer);
-    }).catch(e => {
-        console.log(e);
-        res.render('error.ejs', {
-            message: e
-        });
-    });
-});
-app.get('/fisco/deploy/wecredit', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.deploy_contract_precompiled(accountcontroller, compiled_dir)
-        .then((AccountCtr) => {
-            console.log(accountcontroller, AccountCtr.address);
-            fiscoFuzzer._send_tx({
-                to: AccountCtr.address,
-                fun: "registeAccount(bytes32,bytes32,bytes32,string)",
-                param: ["0x0", "0x0", "0x0", "0xcaffee"]
-            }, "./deployed_contract/AccountController/AccountController.abi").then((receipt) => {
-                console.log(receipt);
-                fiscoFuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
-                    .then((CreditCtr) => {
-                        console.log(creditcontroller, CreditCtr.address);
-                        res.render("deploy.ejs", {
-                            contracts: [AccountCtr, CreditCtr],
-                            status: "success"
-                        });
-                    })
-            }).catch(e => {
-                console.log(e);
-                console.trace();
-                res.render('error.ejs', {
-                    message: e
-                });
-            });
-        }).catch(e => {
-            console.log(e);
-            console.trace();
-            res.render('error.ejs', {
-                message: e
-            });
-        });
-
-}); app.get('/fisco/load/wecredit', (req, res) => {
-    let fuzzer = new FiscoFuzzer(0, "CreditController");
-    async function test() {
-        await fuzzer.test();
-        let ret = await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
-            "/home/liuye/Webank/vultron/deployed_contract/CreditController",
-            "/home/liuye/Webank/vultron/Vultron-Fisco/fisco/wecredit/CreditController.sol");
-        return ret;
-    }
-
-    test().then((answer) => {
-            if (typeof answer.accounts === 'undefined')
-                throw "Error loading contracts";
-            // console.log(JSON.stringify(answer));
-            res.render('contracts.ejs', {
-                accounts: answer.accounts,
-                target_adds: answer.target_adds,
-                target_abi: JSON.stringify(answer.target_abi),
-                attack_adds: "NULL",
-                attack_abi: "[]"
-            });
-            console.log("success");
-        })
-        .catch((e) => {
-            res.render('error.ejs', {
-                message: e
-            });
-
-            console.log(e);
-            console.trace();
-        });
-});
-
-app.get('/fisco/bootstrap/wecredit', (req, res) => {
-    //  let fuzzer = new FiscoFuzzer(0, "CreditController");
-    let fuzzer = FiscoStateMachineFuzzer.getInstance(0, "CreditController", __dirname);
-    async function test() {
-        await fuzzer.test();
-        await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
-            "/home/liuye/Webank/vultron/deployed_contract/CreditController",
-            "/home/liuye/Webank/vultron/Vultron-Fisco/fisco/wecredit/CreditController.sol");
-
-        let ret = await fuzzer.bootstrap();
-        return ret;
-    }
-
-    test().then((answer) => {
-            res.render('seeds.ejs', {
-                callFuns: answer.callFuns,
-                status: answer.execResults
-            });
-            console.log("success");
-        })
-        .catch((e) => {
-            res.render('error.ejs', {
-                message: e
-            });
-
-            console.log(e);
-            console.trace();
-        });
-});
-app.get('/fisco/deploy/precompiled', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.deploy_contract_precompiled_params(contract_path, compiled_dir,
-        'Account(bytes32,bytes32,bytes32,string)', ["0x12", "0x2", "0x1", "0x43424efe34"]).
-    then((answer) => {
-        console.log(answer);
-        res.send(contract_path + " was deployed with address " + answer);
-    }).catch(e => {
-        console.log(e);
-        console.trace();
-        res.render('error.ejs', {
-            message: e
-        });
-    });
-});
-
-app.get('/fisco/call', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.call_contract(contract_path, "get()", null).then((answer) => {
-        console.log(answer);
-        res.send(contract_path + " was called with address " + JSON.stringify(answer));
-    }).catch(e => {
-        console.log(e);
-        console.trace();
-        res.render('error.ejs', {
-            message: e
-        });
-    });
-});
-app.get('/fisco/get', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fiscoFuzzer.get_instance(contract_path).then((instances) => {
-        res.send(contract_path + " was instantialized with " + instances.length + " entities:" + JSON.stringify(instances));
-    }).catch(e => {
-        console.log(e);
-        res.render('error.ejs', {
-            message: e
-        });
-    });
-});
-
 app.get('/load-default', (req, res) => {
     console.log("**** GET /load-default ****");
 
@@ -441,7 +268,7 @@ app.get('/bootstrap', (req, RES) => {
 });
 
 // default RPC address
-let httpRpcAddr = "http://127.0.0.1:8546";
+let httpRpcAddr = "http://127.0.0.1:8566";
 
 function parse_cmd() {
     let args = process.argv.slice(2, process.argv.length);
@@ -463,8 +290,8 @@ function parse_cmd() {
 }
 
 parse_cmd();
-//fuzzer.setProvider(httpRpcAddr);
-//fuzzer.unlockAccount();
+fuzzer.setProvider(httpRpcAddr);
+fuzzer.unlockAccount();
 
 app.listen(port, () => {
     console.log("Express Listening at http://localhost:" + port);

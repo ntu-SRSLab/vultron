@@ -4,3 +4,6 @@
 [submodule "Vultron-Fisco"]
 	path = Vultron-Fisco
 	url = git@github.com:ntu-SRSLab/Vultron-Fisco.git
+[submodule "Vultron-FISCO-BCOS"]
+	path = Vultron-FISCO-BCOS
+	url = git@github.com:ntu-SRSLab/Vultron-FISCO-BCOS.git

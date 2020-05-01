@@ -42,29 +42,9 @@ Both the contract source code and the migration (deployment) scripts are provide
 
 #### Configurations
 
-1. Update BCOS configuration file at `./connection/fisco/config.json` 
-(replace the paths to 'key', 'cert', 'ca' according to your own setup):
-
-```json
-{
-    "privateKey": {
-        "type": "pem",
-        "value": "./0x144d5ca47de35194b019b6f11a56028b964585c9.pem"
-    },
-    "nodes": [
-        {
-            "ip": "127.0.0.1",
-            "port": "20200"
-        }
-    ],
-    "authentication": {
-        "key": "/home/XXX/Webank/fisco/nodes/127.0.0.1/sdk/sdk.key",
-        "cert":"/home/XXX/Webank/fisco/nodes/127.0.0.1/sdk/sdk.crt",
-        "ca":  "/home/XXX/Webank/fisco/nodes/cert/ca.crt"
-    },
-    "groupID": 1,
-    "timeout": 10000
-}
+1. Bootstrap Fisco-Bcos. 
+```
+  cd VULTRON-FISCO-BCOS && ./quickstart.sh
 ```
 
 2. Install packages
