@@ -1,13 +1,17 @@
 // CreditControllerState.js
 // customize the state definition and prepost conditions about CreditController
 //
+const aa = require("aa");
 const assert = require("assert");
 const Machine = require("xstate").Machine;
 const assign = require("xstate").assign;
 const interpret = require("xstate").interpret;
 const createModel = require("@xstate/test").createModel;
 const FiscoFuzzer = require("../fisco/fuzzer.js").FiscoFuzzer;
-
+let  asyncFlag = false;
+function revertAsyncFlag(){
+    asyncFlag =  asyncFlag?false:true; 
+}
 function check_raw_tx(raw_tx) {
     assert(raw_tx["to"]);
     assert(raw_tx["fun"]);
@@ -27,8 +31,7 @@ class CreditInterface {
     }
     async createCredit() {
         let raw_tx = await this.fuzzer._fuzz_fun("createCredit");
-        console.log(raw_tx);
-        let receipt = await this.fuzzer._send_tx(raw_tx);
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
         let events = await this.fuzzer._parse_receipt(receipt);
         let creditEvents = events.filter((e) => {
             return e.name == "creditEvent"
@@ -37,14 +40,14 @@ class CreditInterface {
             console.log(creditEvents);
             let credits = [];
             for (let creditEvent of creditEvents) {
-                assert(creditEvent.events.filter((e) => {
-                    e.name == "credit"
+               assert(creditEvent.events.filter((e) => {
+                   return e.name == "credit"
                 }).length == 1);
                 credits.push(creditEvent.events.filter((e) => {
-                    e.name == "credit"
+                    return e.name == "credit"
                 })[0].value);
             }
-            console.log(credits);
+            console.log("credit:", credits);
             return {
                 target: credits
             }
@@ -54,32 +57,151 @@ class CreditInterface {
         }
     }
     async transferCredit() {
+        let raw_tx = await this.fuzzer._fuzz_fun("transferCredit");
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        let events = await this.fuzzer._parse_receipt(receipt);
+        let creditEvents = events.filter((e) => {
+            return e.name == "creditEvent"
+        });
+        if (creditEvents.length >= 1) {
+            console.log(JSON.stringify(creditEvents));
+            let credits = [];
+            for (let creditEvent of creditEvents) {
+                assert(creditEvent.events.filter((e) => {
+                    return   e.name == "credit"
+                }).length == 1);
+                credits.push(creditEvent.events.filter((e) => {
+                  return   e.name == "credit"
+                })[0].value);
+            }
+            console.log("credit:", credits);
+            return {
+                target: credits,
+                split: [],
+                origin: []
+            }
+        }
+
         return {
-            target: tcredit,
-            split: scredit,
-            origin: ocredit
+            target: [],
+            split: [],
+            origin: []
         }
     }
     async discountCredit() {
+        let raw_tx = await this.fuzzer._fuzz_fun("discountCredit");
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        let events = await this.fuzzer._parse_receipt(receipt);
+        let creditEvents = events.filter((e) => {
+            return e.name == "creditEvent"
+        });
+        if (creditEvents.length >= 1) {
+            console.log(JSON.stringify(creditEvents));
+            let credits = [];
+            for (let creditEvent of creditEvents) {
+                assert(creditEvent.events.filter((e) => {
+                    return e.name == "credit"
+                }).length == 1);
+                credits.push(creditEvent.events.filter((e) => {
+                  return   e.name == "credit"
+                })[0].value);
+            }
+            console.log("credit:", credits);
+            return {
+                target: credits,
+                discount: [],
+                origin: []
+            }
+        }
+
         return {
-            target: tcredit,
-            discount: dcredit,
-            origin: ocredit
+            target: [],
+            discount: [],
+            origin: []
         }
     }
-    async expireCredit(raw_tx) {
+    async expireCredit() {
+        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        let events = await this.fuzzer._parse_receipt(receipt);
+        let creditEvents = events.filter((e) => {
+            return e.name == "creditEvent"
+        });
+        if (creditEvents.length >= 1) {
+            console.log(JSON.stringify(creditEvents));
+            let credits = [];
+            for (let creditEvent of creditEvents) {
+                assert(creditEvent.events.filter((e) => {
+                   return e.name == "credit"
+                }).length == 1);
+                credits.push(creditEvent.events.filter((e) => {
+                   return  e.name == "credit"
+                })[0].value);
+            }
+            console.log("credit:", credits);
+            return {
+                target: credits
+            }
+        }
+
         return {
-            target: tcredit,
+            target: [],
         }
     }
-    async clearCredit(raw_tx) {
+    async clearCredit() {
+        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        let events = await this.fuzzer._parse_receipt(receipt);
+        let creditEvents = events.filter((e) => {
+            return e.name == "creditEvent"
+        });
+        if (creditEvents.length >= 1) {
+            console.log(JSON.stringify(creditEvents));
+            let credits = [];
+            for (let creditEvent of creditEvents) {
+                assert(creditEvent.events.filter((e) => {
+                    return e.name == "credit"
+                }).length == 1);
+                credits.push(creditEvent.events.filter((e) => {
+                   return  e.name == "credit"
+                })[0].value);
+            }
+            console.log("credit:", credits);
+            return {
+                target: credits
+            }
+        }
+
         return {
-            target: tcredit,
+            target: [],
         }
     }
-    async closeCredit(raw_tx) {
+    async closeCredit() {
+        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        let events = await this.fuzzer._parse_receipt(receipt);
+        let creditEvents = events.filter((e) => {
+            return e.name == "creditEvent"
+        });
+        if (creditEvents.length >= 1) {
+            console.log(JSON.stringify(creditEvents));
+            let credits = [];
+            for (let creditEvent of creditEvents) {
+                assert(creditEvent.events.filter((e) => {
+                    return e.name == "credit"
+                }).length == 1);
+                credits.push(creditEvent.events.filter((e) => {
+                   return  e.name == "credit"
+                })[0].value);
+            }
+            console.log("credit:", credits);
+            return {
+                target: credits
+            }
+        }
+
         return {
-            target: tcredit,
+            target: [],
         }
     }
     async getStatus() {
@@ -95,12 +217,12 @@ class CreditInterface {
 class CreditControllerState {
     constructor(fuzzer) {
         this.status = {
-            holding: undefined,
-            clearing: undefined,
-            valid: undefined
+            holding: 0,
+            clearing: 0,
+            valid: 0
         };
-        this.sccAmt = undefined;
-        this.owner = undefined;
+        this.sccAmt = 0;
+        this.owner = 0;
         this.credit = new CreditInterface(fuzzer);
     }
     static getInstance(_fuzzer) {
@@ -109,13 +231,13 @@ class CreditControllerState {
         console.log(CreditControllerState.instance);
         return CreditControllerState.instance;
     }
-    update() {
-        this.status = this.credit.getStatus();
-        this.sccAmt = this.credit.getSccAmt();
-        this.owner = this.credit.getOwner();
+   async  update() {
+        this.status = await this.credit.getStatus();
+        this.sccAmt = await this.credit.getSccAmt();
+        this.owner = await this.credit.getOwner();
     }
     async createCredit() {
-        this.update();
+        await this.update();
         //preCondition
         //TO DO
         let ret = await this.credit.createCredit();
@@ -125,51 +247,90 @@ class CreditControllerState {
     }
 
     async transferCredit() {
-        this.update();
+        await this.update();
         //preCondition
         //TO DO
-        let ret = this.credit.transferCredit();
+        let ret = await this.credit.transferCredit();
         //...
         //postCondition
         return ret.target;
     }
     async discountCredit() {
-        this.update();
+        await this.update();
         //preCondition
         //TO DO
-        let ret = this.credit.discountCredit();
+        let ret = await this.credit.discountCredit();
         //...
         //postCondition
         return ret.target;
     }
     async expireCredit() {
-        this.update();
+        await  this.update();
         //preCondition
         //TO DO
-        let ret = this.credit.expireCredit();
+        let ret = await  this.credit.expireCredit();
         //...
         //postCondition
         return ret.target;
     }
     async closeCredit() {
-        this.update();
+        await this.update();
         //preCondition
         //TO DO
-        let ret = this.credit.closeCredit();
+        let ret = await this.credit.closeCredit();
         //...
         //postCondition
         return ret.target;
     }
     async clearCredit() {
-        this.update();
+        await this.update();
         //preCondition
         //TO DO
-        let ret = this.credit.clearCredit();
+        let ret = await this.credit.clearCredit();
         //...
         //postCondition
         return ret.target;
     }
 }
+
+// actions
+let     createCredit = async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+            ret = await context.ctx.createCredit();
+        return ret;
+    };
+let     transferCredit  = async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+             ret = await context.ctx.transferCredit();
+        return ret;
+    };
+  let   discountCredit =  async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+             ret = await context.ctx.discountCredit();
+        return ret;
+    };
+let     expireCredit = async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+            ret = await context.ctx.expireCredit();
+        return ret;
+    };
+let   clearCredit= async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+              ret =  await context.ctx.clearCredit();
+        return ret;
+    };
+ let   closeCredit = async (context, event) => {
+        let ret = [];
+        if (asyncFlag)
+                ret = await context.ctx.closeCredit();
+        return ret;
+    } ;
+
 
 const createCreditStateMachine = statectx => {
     return Machine({
@@ -248,25 +409,12 @@ const createCreditStateMachine = statectx => {
         }
     }, {
         actions: {
-            createCredit: async (context, event) => {
-                await context.ctx.createCredit();
-            },
-            transferCredit: async (context, event) => {
-                await context.ctx.transferCredit();
-            },
-            discountCredit: async (context, event) => {
-                await context.ctx.discountCredit();
-            },
-            expireCredit: async (context, event) => {
-                await context.ctx.expireCredit();
-            },
-            clearCredit: async (context, event) => {
-                await context.ctx.clearCredit();
-            },
-            closeCredit: async (context, event) => {
-                await context.ctx.closeCredit();
-            }
-
+            createCredit:  createCredit,
+            transferCredit: transferCredit,
+            discountCredit: discountCredit,
+            expireCredit: expireCredit,
+            clearCredit: clearCredit,
+            closeCredit:  closeCredit
         }
     })
 };
@@ -281,19 +429,47 @@ class FiscoStateMachineFuzzer extends FiscoFuzzer {
         return FiscoStateMachineFuzzer.instance;
     }
     async bootstrap() {
+
         let creditStateMachine = createCreditStateMachine(CreditControllerState.getInstance(FiscoStateMachineFuzzer.getInstance()));
-       // console.log(creditStateMachine.context);
-        const service = interpret(creditStateMachine).onTransition(state => {
+        // console.log(creditStateMachine.context);
+        let service = interpret(creditStateMachine).onTransition(state => {
             console.log(state.value);
         });
-
+        service = aa.promisifyAll(service);
+        // console.log(creditStateMachine);
         const toggleModel = createModel(creditStateMachine);
         let plans = toggleModel.getSimplePathPlans();
-	console.log("size of plans:", plans.length);
-	console.log("plans[1]:" , plans[1].state, "->", plans[1].paths);
-        await service.start();
-        await service.send("create");
-        await service.stop();
+        console.log("size of plans:", plans.length);
+        let index = 1;
+        for (let plan of plans) {
+            console.log("plan#", index++);
+            for (let path of plan.paths) {
+                let start =  service.start();
+                let events = path.description.split("via ")[1].split(" → ");
+                console.log(path.description);
+                console.log("transition by event ", events);
+                let state = service.send(events);
+                // console.log(state);
+                console.log(state.actions);
+                revertAsyncFlag();
+                for (let action of state.actions){
+                    
+                    let ret = await action.exec(start.context, undefined);
+                    console.log(action.type, ret);
+                    while(ret.length==0){
+                        ret = await action.exec(start.context, undefined);
+                        console.log(action.type, ret);
+                    }
+                }
+                revertAsyncFlag();
+                service.stop();
+                // console.log(path.segments);
+            }
+            console.log("Approaching fsm state->", plan.state.value);
+            console.log("********************************************");
+            // if (index == 3)
+            //     break;
+        }
 
         return {
             callFuns: [],

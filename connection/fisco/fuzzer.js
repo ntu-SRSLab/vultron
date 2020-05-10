@@ -1,30 +1,35 @@
 const abiDecoder = require('abi-decoder');
 const path = require('path');
+const shell = require("shelljs");
 const Web3jService = require('web3j-api/web3j').Web3jService;
-const web3j = new Web3jService();
 const Configuration = require('web3j-api/common/configuration').Configuration;
 Configuration.setConfig(path.join(__dirname, './config.json'));
 const readJSON = require("./common.js").readJSON;
 const write2file = require("./common.js").write2file;
 const types = require("./common.js").types;
-const gen_callFun = require("./common.js").gen_callFun;
+// const gen_callFun = require("./common.js").gen_callFun;
+const gen_callFun = require("./common_randompool.js").gen_callFun;
+
 const findCandSequence = require("./common.js").findCandSequence;
 const UserAccount = require("./common.js").UserAccount;
 const randomNum = require("./common.js").randomNum;
 
 const tracer = require('../EVM2Code');
 const fs = require('fs');
-const locks = require('locks');
-// mutex
-const mutex = locks.createMutex();
-const async = require('async');
 const assert = require("assert");
 
-//
+
 // the maximum length of seed_callSequence
 const sequence_maxLen = 4;
 
-
+function IsJsonObject(json) {
+    try {
+        JSON.stringify(json);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
 class FiscoFuzzer extends Web3jService {
     constructor(seed, contract_name, workdir) {
         super();
@@ -77,20 +82,21 @@ class FiscoFuzzer extends Web3jService {
     // @target_instance_path
     // @targetSolPath
     async load(target_artifact_path, target_instance_path, targetSolPath) {
+        console.log("current running workdir:", shell.pwd());
         let instances = await this.get_instance(target_instance_path);
         this.g_targetContract = instances[0];
         this.g_target_artifact = readJSON(target_artifact_path);
-        this.g_cand_sequence = await findCandSequence(this.g_targetContract.abi, undefined, this.g_targetContract);
-        this.g_targetStmt_set = await tracer.buildStmtSet(this.g_target_artifact.sourcePath,
-            this.g_target_artifact.srcmapRuntime,
-            this.g_target_artifact.source);
-        this.g_targetIns_map = await tracer.buildInsMap(this.g_target_artifact.sourcePath,
-            this.g_target_artifact.runtimeBytecode,
-            this.g_target_artifact.srcmapRuntime,
-            this.g_target_artifact.source);
-        this.g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
-        this.g_send_call_set = await tracer.buildMoneySet(targetSolPath);
-        this.g_send_call_found = await tracer.buildRelevantDepen(this.g_staticDep_target, this.g_send_call_set);
+        // this.g_cand_sequence = await findCandSequence(this.g_targetContract.abi, undefined, this.g_targetContract);
+        // this.g_targetStmt_set = await tracer.buildStmtSet(this.g_target_artifact.sourcePath,
+        //     this.g_target_artifact.srcmapRuntime,
+        //     this.g_target_artifact.source);
+        // this.g_targetIns_map = await tracer.buildInsMap(this.g_target_artifact.sourcePath,
+        //     this.g_target_artifact.runtimeBytecode,
+        //     this.g_target_artifact.srcmapRuntime,
+        //     this.g_target_artifact.source);
+        // this.g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
+        // this.g_send_call_set = await tracer.buildMoneySet(targetSolPath);
+        // this.g_send_call_found = await tracer.buildRelevantDepen(this.g_staticDep_target, this.g_send_call_set);
         this.loadContract = true;
         // for simplicity
         this.g_targetStmt_set = undefined;
@@ -181,26 +187,16 @@ class FiscoFuzzer extends Web3jService {
             const dir = await fs.promises.opendir(path);
             for await (const dirent of dir) {
                 if (dirent.name.search("0x") != -1) {
-                    //console.log("address:" + dirent.name);
                     answer += dirent.name + ";";
                     let ret;
-                    //console.log(dirent.name, function_name, argv);
                     if (argv == null || argv == undefined) {
-                        //console.log("argv is null or undefined");
                         ret = await this.call(dirent.name, function_name, "");
-                        //console.log(ret);
-                        //console.log("events:", JSON.stringify(abiDecoder.decodeLogs(ret.logs)));
                     } else {
-                        //console.log(argv);
                         ret = await this.call(dirent.name, function_name, argv);
-                        //console.log(ret);
-                        //console.log("events:", JSON.stringify(abiDecoder.decodeLogs(ret.logs)));
                     }
-                    //console.log("hello call contract");
                     answer += JSON.stringify(ret) + "\n</br>";
-                    //console.log(answer);
                 } else {
-                    //console.log(dirent.name);
+                    console.log(dirent.name);
                 }
             }
         }
@@ -308,13 +304,17 @@ class FiscoFuzzer extends Web3jService {
         }
     }
     async _send_tx(raw_tx, contract_abi) {
-        //console.log("_send_tx");
+        console.log("_send_tx", raw_tx);
         let receipt = await this.sendRawTransaction(raw_tx.to, raw_tx.fun, raw_tx.param);
+        // console.log(receipt);
         if (contract_abi) {
-            let abi = JSON.parse(fs.readFileSync(contract_abi, "utf8"));
+            let abi = undefined;
+            if (IsJsonObject(contract_abi))
+                abi = contract_abi;
+            else
+                abi = JSON.parse(fs.readFileSync(contract_abi, "utf8"));
+            assert(abi, "abi is undefined, contract_abi is not well defined");
             abiDecoder.addABI(abi);
-            //console.log(receipt);
-            //console.log(JSON.stringify(abiDecoder.decodeLogs(receipt.logs)));
         }
         return receipt;
     }
@@ -322,7 +322,7 @@ class FiscoFuzzer extends Web3jService {
         let receipt = await this.sendRawTransaction(raw_tx.to, raw_tx.fun, raw_tx.param);
         return receipt;
     }
-    async _parse_receipt(receipt) {
+    _parse_receipt(receipt) {
         //console.log("events:", JSON.stringify(abiDecoder.decodeLogs(receipt.logs)));
         return abiDecoder.decodeLogs(receipt.logs);
     }

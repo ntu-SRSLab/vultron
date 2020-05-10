@@ -8,6 +8,7 @@ const port = 3001 || process.env.FISCOPORT;
 const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
 const bodyParser = require('body-parser');
 const multer = require('multer');
+const shell = require("shelljs");
 var storage = multer.diskStorage({
     // destination: function (req, file, cb) {
     //   cb(null, './uploads')
@@ -61,7 +62,14 @@ app.get('/fisco/deploy', (req, res) => {
         });
     });
 });
+
+app.get('/fisco/compile/wecredit', (req, res) => {
+    let ret = shell.exec("node compile.js");
+    let compiled = ret.split("to compile").slice(2);
+    res.send(compiled);
+});
 app.get('/fisco/deploy/wecredit', (req, res) => {
+    shell.rm("./deployed_contract/*/0x*")
     console.log("**** GET", req.originalUrl, " ****");
     fuzzer.deploy_contract_precompiled(accountcontroller, compiled_dir)
         .then((AccountCtr) => {
@@ -70,7 +78,7 @@ app.get('/fisco/deploy/wecredit', (req, res) => {
                 to: AccountCtr.address,
                 fun: "registeAccount(bytes32,bytes32,bytes32,string)",
                 param: ["0x0", "0x0", "0x0", "0xcaffee"]
-            }, "./deployed_contract/AccountController/AccountController.abi").then((receipt) => {
+            }, JSON.parse(fs.readFileSync("./deployed_contract/AccountController/AccountController.abi", "utf8"))).then((receipt) => {
                 console.log(receipt);
                 fuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
                     .then((CreditCtr) => {
@@ -99,9 +107,9 @@ app.get('/fisco/deploy/wecredit', (req, res) => {
 app.get('/fisco/load/wecredit', (req, res) => {
     async function test() {
         await fuzzer.test();
-        let ret = await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
-            "/home/liuye/Webank/vultron/deployed_contract/CreditController",
-            "/home/liuye/Webank/vultron/Vultron-Fisco/fisco/wecredit/CreditController.sol");
+        let ret = await fuzzer.load("./deployed_contract/CreditController/CreditController.artifact",
+            "./deployed_contract/CreditController",
+            "./Vultron-Fisco-State/fisco/wecredit/CreditController.sol");
         return ret;
     }
 
@@ -131,9 +139,9 @@ app.get('/fisco/load/wecredit', (req, res) => {
 app.get('/fisco/bootstrap/wecredit', (req, res) => {
     async function test() {
         await fuzzer.test();
-        await fuzzer.load("/home/liuye/Webank/vultron/deployed_contract/CreditController/CreditController.artifact",
-            "/home/liuye/Webank/vultron/deployed_contract/CreditController",
-            "/home/liuye/Webank/vultron/Vultron-Fisco/fisco/wecredit/CreditController.sol");
+        await fuzzer.load("./deployed_contract/CreditController/CreditController.artifact",
+            "./deployed_contract/CreditController",
+            "./Vultron-Fisco-State/fisco/wecredit/CreditController.sol");
 
         let ret = await fuzzer.bootstrap();
         return ret;
