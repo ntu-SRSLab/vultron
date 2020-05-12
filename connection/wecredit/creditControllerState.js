@@ -300,6 +300,7 @@ class CreditControllerState {
         //preCondition
         //TO DO
          let ret = await this.credit.createCredit();
+       
          while(ret.target.length==0){
             ret = await this.credit.createCredit();
          }
@@ -319,6 +320,11 @@ class CreditControllerState {
         //preCondition
         //TO DO
         let ret = await this.credit.transferCredit();
+     
+        while(ret.target.length==0){
+            ret = await this.credit.transferCredit();
+        }
+         console.log("passed tx:", ret.raw_tx);
         for (let target of ret.target){
             let status = await this.update(target);
             console.log("update:",JSON.stringify(status));
@@ -332,6 +338,10 @@ class CreditControllerState {
         //preCondition
         //TO DO
         let ret = await this.credit.discountCredit();
+        while(ret.target.length==0){
+            ret = await this.credit.discountCredit();
+        }
+        console.log("passed tx:", ret.raw_tx);
         //...
         //postCondition
         for (let target of ret.target){
@@ -345,6 +355,11 @@ class CreditControllerState {
         //preCondition
         //TO DO
         let ret = await  this.credit.expireCredit();
+        while(ret.target.length==0){
+            ret = await this.credit.expireCredit();
+        }
+        
+        console.log("passed tx:", ret.raw_tx);
         //...
         //postCondition
         for (let target of ret.target){
@@ -357,7 +372,12 @@ class CreditControllerState {
         // await this.update();
         //preCondition
         //TO DO
-        let ret = await this.credit.closeCredit();
+        let ret = await this.credit.closeCredit(); 
+        while(ret.target.length==0){
+            ret = await this.credit.closeCredit();
+        }
+
+        console.log("passed tx:", ret.raw_tx);
         //...
         //postCondition
         for (let target of ret.target){
@@ -371,6 +391,10 @@ class CreditControllerState {
         //preCondition
         //TO DO
         let ret = await this.credit.clearCredit();
+        while(ret.target.length==0){
+            ret = await this.credit.clearCredit();
+        }
+        console.log("passed tx:", ret.raw_tx);
         //...
         //postCondition
          //postCondition

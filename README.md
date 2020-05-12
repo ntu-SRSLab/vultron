@@ -63,14 +63,14 @@ Both the contract source code and the migration (deployment) scripts are provide
 ```
   node fiscovultron-server.js
 ```
-<!-- 2. Test BCOS connection:
+ 2. Test BCOS connection:
 ```
-  http://localhost:3001/fisco  -->
-<!-- ```
-3. Test BCOS deploy:
+  http://localhost:3001/fisco  
+```
+<!-- 3. Test BCOS deploy:
 ```
   http://localhost:3000/fisco/deploy/wecredit 
-``` -->
+``` --> -->
 3. Compile wecredit contract
 ```
   http://localhost:3001/fisco/compile/wecredit 

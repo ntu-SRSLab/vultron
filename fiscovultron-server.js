@@ -51,18 +51,18 @@ app.get('/fisco', (req, res) => {
         res.send("connection success");
     });
 });
-app.get('/fisco/deploy', (req, res) => {
-    console.log("**** GET", req.originalUrl, " ****");
-    fuzzer.deploy_contract(hello_contract_path).then((answer) => {
-        console.log(answer);
-        res.send(hello_contract_path + " was deployed with address " + answer);
-    }).catch(e => {
-        console.log(e);
-        res.render('error.ejs', {
-            message: e
-        });
-    });
-});
+// app.get('/fisco/deploy', (req, res) => {
+//     console.log("**** GET", req.originalUrl, " ****");
+//     deployer.deploy_contract(hello_contract_path).then((answer) => {
+//         console.log(answer);
+//         res.send(hello_contract_path + " was deployed with address " + answer);
+//     }).catch(e => {
+//         console.log(e);
+//         res.render('error.ejs', {
+//             message: e
+//         });
+//     });
+// });
 
 app.get('/fisco/compile/wecredit', (req, res) => {
     let ret = shell.exec("node compile.js");
