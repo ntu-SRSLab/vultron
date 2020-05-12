@@ -4,3 +4,7 @@ curl -o /usr/bin/solc -fL https://github.com/ethereum/solidity/releases/download
 # pull repo
 cd Vultron-Fisco && git pull && git checkout -- *
 cd ..
+# cd Vultron-FISCO-BCOS && git pull && git checkout -- * && ./quickstart.sh
+# cd ..
+# cd Vultron-GoEthereum && git pull && git checkout -- * && 
+# cd ..
