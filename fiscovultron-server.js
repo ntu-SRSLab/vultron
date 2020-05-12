@@ -6,6 +6,7 @@ const express = require('express');
 const app = express();
 const port = 3001 || process.env.FISCOPORT;
 const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
+const FiscoDeployer = require("./connection/fisco/fuzzer").FiscoDeployer;
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const shell = require("shelljs");
@@ -42,8 +43,8 @@ app.get('/', (req, res) => {
     console.log("**** GET / ****");
     res.render('index.ejs');
 });
-
-let fuzzer = FiscoStateMachineFuzzer.getInstance(0, "CreditController", __dirname);
+let deployer = FiscoDeployer.getInstance("./deployed_contract");
+let fuzzer = FiscoStateMachineFuzzer.getInstance(1, "CreditController", __dirname);
 app.get('/fisco', (req, res) => {
     console.log("**** GET", req.originalUrl, " ****");
     fuzzer.test().then((success) => {
@@ -71,7 +72,8 @@ app.get('/fisco/compile/wecredit', (req, res) => {
 app.get('/fisco/deploy/wecredit', (req, res) => {
     shell.rm("./deployed_contract/*/0x*")
     console.log("**** GET", req.originalUrl, " ****");
-    fuzzer.deploy_contract_precompiled(accountcontroller, compiled_dir)
+    // fuzzer.deploy_contract_precompiled(accountcontroller, compiled_dir)
+    deployer.deploy_contract_precompiled("AccountController")
         .then((AccountCtr) => {
             console.log(accountcontroller, AccountCtr.address);
             fuzzer._send_tx({
@@ -80,7 +82,8 @@ app.get('/fisco/deploy/wecredit', (req, res) => {
                 param: ["0x0", "0x0", "0x0", "0xcaffee"]
             }, JSON.parse(fs.readFileSync("./deployed_contract/AccountController/AccountController.abi", "utf8"))).then((receipt) => {
                 console.log(receipt);
-                fuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
+              deployer.deploy_contract_precompiled_params("CreditController","CreditController(address)", [AccountCtr.address] )
+                // fuzzer.deploy_contract_precompiled_params(creditcontroller, compiled_dir, "CreditController(address)", [AccountCtr.address])
                     .then((CreditCtr) => {
                         console.log(creditcontroller, CreditCtr.address);
                         res.render("deploy.ejs", {
@@ -139,10 +142,7 @@ app.get('/fisco/load/wecredit', (req, res) => {
 app.get('/fisco/bootstrap/wecredit', (req, res) => {
     async function test() {
         await fuzzer.test();
-        await fuzzer.load("./deployed_contract/CreditController/CreditController.artifact",
-            "./deployed_contract/CreditController",
-            "./Vultron-Fisco-State/fisco/wecredit/CreditController.sol");
-
+        await fuzzer.load();
         let ret = await fuzzer.bootstrap();
         return ret;
     }

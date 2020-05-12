@@ -57,34 +57,29 @@ Both the contract source code and the migration (deployment) scripts are provide
 ```
   ./prerequisites.sh 
 ```
-4. Compile wecredit contracts
-```
-   node compile.js
-```
-
-#### Getting Started
+#### Getting Started for Wecredit
 
 1. Start the server:
 ```
-  node server.js
+  node fiscovultron-server.js
 ```
-2. Test BCOS connection:
+<!-- 2. Test BCOS connection:
 ```
-  http://localhost:3000/fisco 
-```
+  http://localhost:3001/fisco  -->
+<!-- ```
 3. Test BCOS deploy:
 ```
-  http://localhost:3000/fisco/deploy 
-```
-3. Deploy wecredit contract
-```
   http://localhost:3000/fisco/deploy/wecredit 
+``` -->
+3. Compile wecredit contract
 ```
-4. Load wecredit contract
+  http://localhost:3001/fisco/compile/wecredit 
 ```
-  http://localhost:3000/fisco/load/wecredit 
+4. Deploy wecredit contract (CreditController and AccountController)
+```
+  http://localhost:3001/fisco/deploy/wecredit 
 ```
 5. Bootstrap wecredit contract
 ```
-  http://localhost:3000/fisco/bootstrap/wecredit 
+  http://localhost:3001/fisco/bootstrap/wecredit 
 ```

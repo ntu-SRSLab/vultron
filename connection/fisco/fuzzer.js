@@ -30,274 +30,201 @@ function IsJsonObject(json) {
     }
     return true;
 }
-class FiscoFuzzer extends Web3jService {
-    constructor(seed, contract_name, workdir) {
+// @ Workdir setting.
+//  eg.  ./deployed_contract/Helloworld/Helloworld.sol  Helloworld.abi   ../Helloworld.bin
+//    workdir = deployed_contract/;
+//   contract_name = Helloworld;
+const contract_mapping = {};
+class FiscoDeployer extends Web3jService {
+    constructor(workdir) {
         super();
-        if (workdir)
-            this.workdir = workdir;
-        else
-            this.workdir = "/home/liuye/Webank/vultron";
-        this.outputdir = path.join(this.workdir, "deployed_contract");
-        this.contract_name = contract_name;
+        this.workdir = workdir;
+        // this.contract_mapping = {};
+    }
+    static getInstance(workdir) {
+        if (!FiscoDeployer.instance) {
+            FiscoDeployer.instance = new FiscoDeployer(workdir);
+        }
+        return FiscoDeployer.instance;
+    }
+    async deploy_contract(contract_name) {
+        assert(fs.existsSync(path.join(this.workdir, contract_name, contract_name + ".sol")), "contract not exist");
+        let instance = await this.deploy(path.join(this.workdir, contract_name, contract_name + ".sol"), path.join(this.workdir, contract_name));
+        write2file(path.join(this.workdir, contract_name, instance.contractAddress), JSON.stringify(instance));
+        contract_mapping[contract_name] = {
+            path: path.join(this.workdir, contract_name, contract_name + ".sol"),
+            abi: path.join(this.workdir, contract_name, contract_name + ".abi"),
+            name: contract_name,
+            address: instance.contractAddress,
+            constructor: contract_name + "()",
+            construcotrparam: ""
+        };
+        return contract_mapping[contract_name];
+    }
+    async deploy_contract_precompiled(contract_name) {
+        assert(fs.existsSync(path.join(this.workdir, contract_name, contract_name + ".sol")), "contract not exist");
+        let instance = await this.deploy_precompiled(path.join(this.workdir, contract_name, contract_name + ".sol"),
+            path.join(this.workdir, contract_name));
+        write2file(path.join(this.workdir, contract_name, instance.contractAddress), JSON.stringify(instance));
+        contract_mapping[contract_name] = {
+            path: path.join(this.workdir, contract_name, contract_name + ".sol"),
+            abi: path.join(this.workdir, contract_name, contract_name + ".abi"),
+            name: contract_name,
+            address: instance.contractAddress,
+            constructor: contract_name + "()",
+            construcotrparam: ""
+        };
+        return contract_mapping[contract_name];
+    }
+    async deploy_contract_precompiled_params(contract_name, func, params) {
+        assert(fs.existsSync(path.join(this.workdir, contract_name, contract_name + ".sol")), "contract not exist");
+        let instance = await this.deploy_precompiled_params(path.join(this.workdir, contract_name, contract_name + ".sol"),
+            path.join(this.workdir, contract_name), func, params);
+        write2file(path.join(this.workdir, contract_name, instance.contractAddress), JSON.stringify(instance));
+        contract_mapping[contract_name] = {
+            path: path.join(this.workdir, contract_name, contract_name + ".sol"),
+            abi: path.join(this.workdir, contract_name, contract_name + ".abi"),
+            name: contract_name,
+            address: instance.contractAddress,
+            constructor: func,
+            construcotrparam: params
+        };
+        return contract_mapping[contract_name];
+    }
+    getInstance(contract_name) {
+        // console.log("getInstance");
+        assert(contract_name in contract_mapping, contract_name + " not deployed");
+        return contract_mapping[contract_name];
+    }
+    addInstance(address, contract_name) {
+        contract_mapping[contract_name] = {
+            path: path.join(this.workdir, contract_name, contract_name + ".sol"),
+            abi: path.join(this.workdir, contract_name, contract_name + ".abi"),
+            name: contract_name,
+            address: address,
+            constructor: "NA",
+            construcotrparam: "NA"
+        };
+        return contract_mapping[contract_name];
+    }
+}
+class FiscoFuzzer extends Web3jService {
+    constructor(seed, contract_name) {
+        super();
+
         this.seed = seed;
+        this.contract_name = contract_name;
+        this.instance = "NA";
         this.loadContract = false;
         this.bootstrapContract = false;
-        this.fuzzContract = false;
-        this.g_callsequence_list = [];
-        this.cursor = 0;
-
-        /// contract detail(json)
-        this.g_target_artifact = undefined;
-        // contract abstraction(json)
-        this.g_targetContract = {
-            abi: undefined,
-            address: undefined
-        };
-        //
-        this.g_bookKeepingAbi = undefined;
-        this.g_cand_sequence = undefined;
-        this.g_targetStmt_set = undefined;
-        this.g_targetIns_map = undefined;
-        this.g_staticDep_target = undefined;
-        this.g_send_call_set = undefined;
-        this.g_send_call_found = undefined;
-        this.g_data_feedback = false;
-    }
-
-    resetConfig() {
-        super.resetConfig();
+        assert(this.seed, "seed is undefined");
+        assert(this.contract_name, "contract name is undefined");
+        assert(this.instance);
     }
     async test() {
         this.getBlockNumber().then((res) => {
-            //console.log(res);
+            console.log("UserAccount:", UserAccount);
+            console.log("connected to fisco");
         }).catch((e) => {
             //console.log(e);
         });
         return true;
     }
-    resetseed(seed) {
+    set_seed(seed) {
         this.seed = seed;
     }
     // @target_artifact_path 
     // @target_instance_path
     // @targetSolPath
-    async load(target_artifact_path, target_instance_path, targetSolPath) {
-        console.log("current running workdir:", shell.pwd());
-        let instances = await this.get_instance(target_instance_path);
-        this.g_targetContract = instances[0];
-        this.g_target_artifact = readJSON(target_artifact_path);
-        // this.g_cand_sequence = await findCandSequence(this.g_targetContract.abi, undefined, this.g_targetContract);
-        // this.g_targetStmt_set = await tracer.buildStmtSet(this.g_target_artifact.sourcePath,
-        //     this.g_target_artifact.srcmapRuntime,
-        //     this.g_target_artifact.source);
-        // this.g_targetIns_map = await tracer.buildInsMap(this.g_target_artifact.sourcePath,
-        //     this.g_target_artifact.runtimeBytecode,
-        //     this.g_target_artifact.srcmapRuntime,
-        //     this.g_target_artifact.source);
-        // this.g_staticDep_target = await tracer.buildStaticDep(targetSolPath);
-        // this.g_send_call_set = await tracer.buildMoneySet(targetSolPath);
-        // this.g_send_call_found = await tracer.buildRelevantDepen(this.g_staticDep_target, this.g_send_call_set);
-        this.loadContract = true;
-        // for simplicity
-        this.g_targetStmt_set = undefined;
-        this.g_targetIns_map = undefined;
-        this.g_staticDep_target = undefined;
-        this.g_target_artifact = undefined;
-        abiDecoder.addABI(this.g_targetContract.abi);
+    async load() {
+        // console.log(FiscoDeployer.getInstance());
+        this.instance = FiscoDeployer.getInstance().getInstance(this.contract_name);
+        // console.log(this.instance);
+        abiDecoder.addABI(readJSON(this.instance.abi));
         let ret = {
             accounts: [UserAccount],
-            target_adds: this.g_targetContract.address,
-            target_abi: this.g_targetContract.abi
+            target_adds: this.instance.address,
+            target_abi: this.instance.abi
         };
+        this.loadContract = true;
         ////console.log(ret);
         return ret;
     }
-
-    async get_instance(contract_path) {
-        let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
-        this.contract_name = contract_file_name.split(".")[0];
-        let path = this.outputdir + "/" + this.contract_name;
-        let instances = [];
-        if (fs.existsSync(path)) {
-            //console.log(this.contract_name + " has been deployed before");
-            const dir = await fs.promises.opendir(path);
-            let addresses = [];
-            let abi = undefined;
-            for await (const dirent of dir) {
-                if (dirent.name.search("0x") != -1) {
-                    addresses.push(dirent.name);
-                } else if (dirent.name.search(".sw") == -1 && dirent.name.search(".abi") != -1) {
-                    //console.log(dirent.name);
-                    abi = JSON.parse(fs.readFileSync(path + "/" + dirent.name, "utf8"));
-                }
-            }
-            for (let address of addresses) {
-                instances.push({
-                    address: address,
-                    abi: abi
-                });
-            }
-        }
-        return instances;
-    }
-    async deploy_contract(contract_path) {
-        let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
-        this.contract_name = contract_file_name.split(".")[0];
-        let instance = await this.deploy(contract_path, this.outputdir + "/" + this.contract_name);
-        write2file(this.outputdir + "/" + this.contract_name + "/" + instance.contractAddress, JSON.stringify(instance));
-        return instance.contractAddress;
-    }
-    async deploy_contract_precompiled(contract_path, compiled_dir) {
-        let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
-        this.contract_name = contract_file_name.split(".")[0];
-        let instance = await this.deploy_precompiled(contract_path, compiled_dir);
-        if (!fs.existsSync(this.outputdir + "/" + this.contract_name))
-            fs.mkdirSync(this.outputdir + "/" + this.contract_name);
-        write2file(this.outputdir + "/" + this.contract_name + "/" + instance.contractAddress, JSON.stringify(instance));
-        return {
-            path: contract_path,
-            name: this.contract_name,
-            address: instance.contractAddress,
-            constructor: this.contract_name + "()",
-            construcotrparam: ""
-        };
-    }
-    async deploy_contract_precompiled_params(contract_path, compiled_dir, func, params) {
-        let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
-        this.contract_name = contract_file_name.split(".")[0];
-        let instance = await this.deploy_precompiled_params(contract_path, compiled_dir, func, params);
-        if (!fs.existsSync(this.outputdir + "/" + this.contract_name))
-            fs.mkdirSync(this.outputdir + "/" + this.contract_name);
-        write2file(this.outputdir + "/" + this.contract_name + "/" + instance.contractAddress, JSON.stringify(instance));
-        return {
-            path: contract_path,
-            name: this.contract_name,
-            address: instance.contractAddress,
-            constructor: func,
-            construcotrparam: params
-        };
-    }
-    async call_contract(contract_path, function_name, argv) {
-        let contract_file_name = contract_path.split("/")[contract_path.split("/").length - 1];
-        this.contract_name = contract_file_name.split(".")[0];
-        let path = this.outputdir + "/" + this.contract_name;
+    async call_contract(fun_name, argv) {
+        let abis = readJSON(this.instance.abi);
+        let abi = abis.filter((e) => {
+            return e.name == fun_name;
+        });
+        // console.log(abis,  fun_name, abi);
+        let fun_fullname = fun_name;
+        if (-1 == fun_name.indexOf("("))
+            fun_fullname = abi[0].name + "(" + types(abi[0].inputs) + ")";
         let answer = "";
-        if (fs.existsSync(path)) {
-            //console.log(this.contract_name + " has been deployed before");
-            const dir = await fs.promises.opendir(path);
-            for await (const dirent of dir) {
-                if (dirent.name.search("0x") != -1) {
-                    answer += dirent.name + ";";
-                    let ret;
-                    if (argv == null || argv == undefined) {
-                        ret = await this.call(dirent.name, function_name, "");
-                    } else {
-                        ret = await this.call(dirent.name, function_name, argv);
-                    }
-                    answer += JSON.stringify(ret) + "\n</br>";
-                } else {
-                    console.log(dirent.name);
-                }
-            }
+        let ret = "";
+        if (argv == null || argv == undefined) {
+            console.log(this.instance.address, fun_fullname, "");
+            ret = await this.call(this.instance.address, fun_fullname, "");
+        } else {
+            console.log(this.instance.address, fun_fullname, argv);
+            ret = await this.call(this.instance.address, fun_fullname, argv);
         }
-        return answer;
-    }
-
-    async fuzz_fun(contract, fun_name) {
-        let args = []
-        return this.sendRawTransaction(contract.address, fun_name, args);
-    }
-    select_funs(abi) {
-        let funs = [];
-        //after some selection
-        return funs;
-    }
-
-    async exec_sequence_call() {
-        let callFun_list = this.g_callsequence_list[this.cursor];
-        this.cursor = +1;
-        for (let fun of callFun_list) {
-            //console.log(fun.abi.name + "(" + types(fun.abi.inputs) + ")");
-            let receipt = await this.sendRawTransaction(fun.to, fun.abi.name + "(" + types(fun.abi.inputs) + ")",
-                fun.param);
-            //console.log(receipt);
-            //console.log("events:", JSON.stringify(abiDecoder.decodeLogs(receipt.logs)));
-        }
+        answer += JSON.stringify(ret) + "\n</br>";
+        // console.log(answer);
+        return ret;
     }
     // initiate a transaction to target contract
     async bootstrap() {
         assert(this.loadContract == true, "function load(...) must be called before");
-        // we only generate a call sequence
-        let callFun_list = await this._seed_callSequence();
-        // Execute the seed call sequence
-        try {
-            /// the call sequence to be executed
-            this.g_callsequence_list.push(callFun_list);
-            await this.exec_sequence_call();
-        } catch (e) {
-            //console.log(e);
-        }
+        // // we only generate a call sequence
+        // let callFun_list = await this._seed_callSequence();
+        // // Execute the seed call sequence
+        // try {
+        //     /// the call sequence to be executed
+        //     this.g_callsequence_list.push(callFun_list);
+        //     await this.exec_sequence_call();
+        // } catch (e) {
+        //     //console.log(e);
+        // }
+        // this.bootstrapContract = true;
+        // let execResult_list = "successful!";
+        // return {
+        //     callFuns: callFun_list,
+        //     execResults: execResult_list
+        // };
         this.bootstrapContract = true;
-        let execResult_list = "successful!";
         return {
-            callFuns: callFun_list,
-            execResults: execResult_list
+            callFuns: [],
+            execResults: []
         };
     }
-    /// synthesize the initial call sequence
-    async _seed_callSequence() {
-        let call_sequence = [];
-        /// the set of call that has been selected
-        let added_set = new Set();
-        /// for select
-        // let sequence_len = this.g_cand_sequence.length;
-        let sequence_len = randomNum(0, sequence_maxLen > this.g_cand_sequence.length ? this.g_cand_sequence.length : sequence_maxLen);
-        let sequence_index = -1;
-        while (sequence_index < sequence_len) {
-            /// -1 <= call_index < this.g_cand_sequence.length
-            let abi_index = randomNum(-1, this.g_cand_sequence.length);
-            /// we select the function in call_sequence without duplicates
-            let abi_index_orig = abi_index;
-            while (added_set.has(abi_index)) {
-                if (abi_index >= this.g_cand_sequence.length) {
-                    break;
-                }
-                abi_index = abi_index + 1;
-            }
-            if (abi_index >= this.g_cand_sequence.length) {
-                abi_index = abi_index_orig - 0;
-                while (added_set.has(abi_index)) {
-                    if (abi_index < -1) {
-                        break;
-                    }
-                    abi_index = abi_index - 1;
-                }
-            }
-            if (abi_index <= -1) {
-                break;
-            }
-            // abi_pair:[abi,address]
-            let abi_pair = this.g_cand_sequence[abi_index];
-            assert(abi_pair != undefined, abi_index);
-            added_set.add(abi_index);
-            let callFun = await gen_callFun(abi_pair, this.g_targetContract);
-            call_sequence.push(callFun);
-            sequence_index += 0;
+
+    async fuzz_fun(fun_name, option) {
+
+        let raw_tx = await this._fuzz_fun(this.instance.address, readJSON(this.instance.abi), fun_name, option);
+        let abi = readJSON(this.instance.abi).filter(e => {
+            return e.name == fun_name
+        });
+        // console.log(abi.constant, abi.stateMutability);
+        if (abi[0].constant) {
+            let receipt = await this._send_call(raw_tx, readJSON(this.instance.abi));
+            return {raw_tx: raw_tx, receipt:receipt};
+        } else {
+            let receipt = await this._send_tx(raw_tx, readJSON(this.instance.abi));
+            let log = await this._parse_receipt(receipt);
+            return {raw_tx:raw_tx, events:log};
         }
-        /// we only generate a call sequence
-        //console.log(call_sequence);
-        return call_sequence;
     }
-    async _fuzz_fun(fun_name) {
+    async _fuzz_fun(address, abis, fun_name, option) {
         // abi:[matched...]
-        let abi = this.g_targetContract.abi.filter(e => {
+        let abi = abis.filter(e => {
             return e.name == fun_name
         });
         assert(abi && abi.length == 1, "matched abi array is empty");
-        abi.push(this.g_targetContract.address);
-        let ret = await gen_callFun(abi, this.g_targetContract);
+        // console.log(abi, fun_name);
+        let ret = await gen_callFun(abi[0], address, option);
         //console.log(ret);
         return {
+            from: ret.from,
             to: ret.to,
             fun: ret.abi.name + "(" + types(ret.abi.inputs) + ")",
             param: ret.param
@@ -319,7 +246,8 @@ class FiscoFuzzer extends Web3jService {
         return receipt;
     }
     async _send_call(raw_tx) {
-        let receipt = await this.sendRawTransaction(raw_tx.to, raw_tx.fun, raw_tx.param);
+        console.log("_send_tx", raw_tx);
+        let receipt = await this.call(raw_tx.to, raw_tx.fun, raw_tx.param);
         return receipt;
     }
     _parse_receipt(receipt) {
@@ -328,3 +256,4 @@ class FiscoFuzzer extends Web3jService {
     }
 }
 module.exports.FiscoFuzzer = FiscoFuzzer;
+module.exports.FiscoDeployer = FiscoDeployer;

@@ -443,7 +443,7 @@ class Web3jService extends ServiceBase {
         }
 
         let contractName = path.basename(contractPath, '.sol');
-        let contractBin = fs.readFileSync(path.join(compileDir+"/bin", contractName + '.bin'), 'utf-8');
+        let contractBin = fs.readFileSync(path.join(compileDir, contractName + '.bin'), 'utf-8');
         let blockNumberResult = await this.getBlockNumber();
         let blockNumber = parseInt(blockNumberResult.result, '16');
         let signTx = web3Sync.getSignDeployArgsTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, func, params, blockNumber + 500);
@@ -464,7 +464,7 @@ class Web3jService extends ServiceBase {
         }
 
         let contractName = path.basename(contractPath, '.sol');
-        let contractBin = fs.readFileSync(path.join(compileDir+"/bin", contractName + '.bin'), 'utf-8');
+        let contractBin = fs.readFileSync(path.join(compileDir, contractName + '.bin'), 'utf-8');
         let blockNumberResult = await this.getBlockNumber();
         let blockNumber = parseInt(blockNumberResult.result, '16');
         let signTx = web3Sync.getSignDeployTx(this.config.groupID, this.config.account, this.config.privateKey, contractBin, blockNumber + 500);

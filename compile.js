@@ -1,7 +1,8 @@
 #!/usr/local/bin/node
 const fs=require("fs");
 const solc=require("solc");
-const path = require('path');
+const spath = require('path');
+const shell = require("shelljs");
 var input = {
     'Credit.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/Credit.sol', 'utf8'),
     'CreditMap.sol': fs.readFileSync('./Vultron-Fisco/fisco/wecredit/CreditMap.sol', 'utf8'),
@@ -55,13 +56,14 @@ for(let contract of Object.keys(compiledContract.contracts))
 	     console.log("./deployed_contract/wecredit/bin/"+file_name +".bin");
 	     console.log("./deployed_contract/wecredit/abi/"+file_name +".abi");
 	     content.source = input[file_name+".sol"]; 
-	     content.sourcePath = __dirname + "/fisco/wecredit/" + file_name+".sol"; 
+		 content.sourcePath =spath.join(__dirname ,"./Vultron-Fisco/fisco/wecredit/", file_name+".sol"); 
 	     fs.writeFileSync("./deployed_contract/wecredit/artifact/"+ file_name+".artifact", JSON.stringify(content));
 	     fs.writeFileSync("./deployed_contract/wecredit/bin/"+ file_name+".bin", content.bytecode);
 	     fs.writeFileSync("./deployed_contract/wecredit/abi/"+ file_name+".abi", JSON.stringify(JSON.parse(content.interface)));
 	     write2File("./deployed_contract/"+file_name, file_name+".abi",JSON.stringify(JSON.parse(content.interface)));
 	     write2File("./deployed_contract/"+file_name, file_name+".bin", content.bytecode);
 	     write2File("./deployed_contract/"+file_name, file_name+".artifact", JSON.stringify(content));
-	     console.log("compiled");
+		 shell.cp(content.sourcePath, spath.join("./deployed_contract/",  file_name) );
+		 console.log("compiled");
 	}
 }

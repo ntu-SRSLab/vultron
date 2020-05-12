@@ -467,8 +467,9 @@ async function seed_callSequence_withoutData() {
 
 function types(inputs) {
     let input_types = [];
-    for (let input of inputs)
-        input_types.push(input.type);
+    if(inputs && inputs.length>=1)
+        for (let input of inputs)
+            input_types.push(input.type);
     return input_types.join();
 }
 

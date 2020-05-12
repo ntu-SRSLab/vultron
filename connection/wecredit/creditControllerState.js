@@ -3,11 +3,13 @@
 //
 const aa = require("aa");
 const assert = require("assert");
+const hex2ascii = require('hex2ascii')
 const Machine = require("xstate").Machine;
 const assign = require("xstate").assign;
 const interpret = require("xstate").interpret;
 const createModel = require("@xstate/test").createModel;
 const FiscoFuzzer = require("../fisco/fuzzer.js").FiscoFuzzer;
+const FiscoDeployer = require("../fisco/fuzzer.js").FiscoDeployer;
 let  asyncFlag = false;
 function revertAsyncFlag(){
     asyncFlag =  asyncFlag?false:true; 
@@ -17,23 +19,38 @@ function check_raw_tx(raw_tx) {
     assert(raw_tx["fun"]);
     assert(raw_tx["param"]);
 }
+const  EXPIRE_CREDIT = 400;
+const  CLEAR_CREDIT = 500;
+const  CLOSE_CREDIT = 600;
+
+const  CREDIT_HOLAING_CREATE_STATUS = "A";
+const  CREDIT_HOLAING_INVALID_STATUS = "T";
+const  CREDIT_HOLAING_DISCOUNTED_STATUS = "D";
+const  CREDIT_CLEARING_CLEARED_STATUS = "AC";
+const  CREDIT_CLEARING_NOCLEARED_STATUS = "NC";
+const  CREDIT_VALID_NOEXPIRED_STATUS = "V";
+const  CREDIT_VALID_EXPIRED_STATUS = "E";
+const  CREDIT_VALID_CLOSED_STATUS = "C";
+const  H1 = CREDIT_HOLAING_CREATE_STATUS;
+const  H2 = CREDIT_HOLAING_INVALID_STATUS;
+const  H3 = CREDIT_HOLAING_DISCOUNTED_STATUS;
+const  C1 = CREDIT_CLEARING_CLEARED_STATUS;
+const  C2 = CREDIT_CLEARING_NOCLEARED_STATUS;
+const  V1 = CREDIT_VALID_NOEXPIRED_STATUS;
+const  V2 = CREDIT_VALID_EXPIRED_STATUS;
+const  V3 = CREDIT_VALID_CLOSED_STATUS;
 class CreditInterface {
-    constructor(fuzzer) {
-        this.fuzzer = fuzzer
-        this.abi = this.fuzzer.g_targetContract.abi;
-        this.address = this.fuzzer.g_targetContract.address;
-    }
-    _setAbi(abi) {
-        this.abi = abi;
-    }
-    _setAddress(address) {
-        this.address = address;
+    constructor(CreditController, Credit) {
+        this.CreditController = CreditController;
+       this.Credit = undefined;
     }
     async createCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("createCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("createCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz = await this.CreditController.fuzz_fun("createCredit");
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -49,18 +66,22 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits
             }
         }
         return {
+            raw_tx: fuzz.raw_tx,
             target: []
         }
     }
     async transferCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("transferCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("transferCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz = await this.CreditController.fuzz_fun("transferCredit");
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -76,6 +97,7 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits,
                 split: [],
                 origin: []
@@ -83,16 +105,19 @@ class CreditInterface {
         }
 
         return {
+            raw_tx: fuzz.raw_tx,
             target: [],
             split: [],
             origin: []
         }
     }
     async discountCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("discountCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("discountCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz = await this.CreditController.fuzz_fun("discountCredit");
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -108,23 +133,27 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits,
                 discount: [],
                 origin: []
             }
         }
 
-        return {
+        return {     
+             raw_tx: fuzz.raw_tx,
             target: [],
             discount: [],
             origin: []
         }
     }
     async expireCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:EXPIRE_CREDIT}]});
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -140,19 +169,23 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits
             }
         }
 
         return {
+            raw_tx: fuzz.raw_tx,
             target: [],
         }
     }
     async clearCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz =  await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:CLEAR_CREDIT}]});
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -168,19 +201,22 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits
             }
         }
-
         return {
+            raw_tx: fuzz.raw_tx,
             target: [],
         }
     }
     async closeCredit() {
-        let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        let events = await this.fuzzer._parse_receipt(receipt);
-        let creditEvents = events.filter((e) => {
+        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
+        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
+        // let events = await this.fuzzer._parse_receipt(receipt);
+        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:CLOSE_CREDIT}]});
+        assert(fuzz.events);
+        let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
         });
         if (creditEvents.length >= 1) {
@@ -196,26 +232,48 @@ class CreditInterface {
             }
             console.log("credit:", credits);
             return {
+                raw_tx: fuzz.raw_tx,
                 target: credits
             }
         }
-
         return {
+            raw_tx: fuzz.raw_tx,
             target: [],
         }
     }
-    async getStatus() {
-        return 0;
+    async getStatus(address) {
+        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        this.Credit = new FiscoFuzzer(1, "Credit");
+        this.Credit.load();
+        let ret1 = await this.Credit.call_contract("getCreditSccHoldingStatus");
+        let ret2 = await this.Credit.call_contract("getCreditSccClearingStatus");
+        let ret3 = await this.Credit.call_contract("getCreditSccValidStatus");
+        // console.log(ret1, ret2, ret3);
+    
+        let aret1  = hex2ascii(ret1.result.output.toString());
+        let aret2  = hex2ascii(ret2.result.output.toString());
+        let aret3  = hex2ascii(ret3.result.output.toString());
+        console.log(aret1, aret2, aret3);
+        return {Holding:aret1 , Clearing:aret2, Valid:aret3};
     }
-    async getSccAmt() {
-        return 0;
+    async getSccAmt(address) {
+        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        this.Credit = new FiscoFuzzer(1, "Credit");
+        this.Credit.load();
+        let ret = await this.Credit.call_contract("getCreditAmt");
+        console.log("sccAmt:", BigInt(ret.result.output.toString()));
+        return BigInt(ret.result.output.toString());
     }
-    async getOwner() {
-        return 0;
+    async getOwner(address) {
+        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        this.Credit = new FiscoFuzzer(1, "Credit");
+        this.Credit.load();
+        let ret = await this.Credit.call_contract("getCreditOwner");
+        return ret.result.output.toString().replace(/^0x0+/, "0x");
     }
 }
 class CreditControllerState {
-    constructor(fuzzer) {
+    constructor(CreditController, Credit) {
         this.status = {
             holding: 0,
             clearing: 0,
@@ -223,72 +281,103 @@ class CreditControllerState {
         };
         this.sccAmt = 0;
         this.owner = 0;
-        this.credit = new CreditInterface(fuzzer);
+        this.credit = new CreditInterface(CreditController, Credit);
     }
-    static getInstance(_fuzzer) {
+    static getInstance(CreditController, Credit) {
         if (!CreditControllerState.instance)
-            CreditControllerState.instance = new CreditControllerState(_fuzzer);
-        console.log(CreditControllerState.instance);
+            CreditControllerState.instance = new CreditControllerState(CreditController, Credit);
+        // console.log(CreditControllerState.instance);
         return CreditControllerState.instance;
     }
-   async  update() {
-        this.status = await this.credit.getStatus();
-        this.sccAmt = await this.credit.getSccAmt();
-        this.owner = await this.credit.getOwner();
+   async  update(address) {
+        this.status = await this.credit.getStatus(address);
+        this.sccAmt = await this.credit.getSccAmt(address);
+        this.owner = await this.credit.getOwner(address);
+        return {status: this.status, sccAmt:this.sccAmt, owner:this.owner};
     }
     async createCredit() {
-        await this.update();
+        // await this.update();
         //preCondition
         //TO DO
-        let ret = await this.credit.createCredit();
-        //...
+         let ret = await this.credit.createCredit();
+         while(ret.target.length==0){
+            ret = await this.credit.createCredit();
+         }
+         console.log("passed tx:", ret.raw_tx);
+         let state = await this.update(ret.target[0]);
+         console.log("update:", state);
+         //...
         //postCondition
+        assert(state.status.Holding==H1 && state.status.Clearing==C2 && state.status.Valid == V1, "status error");
+        assert(state.owner == ret.raw_tx.from, "credit owner error");
+        assert(state.sccAmt ==  BigInt(ret.raw_tx.param[1]), "sccAmt error");
         return ret.target;
     }
 
     async transferCredit() {
-        await this.update();
+        // await this.update();
         //preCondition
         //TO DO
         let ret = await this.credit.transferCredit();
+        for (let target of ret.target){
+            let status = await this.update(target);
+            console.log("update:",JSON.stringify(status));
+        }
         //...
         //postCondition
         return ret.target;
     }
     async discountCredit() {
-        await this.update();
+        // await this.update();
         //preCondition
         //TO DO
         let ret = await this.credit.discountCredit();
         //...
         //postCondition
+        for (let target of ret.target){
+            let status = await this.update(target);
+            console.log("update:",status);
+        }
         return ret.target;
     }
     async expireCredit() {
-        await  this.update();
+        // await  this.update();
         //preCondition
         //TO DO
         let ret = await  this.credit.expireCredit();
         //...
         //postCondition
+        for (let target of ret.target){
+            let status = await this.update(target);
+            console.log("update:",status);
+        }
         return ret.target;
     }
     async closeCredit() {
-        await this.update();
+        // await this.update();
         //preCondition
         //TO DO
         let ret = await this.credit.closeCredit();
         //...
         //postCondition
+        for (let target of ret.target){
+            let status = await this.update(target);
+            console.log("update:",status);
+        }
         return ret.target;
     }
     async clearCredit() {
-        await this.update();
+        // await this.update();
         //preCondition
         //TO DO
         let ret = await this.credit.clearCredit();
         //...
         //postCondition
+         //postCondition
+         for (let target of ret.target){
+            let status = await this.update(target);
+            console.log("update:",status);
+        }
         return ret.target;
     }
 }
@@ -418,19 +507,24 @@ const createCreditStateMachine = statectx => {
         }
     })
 };
+// let CreditFuzzer = new FiscoFuzzer(1, "Credit");
 class FiscoStateMachineFuzzer extends FiscoFuzzer {
-    constructor(seed, contract_name, outputdir) {
-        super(seed, contract_name, outputdir);
+    constructor(seed, contract_name) {
+        super(seed, contract_name);
     }
-    static getInstance(seed, contract_name, workdir) {
+    static getInstance(seed, contract_name) {
         if (!FiscoStateMachineFuzzer.instance) {
-            FiscoStateMachineFuzzer.instance = new FiscoStateMachineFuzzer(seed, contract_name, workdir)
+            FiscoStateMachineFuzzer.instance = new FiscoStateMachineFuzzer(seed, contract_name)
         }
         return FiscoStateMachineFuzzer.instance;
     }
     async bootstrap() {
 
-        let creditStateMachine = createCreditStateMachine(CreditControllerState.getInstance(FiscoStateMachineFuzzer.getInstance()));
+        let creditStateMachine = createCreditStateMachine(
+            CreditControllerState.getInstance(
+                            FiscoStateMachineFuzzer.getInstance(),
+                             undefined,
+                    ));
         // console.log(creditStateMachine.context);
         let service = interpret(creditStateMachine).onTransition(state => {
             console.log(state.value);
@@ -438,6 +532,7 @@ class FiscoStateMachineFuzzer extends FiscoFuzzer {
         service = aa.promisifyAll(service);
         // console.log(creditStateMachine);
         const toggleModel = createModel(creditStateMachine);
+        console.log(toggleModel.machine.context);
         let plans = toggleModel.getSimplePathPlans();
         console.log("size of plans:", plans.length);
         let index = 1;
