@@ -7,3 +7,6 @@
 [submodule "Vultron-FISCO-BCOS"]
 	path = Vultron-FISCO-BCOS
 	url = git@github.com:ntu-SRSLab/Vultron-FISCO-BCOS.git
+[submodule "xstate-viz"]
+	path = xstate-viz
+	url = git@github.com:statecharts/xstate-viz.git

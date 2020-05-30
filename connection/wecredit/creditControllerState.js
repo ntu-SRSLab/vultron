@@ -151,7 +151,7 @@ class CreditInterface {
         // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
         // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
         // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:EXPIRE_CREDIT}]});
+        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:EXPIRE_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -183,7 +183,7 @@ class CreditInterface {
         // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
         // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
         // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz =  await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:CLEAR_CREDIT}]});
+        let fuzz =  await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLEAR_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -214,7 +214,7 @@ class CreditInterface {
         // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
         // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
         // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:2, value:CLOSE_CREDIT}]});
+        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLOSE_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -310,8 +310,8 @@ class CreditControllerState {
          //...
         //postCondition
         assert(state.status.Holding==H1 && state.status.Clearing==C2 && state.status.Valid == V1, "status error");
-        assert(state.owner == ret.raw_tx.from, "credit owner error");
-        assert(state.sccAmt ==  BigInt(ret.raw_tx.param[1]), "sccAmt error");
+        assert(state.owner == ret.raw_tx.from, "credit owner error in createCredit");
+        assert(state.sccAmt ==  BigInt(ret.raw_tx.param[1]), "sccAmt error in createCredit");
         return ret.target;
     }
 
@@ -325,10 +325,21 @@ class CreditControllerState {
             ret = await this.credit.transferCredit();
         }
          console.log("passed tx:", ret.raw_tx);
+        let states = [];
         for (let target of ret.target){
-            let status = await this.update(target);
-            console.log("update:",JSON.stringify(status));
+            let states = await this.update(target);
+            console.log("update:",state);
+            states.push(state);
         }
+        assert(
+            states[2].status.Holding==H2&& 
+            states[1].status.Holding!=H2 && states[1].status.Holding == states[0].status.Holding && 
+            states[2].status.Clearing == states[1].status.Clearing && states[1].status.Clearing == states[0].status.Clearing &&
+            states[2].status.Valid == states[1].status.Valid && states[1].status.Valid == states[0].status.Valid,
+            "status error in transferCredit"
+            );
+        assert(states[2].sccAmt == states[1].sccAmt+states[0].sccAmt, "sccAmt error in transferCredit");
+        assert(states[1].owner == ret.raw_tx.param[1] && states[0].owner == ret.raw_tx.from, "credit owner error in transferCredit");
         //...
         //postCondition
         return ret.target;
@@ -344,10 +355,23 @@ class CreditControllerState {
         console.log("passed tx:", ret.raw_tx);
         //...
         //postCondition
+        let states = [];
         for (let target of ret.target){
-            let status = await this.update(target);
-            console.log("update:",status);
+            let state = await this.update(target);
+            console.log("update:",state);
+            states.push(state);
         }
+        assert(
+            states[2].status.Holding==H2&& 
+            states[1].status.Holding==H3 && 
+            states[0].status.Holding!=H2 && 
+            states[2].status.Clearing == states[1].status.Clearing && states[1].status.Clearing == states[0].status.Clearing &&
+            states[2].status.Valid == states[1].status.Valid && states[1].status.Valid == states[0].status.Valid,
+            "status error in transferCredit"
+            );
+        assert(states[2].sccAmt == states[1].sccAmt+states[0].sccAmt, "sccAmt error in transferCredit");
+        assert(states[1].owner == ret.raw_tx.from && states[0].owner == ret.raw_tx.from, "credit owner error in transferCredit");
+  
         return ret.target;
     }
     async expireCredit() {
@@ -360,12 +384,13 @@ class CreditControllerState {
         }
         
         console.log("passed tx:", ret.raw_tx);
+         let state = await this.update(ret.target[0]);
+         console.log("update:", state);
         //...
         //postCondition
-        for (let target of ret.target){
-            let status = await this.update(target);
-            console.log("update:",status);
-        }
+    
+        assert(state.status.Valid == V2, "status error in expireCredit");
+   
         return ret.target;
     }
     async closeCredit() {
@@ -378,12 +403,11 @@ class CreditControllerState {
         }
 
         console.log("passed tx:", ret.raw_tx);
+        let state = await this.update(ret.target[0]);
+        console.log("update:", state);
         //...
         //postCondition
-        for (let target of ret.target){
-            let status = await this.update(target);
-            console.log("update:",status);
-        }
+        assert(state.status.Valid ==V3 , "status error in closeCredit");
         return ret.target;
     }
     async clearCredit() {
@@ -394,15 +418,15 @@ class CreditControllerState {
         while(ret.target.length==0){
             ret = await this.credit.clearCredit();
         }
+     
         console.log("passed tx:", ret.raw_tx);
+        let state = await this.update(ret.target[0]);
+        console.log("update:", state);
         //...
         //postCondition
          //postCondition
-         for (let target of ret.target){
-            let status = await this.update(target);
-            console.log("update:",status);
-        }
-        return ret.target;
+         assert(state.status.Clearing == C1, "status error in clearCredit");
+         return ret.target;
     }
 }
 
@@ -557,9 +581,28 @@ class FiscoStateMachineFuzzer extends FiscoFuzzer {
         // console.log(creditStateMachine);
         const toggleModel = createModel(creditStateMachine);
         console.log(toggleModel.machine.context);
+        console.log("******************************");
         let plans = toggleModel.getSimplePathPlans();
-        console.log("size of plans:", plans.length);
+        console.log("size of  simplepath plans:", plans.length);
         let index = 1;
+        for (let plan of plans){
+            console.log("plan#", index++);
+            for (let path of plan.paths){
+                console.log(path.description);
+            }
+        }
+        console.log("******************************");
+        plans = toggleModel.getShortestPathPlans();
+        console.log("size of shortestpath plans:", plans.length);
+        index = 1;
+        for (let plan of plans){
+            console.log("plan#", index++);
+            for (let path of plan.paths){
+                console.log(path.description);
+            }
+        }
+        console.log("******************************");
+        index = 1;
         for (let plan of plans) {
             console.log("plan#", index++);
             for (let path of plan.paths) {

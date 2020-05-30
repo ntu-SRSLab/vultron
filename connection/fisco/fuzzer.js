@@ -137,6 +137,7 @@ class FiscoFuzzer extends Web3jService {
     // @target_instance_path
     // @targetSolPath
     async load() {
+        assert(this.loadContract ==false, "error loaded already") ;
         // console.log(FiscoDeployer.getInstance());
         this.instance = FiscoDeployer.getInstance().getInstance(this.contract_name);
         // console.log(this.instance);
@@ -231,7 +232,7 @@ class FiscoFuzzer extends Web3jService {
         }
     }
     async _send_tx(raw_tx, contract_abi) {
-        console.log("_send_tx", raw_tx);
+        // console.log("_send_tx", raw_tx);
         let receipt = await this.sendRawTransaction(raw_tx.to, raw_tx.fun, raw_tx.param);
         // console.log(receipt);
         if (contract_abi) {
@@ -246,7 +247,7 @@ class FiscoFuzzer extends Web3jService {
         return receipt;
     }
     async _send_call(raw_tx) {
-        console.log("_send_tx", raw_tx);
+        // console.log("_send_call", raw_tx);
         let receipt = await this.call(raw_tx.to, raw_tx.fun, raw_tx.param);
         return receipt;
     }

@@ -155,25 +155,7 @@ function generate_random(parameter_type) {
         let byteRegex = /byte$/;
         let stringRegex = /string$/;
         let addressRegex = /address$/;
-        if (parameter_type.match(intXXXRegex)) {
-            let match = parameter_type.match(intXXXRegex);
-            // console.log(match);
-            assert(match[1], "size is empty");
-            let size = Math.floor(parseInt(match[1]) / 8);
-            if (false == (parameter_type in Pools)) {
-                if (size < 8)
-                    Pools[parameter_type] = new IntPool(true, {
-                        start: 1,
-                        end: size
-                    }, const_pool_size, "random pools for" + parameter_type);
-                else
-                    Pools[parameter_type] = new BigIntPool(true, {
-                        start: 1,
-                        end: size
-                    }, const_pool_size, "random pools for" + parameter_type);
-            }
-            return Pools[parameter_type].random();
-        } else if (parameter_type.match(uintXXXRegex)) {
+        if (parameter_type.match(uintXXXRegex)) {
             let match = parameter_type.match(uintXXXRegex);
             // console.log(match);
             assert(match[1], "size is empty");
@@ -186,6 +168,24 @@ function generate_random(parameter_type) {
                     }, const_pool_size, "random pools for" + parameter_type);
                 else
                     Pools[parameter_type] = new BigIntPool(false, {
+                        start: 1,
+                        end: size
+                    }, const_pool_size, "random pools for" + parameter_type);
+            }
+            return Pools[parameter_type].random();
+        } else if (parameter_type.match(intXXXRegex)) {
+            let match = parameter_type.match(intXXXRegex);
+            // console.log(match);
+            assert(match[1], "size is empty");
+            let size = Math.floor(parseInt(match[1]) / 8);
+            if (false == (parameter_type in Pools)) {
+                if (size < 8)
+                    Pools[parameter_type] = new IntPool(true, {
+                        start: 1,
+                        end: size
+                    }, const_pool_size, "random pools for" + parameter_type);
+                else
+                    Pools[parameter_type] = new BigIntPool(true, {
                         start: 1,
                         end: size
                     }, const_pool_size, "random pools for" + parameter_type);
