@@ -12,10 +12,16 @@
     "@vue/cli-plugin-babel": "4.1.1",
     "bootstrap": "^4.5.0",
     "bootstrap-vue": "^2.15.0",
-    "jquery": "^1.9.1",
+    "canvg": "^3.0.6",
+    "i": "^0.3.6",
+    "jquery": "^1.12.4",
+    "konva": "^6.0.0",
     "node-sass": "^4.14.1",
     "sass-loader": "^8.0.2",
-    "vue": "^2.6.11"
+    "state-machine-cat": "^7.0.0",
+    "vue": "^2.6.11",
+    "vue-jquery": "^1.0.6",
+    "vue-konva": "^2.1.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-eslint": "4.1.1",
