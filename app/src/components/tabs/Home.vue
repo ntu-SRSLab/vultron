@@ -55,11 +55,11 @@
       const event_Deploy = "Deploy";
       const event_Transaction = "Transaction";
       const event_Call = "Call";
-      const client_Upload = "client_Upload";
-      const client_Compile = "client_Compile";
-      const client_Deploy = "client_Deploy";
-      const client_Transaction = "client_Transaction";
-      const client_Call = "client_Call";
+      const client_Upload = "Upload_client";
+      const client_Compile = "Compile_client";
+      const client_Deploy = "Deploy_client";
+      const client_Transaction = "Transaction_client";
+      const client_Call = "Call_client";
   export default {
     name: "Home",
     data: function () {
@@ -474,7 +474,7 @@
       OnUpload(e) {
         console.log(e);
         this.log +="<br> uploaded contracts to server:" + JSON.stringify(this.selected);
-        this.$socket.emit("client", {type:client_Upload, data:  files});
+        this.$socket.emit("client", {type:client_Upload, data:  this.uploaded});
         this.compiled = this.selected;
       },
       OnCompile(e) {
@@ -489,6 +489,9 @@
          }
       },
       OnDeploy(e) {
+        console.log(client_Deploy);
+        console.log(client_Call);
+        console.log(client_Transaction);
         console.log(e);
         this.deployed = this.compiled;
         this.log +="<br> deployed:" + JSON.stringify(this.selected);
