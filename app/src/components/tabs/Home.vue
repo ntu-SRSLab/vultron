@@ -50,7 +50,16 @@
 
 
 <script>
-
+      const event_Upload = "Upload";
+      const event_Compile = "Compile";
+      const event_Deploy = "Deploy";
+      const event_Transaction = "Transaction";
+      const event_Call = "Call";
+      const client_Upload = "client_Upload";
+      const client_Compile = "client_Compile";
+      const client_Deploy = "client_Deploy";
+      const client_Transaction = "client_Transaction";
+      const client_Call = "client_Call";
   export default {
     name: "Home",
     data: function () {
@@ -435,11 +444,7 @@
     },
     created: function(){
       // lisent server event
-      const event_Upload = "Upload";
-      const event_Compile = "Compile";
-      const event_Deploy = "Deploy";
-      const event_Transaction = "Transaction";
-      const event_Call = "Call";
+     
       const events = [event_Upload, event_Compile, event_Deploy, event_Transaction, event_Call];
       for (let event of events){
           this.$socket.on(event, function(data){
@@ -454,26 +459,28 @@
         var files = e.target.files || e.dataTransfer.files;
         if (!files.length)
           return;
-        console.log(files);
+        // console.log(files);
         this.selected = [];
         for (var file of files) {
           this.selected.push({
             contract: file.name
           });
         }
-        this.uploaded = [];
+        
+        this.uploaded = files;
         this.compiled = [];
         this.deployed = [];
       },
       OnUpload(e) {
         console.log(e);
-        this.uploaded = this.selected;
         this.log +="<br> uploaded contracts to server:" + JSON.stringify(this.selected);
+        this.$socket.emit("client", {type:client_Upload, data:  files});
+        this.compiled = this.selected;
       },
       OnCompile(e) {
         console.log(e);
-        this.compiled = this.uploaded;
-         this.log +="<br> compiled:" + JSON.stringify(this.selected);
+        this.$socket.emit("client",{type:client_Compile, data: this.compiled});
+        this.log +="<br> compiled:" + JSON.stringify(this.compiled);
         for (var instance of this.compiled) {
           this.contracts.push({
             value: instance.contract,
@@ -481,7 +488,6 @@
           });
          }
       },
-    
       OnDeploy(e) {
         console.log(e);
         this.deployed = this.compiled;
