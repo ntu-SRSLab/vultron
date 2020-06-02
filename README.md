@@ -11,6 +11,7 @@
 ```
 ### 2. Customize the client docker image and Run it 
 ```bash
+   git clone git@github.com:ntu-SRSLab/vultron.git
    sudo docker build . -t  vultron/app
    sudo docker run -it -name app  --publish 8080:8080 vultron/app
 ```
