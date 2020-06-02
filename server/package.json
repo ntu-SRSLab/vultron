@@ -43,6 +43,7 @@
 		"sha3": "^2.1.2",
 		"shelljs": "^0.8.4",
 		"socket.io": "^2.3.0",
+		"socketio-file-upload": "^0.7.2",
 		"solc": "^0.4",
 		"sprintf-js": "^1.1.2",
 		"truffle": "^4.1.10",

@@ -2,7 +2,8 @@ var app = require('express')()
 var http = require('http').Server(app)
 var io = require('socket.io')(http)
 var assert = require("assert")
-
+var SocketIOFileUpload = require('socketio-file-upload');
+app.use(SocketIOFileUpload.router);
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -44,6 +45,21 @@ io.on('connection', socket => {
       assert( handler[event.type], "invalid event type");
       console.log("event:", event.type);
       handler[event.type](event.data);
+    });
+
+    // Make an instance of SocketIOFileUpload and listen on this socket:
+    var uploader = new SocketIOFileUpload();
+    uploader.dir = "./uploads";
+    uploader.listen(socket);
+
+    // Do something when a file is saved:
+    uploader.on("saved", function(event){
+        console.log(event.file);
+    });
+
+    // Error handler:
+    uploader.on("error", function(event){
+        console.log("Error from uploader", event);
     });
 })
 
