@@ -78,5 +78,5 @@ uploads/*
 *.*.js.sw*
 *.js.sw*
 .gitignore.sw*
-deployed_contract/
-Vultron-Fisco-State/
+app/dist/*
+app/node_modules/*
