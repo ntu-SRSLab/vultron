@@ -1,1 +1,0 @@
-{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"PXTToken","param_Names":["_totalSupply"],"param_Types":["uint256"],"param_Values":{"_totalSupply":50000000000000000},"payable":false,"value":"none","values":[50000000000000000]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}

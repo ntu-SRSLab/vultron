@@ -1,1 +1,0 @@
-{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"TokenTranchePricing","param_Names":["_tranches"],"param_Types":["uint256[]"],"param_Values":{"_tranches":32},"payable":false,"value":"none","values":[32]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}
