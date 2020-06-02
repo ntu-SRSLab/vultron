@@ -1,0 +1,1 @@
+{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"HeroTokenAuction","param_Names":["_ownerCut"],"param_Types":["uint256"],"param_Values":{"_ownerCut":180},"payable":false,"value":"none","values":[180]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}
