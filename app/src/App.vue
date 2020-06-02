@@ -1,5 +1,10 @@
 <template>
   <div id="app">
+    <!-- <div class="container">
+    <p v-if="isConnected">We're connected to the server!</p>
+    <p>Message from server: "{{socketMessage}}"</p>
+    <button @click="pingServer()">Ping Server</button>
+  </div> -->
     <NavHeader  ></NavHeader>
     <Tab> </Tab>
     <BotFooter> </BotFooter>
@@ -8,7 +13,7 @@
 
 <script>
 
-
+// console.log(this.$socket);
 import BotFooter from "./components/BotFooter";
 import NavHeader from "./components/NavHeader";
 import Tab from "./components/Tab";

@@ -14,10 +14,15 @@
         <!-- <b-table striped hover :items="uploaded"></b-table> -->
         <b-button :variant="variant_compile" @click="OnCompile" class="mr-1"> Compile</b-button>
         <!-- <b-table striped hover :items="compiled"></b-table> -->
-        <b-form inline v-if="compiled.length>0">
+        <b-form class="mt-3" inline v-if="compiled.length>0">
           <label class="mr-sm-2" for="inline-form-custom-select-contract">contract </label>
           <b-form-select id="inline-form-custom-select-contract" v-model="selected_contract" :options="contracts"
             class="mb-2 mr-sm-2 mb-sm-0" @click="OnSelectContract"></b-form-select>
+            
+            <label  v-if="selected_contract"  class="mr-sm-2" for="inline-form-custom-select-contract-address">address </label>
+          <b-form-select id="inline-form-custom-select-contract-address" v-model="selected_address" :options="addresses"
+            class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract"></b-form-select>
+
           <label  v-if="selected_contract"  class="mr-sm-2" for="inline-form-custom-select-contract-abi">abi </label>
           <b-form-select id="inline-form-custom-select-contract-abi" v-model="selected_abi" :options="abis"
             class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract"></b-form-select>
@@ -417,13 +422,32 @@
         uploaded: [],
         compiled: [],
         deployed: [],
-        selected2: null,
         options: [],
+
         contracts:[],
         selected_contract:null,
         selected_abi: null,
-        log: ""
+        selected_address: null,
+        log: "",
+
+        server_data: null
       };
+    },
+    created: function(){
+      // lisent server event
+      const event_Upload = "Upload";
+      const event_Compile = "Compile";
+      const event_Deploy = "Deploy";
+      const event_Transaction = "Transaction";
+      const event_Call = "Call";
+      const events = [event_Upload, event_Compile, event_Deploy, event_Transaction, event_Call];
+      for (let event of events){
+          this.$socket.on(event, function(data){
+            if(!this.server_data)
+                this.server_data={};
+            this.server_data[event] = data;
+          })
+      }
     },
     methods: {
       onFileChange(e) {
@@ -486,6 +510,9 @@
       },
       variant_compile: function () {
         return this.compiled.length == 0 ? "primary" : "success";
+      },
+      addresses: function(){
+        return [{value: "0x", text: "0x"}];
       },
       abis:function(){
           var abis = [];

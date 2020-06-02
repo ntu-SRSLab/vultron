@@ -42,6 +42,7 @@
 		"power-assert": "^1.6.1",
 		"sha3": "^2.1.2",
 		"shelljs": "^0.8.4",
+		"socket.io": "^2.3.0",
 		"solc": "^0.4",
 		"sprintf-js": "^1.1.2",
 		"truffle": "^4.1.10",
