@@ -41,7 +41,7 @@ io.on('connection', socket => {
     })
     let handler = new EventHandler();
     socket.on("client",function(event){
-      assert( hanler[event.type], "invalid event type");
+      assert( handler[event.type], "invalid event type");
       console.log("event:", event.type);
       handler[event.type](event.data);
     });
