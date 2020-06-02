@@ -475,6 +475,7 @@
         console.log(e);
         this.log +="<br> uploaded contracts to server:" + JSON.stringify(this.selected);
         this.$socket.emit("client", {type:client_Upload, data:  this.uploaded});
+        this.$uploader.submitFiles(this.uploaded)
         this.compiled = this.selected;
       },
       OnCompile(e) {
@@ -486,6 +487,7 @@
             value: instance.contract,
             text: instance.contract
           });
+         
          }
       },
       OnDeploy(e) {

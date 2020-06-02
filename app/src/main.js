@@ -6,12 +6,18 @@ import Popper from 'popper.js'
 
 import SocketIO from "socket.io-client"
 
+import SocketIOFileUpload from 'socketio-file-upload'
+
+
 
 Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false
 global.Popper = Popper;
 global.vm = vm; //Define you app variable globally
 const SocketInstance = SocketIO('http://localhost:3000');
+var uploader = new SocketIOFileUpload(SocketInstance);
 
+
+Vue.prototype.$uploader = uploader;
 Vue.prototype.$socket = SocketInstance;
 Vue.prototype.$smcat = Smcat;
 // Install BootstrapVue
