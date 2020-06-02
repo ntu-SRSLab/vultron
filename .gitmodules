@@ -1,12 +1,12 @@
 [submodule "Vultron-GoEthereum"]
-	path = Vultron-GoEthereum
+	path = server/Vultron-GoEthereum
 	url = git@github.com:ntu-SRSLab/Vultron-GoEthereum.git
 [submodule "Vultron-Fisco"]
-	path = Vultron-Fisco
+	path = server/Vultron-FISCO 
 	url = git@github.com:ntu-SRSLab/Vultron-Fisco.git
 [submodule "Vultron-FISCO-BCOS"]
-	path = Vultron-FISCO-BCOS
+	path = server/Vultron-FISCO-BCOS
 	url = git@github.com:ntu-SRSLab/Vultron-FISCO-BCOS.git
 [submodule "xstate-viz"]
-	path = xstate-viz
+	path = server/xstate-viz
 	url = git@github.com:statecharts/xstate-viz.git

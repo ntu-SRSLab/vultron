@@ -1,0 +1,19 @@
+{
+    "privateKey": {
+        "type": "pem",
+        "value": "./accounts/0xdf847c88bf4447225a482e7cdcedb3608ec5ea0b.pem"
+    },
+    "nodes": [
+        {
+            "ip": "127.0.0.1",
+            "port": "20200"
+        }
+    ],
+    "authentication": {
+        "key": "../../Vultron-FISCO-BCOS/nodes/127.0.0.1/sdk/sdk.key",
+        "cert":"../../Vultron-FISCO-BCOS/nodes/127.0.0.1/sdk/sdk.crt",
+        "ca":  "../../Vultron-FISCO-BCOS/nodes/cert/ca.crt"
+    },
+    "groupID": 1,
+    "timeout": 10000
+}

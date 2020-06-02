@@ -1,0 +1,51 @@
+<!-- views/project.ejs -->
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vultron</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"> <!-- load fontawesome -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-default navbar-static-top">
+    <div class="container-fluid">
+      <a class="navbar-brand">Vultron</a>
+      <a class="navbar-brand pull-right">
+      	 Deployed Contracts
+      </a>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="list-group">
+      <h4>Accounts:</h4>
+      <%
+	accounts.forEach(function(account) { %>
+      <p class="list-group-item-text">
+	<%= account %>
+      </p> 
+      <% });
+         %>
+    </div>
+    <h4>Target Contract: <%= target_adds %></h4>
+    <p><%= target_abi %></p>
+    <h4>Attack Contract: <%= attack_adds %></h4>
+    <p><%= attack_abi %></p>
+
+    <br>
+    <a href="/seed" class="btn btn-primary">
+      Run Seeds
+    </a>
+  </div>
+  
+  <hr>
+  <footer id="footer">
+    <p class="text-center">© Vultron 2019</p>
+  </footer>
+    
+</body>
+
+</html>

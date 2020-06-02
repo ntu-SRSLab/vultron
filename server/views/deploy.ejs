@@ -1,0 +1,53 @@
+<!-- views/project.ejs -->
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vultron</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"> <!-- load fontawesome -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-default navbar-static-top">
+    <div class="container-fluid">
+      <a class="navbar-brand">Vultron</a>
+      <a class="navbar-brand pull-right">
+      	 <%= status %>
+      </a>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="list-group">
+      <%
+	contracts.forEach(function(contract) { %>
+        <h4 class="list-group-item-heading">
+	  Path:&nbsp; <%= contract.path %> 
+	</h4>
+        <h4 class="list-group-item-heading">
+	  Contract:&nbsp; <%= contract.name %> 
+	</h4>
+        <h4 class="list-group-item-heading">
+	  Address:&nbsp; <%= contract.address %> 
+	</h4>
+	<p class="list-group-item-text">
+	  Constructor Function:&nbsp; <%= contract.constructor %>
+ 	  </p> 
+	<p class="list-group-item-text">
+	  Constructor Param:&nbsp; <%= contract.constructorparam %>
+ 	  </p> 
+      <% });
+         %>
+    </div>
+  </div>
+
+  <hr>
+  <footer id="footer">
+    <p class="text-center">© Vultron 2019</p>
+  </footer>
+    
+</body>
+
+</html>

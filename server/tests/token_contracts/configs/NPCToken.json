@@ -1,0 +1,1 @@
+{"contracts":[{"childhome":"/smart_contracts","from":"none","gas":"none","home":"/home/liuye","name":"NPCToken","param_Names":["_initialAmount"],"param_Types":["uint256"],"param_Values":{"_initialAmount":20000000},"payable":false,"value":"none","values":[20000000]}],"from":"none","gas":"50000000000","home":"/home/liuye","value":"1000000000"}
