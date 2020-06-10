@@ -1,5 +1,5 @@
-// CreditControllerState.js
-// customize the state definition and prepost conditions about CreditController
+// StateMachineCtx.js
+// customize the state definition and prepost conditions about fuzzer
 //
 const aa = require("aa");
 const assert = require("assert");
@@ -40,15 +40,12 @@ const  V1 = CREDIT_VALID_NOEXPIRED_STATUS;
 const  V2 = CREDIT_VALID_EXPIRED_STATUS;
 const  V3 = CREDIT_VALID_CLOSED_STATUS;
 class CreditInterface {
-    constructor(CreditController, Credit) {
-        this.CreditController = CreditController;
+    constructor(fuzzer, Credit) {
+        this.fuzzer = fuzzer;
        this.Credit = undefined;
     }
     async createCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("createCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("createCredit");
+        let fuzz = await this.fuzzer.fuzz_fun("createCredit");
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -76,10 +73,7 @@ class CreditInterface {
         }
     }
     async transferCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("transferCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("transferCredit");
+        let fuzz = await this.fuzzer.fuzz_fun("transferCredit");
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -112,10 +106,7 @@ class CreditInterface {
         }
     }
     async discountCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("discountCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("discountCredit");
+        let fuzz = await this.fuzzer.fuzz_fun("discountCredit");
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -148,10 +139,7 @@ class CreditInterface {
         }
     }
     async expireCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:EXPIRE_CREDIT}]});
+        let fuzz = await this.fuzzer.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:EXPIRE_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -180,10 +168,7 @@ class CreditInterface {
         }
     }
     async clearCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz =  await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLEAR_CREDIT}]});
+        let fuzz =  await this.fuzzer.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLEAR_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -211,10 +196,7 @@ class CreditInterface {
         }
     }
     async closeCredit() {
-        // let raw_tx = await this.fuzzer._fuzz_fun("expireOrClearOrCloseCredit");
-        // let receipt = await this.fuzzer._send_tx(raw_tx, this.abi);
-        // let events = await this.fuzzer._parse_receipt(receipt);
-        let fuzz = await this.CreditController.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLOSE_CREDIT}]});
+        let fuzz = await this.fuzzer.fuzz_fun("expireOrClearOrCloseCredit", {static:[{index:3, value:CLOSE_CREDIT}]});
         assert(fuzz.events);
         let creditEvents = fuzz.events.filter((e) => {
             return e.name == "creditEvent"
@@ -242,7 +224,7 @@ class CreditInterface {
         }
     }
     async getStatus(address) {
-        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        FiscoDeployer.getInstance().addContractInstance(address, "Credit");
         this.Credit = new FiscoFuzzer(1, "Credit");
         this.Credit.load();
         let ret1 = await this.Credit.call_contract("getCreditSccHoldingStatus");
@@ -257,7 +239,7 @@ class CreditInterface {
         return {Holding:aret1 , Clearing:aret2, Valid:aret3};
     }
     async getSccAmt(address) {
-        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        FiscoDeployer.getInstance().addContractInstance(address, "Credit");
         this.Credit = new FiscoFuzzer(1, "Credit");
         this.Credit.load();
         let ret = await this.Credit.call_contract("getCreditAmt");
@@ -265,15 +247,15 @@ class CreditInterface {
         return BigInt(ret.result.output.toString());
     }
     async getOwner(address) {
-        FiscoDeployer.getInstance().addInstance(address, "Credit");
+        FiscoDeployer.getInstance().addContractInstance(address, "Credit");
         this.Credit = new FiscoFuzzer(1, "Credit");
         this.Credit.load();
         let ret = await this.Credit.call_contract("getCreditOwner");
         return ret.result.output.toString().replace(/^0x0+/, "0x");
     }
 }
-class CreditControllerState {
-    constructor(CreditController, Credit) {
+class StateMachineCtx {
+    constructor(fuzzer, Credit) {
         this.status = {
             holding: 0,
             clearing: 0,
@@ -281,13 +263,12 @@ class CreditControllerState {
         };
         this.sccAmt = 0;
         this.owner = 0;
-        this.credit = new CreditInterface(CreditController, Credit);
+        this.credit = new CreditInterface(fuzzer, Credit);
     }
-    static getInstance(CreditController, Credit) {
-        if (!CreditControllerState.instance)
-            CreditControllerState.instance = new CreditControllerState(CreditController, Credit);
-        // console.log(CreditControllerState.instance);
-        return CreditControllerState.instance;
+    static getInstance(fuzzer, Credit) {
+        if (!StateMachineCtx.instance)
+            StateMachineCtx.instance = new StateMachineCtx(fuzzer, Credit);
+        return StateMachineCtx.instance;
     }
    async  update(address) {
         this.status = await this.credit.getStatus(address);
@@ -472,12 +453,12 @@ let   clearCredit= async (context, event) => {
 const createCreditStateMachine = statectx => {
     return Machine({
         id: "creditFSM",
-        initial: "empty",
+        initial: "initial",
         context: {
             ctx: statectx
         },
         states: {
-            empty: {
+            initial: {
                 on: {
                     create: {
                         target: "created",
@@ -567,9 +548,8 @@ class FiscoStateMachineFuzzer extends FiscoFuzzer {
         return FiscoStateMachineFuzzer.instance;
     }
     async bootstrap() {
-
         let creditStateMachine = createCreditStateMachine(
-            CreditControllerState.getInstance(
+            StateMachineCtx.getInstance(
                             FiscoStateMachineFuzzer.getInstance(),
                              undefined,
                     ));
@@ -648,13 +628,4 @@ class FiscoStateMachineFuzzer extends FiscoFuzzer {
         return ret;
     }
 }
-/*
-let creditStateMachine = createCreditStateMachine(CreditControllerState.getInstance(FiscoStateMachineFuzzer.getInstance()));
-console.log(creditStateMachine);
-//const service = interpret(creditStateMachine).onTransition(state => {
-//   console.log(state.value);
-//});
-const toggleModel = createModel(creditStateMachine);
-console.log(toggleModel.getSimplePathPlans());
-*/
 module.exports.FiscoStateMachineFuzzer = FiscoStateMachineFuzzer;

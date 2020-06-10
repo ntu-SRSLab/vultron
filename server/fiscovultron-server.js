@@ -5,15 +5,18 @@ const fs = require("fs");
 const express = require('express');
 const app = express();
 const port = 3001 || process.env.FISCOPORT;
-const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
-const FiscoDeployer = require("./connection/fisco/fuzzer").FiscoDeployer;
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const shell = require("shelljs");
+const compiler = require("./scripts/compile.js");
+const FiscoStateMachineFuzzer = require('./connection/wecredit/creditControllerState.js').FiscoStateMachineFuzzer;
+const FiscoDeployer = require("./connection/fisco/fuzzer").FiscoDeployer;
+
+// start  fisco-bcos network
+shell.exec("cd ../Vultron-FISCO-BCOS && ./quickstart.sh ");
+
+
 var storage = multer.diskStorage({
-    // destination: function (req, file, cb) {
-    //   cb(null, './uploads')
-    // },
     filename: function(req, file, cb) {
         cb(null, Date.now() + '_' + file.originalname)
     }
@@ -51,22 +54,8 @@ app.get('/fisco', (req, res) => {
         res.send("connection success");
     });
 });
-// app.get('/fisco/deploy', (req, res) => {
-//     console.log("**** GET", req.originalUrl, " ****");
-//     deployer.deploy_contract(hello_contract_path).then((answer) => {
-//         console.log(answer);
-//         res.send(hello_contract_path + " was deployed with address " + answer);
-//     }).catch(e => {
-//         console.log(e);
-//         res.render('error.ejs', {
-//             message: e
-//         });
-//     });
-// });
-
 app.get('/fisco/compile/wecredit', (req, res) => {
-    let ret = shell.exec("node compile.js");
-    let compiled = ret.split("to compile").slice(2);
+   let compiled = compiler.compileWecredit();
     res.send(compiled);
 });
 app.get('/fisco/deploy/wecredit', (req, res) => {
