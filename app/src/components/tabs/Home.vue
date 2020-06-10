@@ -9,39 +9,46 @@
             @change="onFileChange" multiple>
           </b-form-file>
         </b-form-group>
+        <b-progress :value="value*100/files.length" variant="success" v-if="status_upload_start"></b-progress>
         <!-- <b-table striped hover :items="selected"></b-table> -->
-        <b-button :variant="variant_upload" @click="OnUpload" class=" mr-1"> Upload</b-button>
+        <b-button :variant="variant_upload" :disabled="disable_upload" @click="OnUpload" class=" mr-1"> 
+                <b-icon   icon="cloud-upload" scale="1" aria-hidden="true"> </b-icon>
+                <span> Upload </span>
+        </b-button>
         <!-- <b-table striped hover :items="uploaded"></b-table> -->
-        <b-button :variant="variant_compile" @click="OnCompile" class="mr-1"> Compile</b-button>
+        <b-button :variant="variant_compile" :disabled="disable_compile" @click="OnCompile" class="mr-1"> 
+                <span>Compile</span>
+                <b-icon   icon="check2" v-if="status_compile"> </b-icon>
+                <b-spinner small   v-if = "status_compile_start"></b-spinner>
+          <!-- Compile -->
+        </b-button>
         <!-- <b-table striped hover :items="compiled"></b-table> -->
-        <b-form class="mt-3" inline v-if="compiled.length>0">
+        <b-form class="mt-3" inline v-if="status_compile">
           <label class="mr-sm-2" for="inline-form-custom-select-contract">contract </label>
           <b-form-select id="inline-form-custom-select-contract" v-model="selected_contract" :options="contracts"
             class="mb-2 mr-sm-2 mb-sm-0" @click="OnSelectContract"></b-form-select>
-            
-            <label  v-if="selected_contract"  class="mr-sm-2" for="inline-form-custom-select-contract-address">address </label>
-          <b-form-select id="inline-form-custom-select-contract-address" v-model="selected_address" :options="addresses"
-            class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract"></b-form-select>
 
-          <label  v-if="selected_contract"  class="mr-sm-2" for="inline-form-custom-select-contract-abi">abi </label>
+          <label v-if="selected_contract" class="mr-sm-2" for="inline-form-custom-select-contract-address">address
+          </label>
+          <b-form-select id="inline-form-custom-select-contract-address" v-model="selected_address"
+            :options="contract_addresses" class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract"></b-form-select>
+
+          <label v-if="selected_contract" class="mr-sm-2" for="inline-form-custom-select-contract-abi">abi </label>
           <b-form-select id="inline-form-custom-select-contract-abi" v-model="selected_abi" :options="abis"
-            class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract"></b-form-select>
+            class="mb-2 mr-sm-2 mb-sm-0" v-if="selected_contract" @change="OnChangeAbi"></b-form-select>
         </b-form>
- 
-        <div  class = "mt-2" v-for="(value, name) in selected_abi" v-bind:key="name">
-                      <b-form-group
-                        label-cols-sm="3"
-                        :label="`${name}`"
-                        label-align-sm="right"
-                        :label-for="`${name}`"
-                      >
-                       <b-form-input  v-if="selected_abi"  :plaintext="readonly(`${name}`)"  class="mr-sm-2"  :id="`${name}`" :type="`${value}`" :placeholder="`${value}`"    :disabled="readonly(`${name}`)" ></b-form-input>
-                     </b-form-group>
+
+        <div class="mt-2" v-for="(value, name) in selected_abi" v-bind:key="name">
+          <b-form-group label-cols-sm="3" :label="`${name}`" label-align-sm="right" :label-for="`${name}`">
+            <b-form-input v-if="selected_abi" :plaintext="readonly(`${name}`)" class="mr-sm-2" :id="`${name}`"
+              :ref="`${name}`" :type="`${value}`" :placeholder="`${value}`" :disabled="readonly(`${name}`)">
+            </b-form-input>
+          </b-form-group>
         </div>
-        <b-button v-if="selected_abi"  block variant="outline-primary" @click="OnDeploy" class="mt-2"> Deploy</b-button>
+        <b-button v-if="status_compile"  :disabled="!selected_abi" block variant="outline-primary" @click="OnDeploy" class="mt-2">  {{select_abi?selected_abi.name==selected_contract.split(".sol")[0]?"Deploy":"SendTx":"Deploy Or SendTransaction"}}</b-button>
         <!-- <b-table striped hover :items="deployed"></b-table> -->
         <b-card class="mt-3" header="Log Result">
-            <span v-html="log"></span>
+          <span v-html="log"></span>
         </b-card>
       </b-form>
     </b-card>
@@ -50,375 +57,20 @@
 
 
 <script>
-      const event_Upload = "Upload";
-      const event_Compile = "Compile";
-      const event_Deploy = "Deploy";
-      const event_Transaction = "Transaction";
-      const event_Call = "Call";
-      const client_Upload = "Upload_client";
-      const client_Compile = "Compile_client";
-      const client_Deploy = "Deploy_client";
-      const client_Transaction = "Transaction_client";
-      const client_Call = "Call_client";
+  const event_Upload = "Upload";
+  const event_Compile = "Compile";
+  const event_Deploy = "Deploy";
+  const event_Transaction = "Transaction";
+  const event_Call = "Call";
+  const client_Upload = "Upload_client";
+  const client_Compile = "Compile_client";
+  const client_Deploy = "Deploy_client";
+  const client_Transaction = "Transaction_client";
+  const client_Call = "Call_client";
   export default {
     name: "Home",
     data: function () {
       return {
-        abi: [{
-          "constant": false,
-          "inputs": [{
-            "name": "reserved",
-            "type": "string"
-          }],
-          "name": "setReserved",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getReserved",
-          "outputs": [{
-            "name": "",
-            "type": "string"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [{
-            "name": "status",
-            "type": "bytes32"
-          }],
-          "name": "updateCreditClearingStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [{
-            "name": "owner",
-            "type": "address"
-          }],
-          "name": "setOwner",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditAssetId",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditCustDataHash",
-          "outputs": [{
-            "name": "",
-            "type": "string"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [],
-          "name": "getCreditOrginSccId",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditSccValidStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditMaturityDate",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditSccClearingStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCredit",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32[]"
-          }, {
-            "name": "",
-            "type": "uint128"
-          }, {
-            "name": "",
-            "type": "string"
-          }, {
-            "name": "",
-            "type": "address"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCustDataHash",
-          "outputs": [{
-            "name": "",
-            "type": "string"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditOwner",
-          "outputs": [{
-            "name": "",
-            "type": "address"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditAccountNo",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [{
-            "name": "bytes32Array",
-            "type": "bytes32[11]"
-          }],
-          "name": "staticArrayToDynamicArray",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32[]"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [{
-            "name": "status",
-            "type": "bytes32"
-          }],
-          "name": "updateCreditValidStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditBytes32Array",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32[11]"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [{
-            "name": "bytes32Array",
-            "type": "bytes32[11]"
-          }, {
-            "name": "sccAmt",
-            "type": "uint128"
-          }, {
-            "name": "custDataHash",
-            "type": "string"
-          }],
-          "name": "setCredit",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditSccHoldingStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditIssuedDate",
-          "outputs": [{
-            "name": "",
-            "type": "bytes32"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": true,
-          "inputs": [],
-          "name": "getCreditAmt",
-          "outputs": [{
-            "name": "",
-            "type": "uint128"
-          }],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        }, {
-          "constant": false,
-          "inputs": [{
-            "name": "status",
-            "type": "bytes32"
-          }],
-          "name": "updateCreditHoldingStatus",
-          "outputs": [{
-            "name": "",
-            "type": "bool"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }, {
-          "inputs": [{
-            "name": "bytes32Array",
-            "type": "bytes32[11]"
-          }, {
-            "name": "sccAmt",
-            "type": "uint128"
-          }, {
-            "name": "custDataHash",
-            "type": "string"
-          }, {
-            "name": "owner",
-            "type": "address"
-          }],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "constructor"
-        }, {
-          "anonymous": false,
-          "inputs": [{
-            "indexed": false,
-            "name": "sccId",
-            "type": "bytes32"
-          }, {
-            "indexed": false,
-            "name": "preOwner",
-            "type": "address"
-          }, {
-            "indexed": false,
-            "name": "owner",
-            "type": "address"
-          }, {
-            "indexed": false,
-            "name": "contractAddress",
-            "type": "address"
-          }],
-          "name": "setOwnerEvent",
-          "type": "event"
-        }, {
-          "anonymous": false,
-          "inputs": [{
-            "indexed": false,
-            "name": "bytes32Array",
-            "type": "bytes32[]"
-          }, {
-            "indexed": false,
-            "name": "sccAmt",
-            "type": "uint128"
-          }, {
-            "indexed": false,
-            "name": "custDataHash",
-            "type": "string"
-          }, {
-            "indexed": false,
-            "name": "contractAddress",
-            "type": "address"
-          }],
-          "name": "setCreditEvent",
-          "type": "event"
-        }, {
-          "anonymous": false,
-          "inputs": [{
-            "indexed": false,
-            "name": "sccId",
-            "type": "bytes32"
-          }, {
-            "indexed": false,
-            "name": "reserved",
-            "type": "string"
-          }, {
-            "indexed": false,
-            "name": "contractAddress",
-            "type": "address"
-          }],
-          "name": "setReservedEvent",
-          "type": "event"
-        }],
         object: {
           title: 'How to do lists in Vue',
           author: 'Jane Doe',
@@ -428,34 +80,88 @@
           int: '2016-04-10'
         },
         selected: [],
-        uploaded: [],
-        compiled: [],
-        deployed: [],
-        options: [],
+        files: [],
+        // if upload complete
+        status_upload: false,
+        // if upload start
+        status_upload_start : false,
+        value : 0,
 
-        contracts:[],
-        selected_contract:null,
+        // if compile complete
+        status_compile: false,
+       // if compile start
+        status_compile_start: false,
+
+        status_deploy: false,
+        options: [],
+        contracts: [],
+        selected_contract: null,
         selected_abi: null,
         selected_address: null,
         log: "",
-
-        server_data: null
+        server_data: null,
+        addresses: {}
       };
     },
-    created: function(){
+    created: function () {
       // lisent server event
-     
-      const events = [event_Upload, event_Compile, event_Deploy, event_Transaction, event_Call];
-      for (let event of events){
-          this.$socket.on(event, function(data){
-            if(!this.server_data)
-                this.server_data={};
-            this.server_data[event] = data;
-          })
-      }
+      var obj = this;
+      this.$socket.on(event_Compile, function (data) {
+        console.log(data);
+        obj.status_compile = true;
+        // obj.log += "<br>" + event_Compile + " done";
+        obj.$fsmservice.add_contracts(data);
+        if (!obj.server_data)
+          obj.server_data = {};
+        obj.server_data[event_Compile] = data;
+        obj.status_compile= true;
+        obj.status_compile_start = false;
+      });
+      this.$socket.on(event_Upload, function (data) {
+        if (!obj.server_data)
+          obj.server_data = {};
+        obj.server_data[event_Upload] = data;
+      });
+      this.$socket.on(event_Deploy, function (data) {
+        console.log(event_Deploy, data);
+        obj.status_deploy = true;
+        obj.log += "<br>" + event_Deploy + ": " + data.name + "-" + data.address;
+        if (!obj.addresses[data.name]) {
+          obj.addresses[`${data.name}`] = [];
+        }
+        obj.addresses[`${data.name}`].push(`${data.address}`);
+
+        if (!obj.server_data)
+          obj.server_data = {};
+        obj.server_data[event_Deploy] = data;
+      });
+      this.$socket.on(event_Transaction, function (data) {
+        obj.log += "<br>" + event_Transaction + ": " + JSON.stringify(data);
+        if (!obj.server_data)
+          obj.server_data = {};
+        obj.server_data[event_Transaction] = data;
+      });
+      this.$socket.on(event_Call, function (data) {
+        if (!obj.server_data)
+          obj.server_data = {};
+        obj.server_data[event_Call] = data;
+      });
+    
+     this.$uploader.addEventListener("complete", function (event) {
+        console.log(event.file.name, " has uploaded");
+        // console.log(obj.selected);
+        obj.status_upload = true;
+        // obj.log += "<br>" + "upload" + " done";
+        obj.value += 1;
+      });
+      this.$uploader.addEventListener("progress", function(event){
+        console.log(event, "upload in progress");
+      });
+
     },
     methods: {
       onFileChange(e) {
+        this.value = 0;
         var files = e.target.files || e.dataTransfer.files;
         if (!files.length)
           return;
@@ -466,84 +172,163 @@
             contract: file.name
           });
         }
+        this.files = files;
+        this.status_upload = false;
+        this.status_compile = false;
+        this.status_deploy = false;
         
-        this.uploaded = files;
-        this.compiled = [];
-        this.deployed = [];
+        this.status_upload_start = false;
+        this.status_compile_start = false;
       },
-      OnUpload(e) {
-        console.log(e);
-        this.log +="<br> uploaded contracts to server:" + JSON.stringify(this.selected);
-        this.$socket.emit("client", {type:client_Upload, data:  this.uploaded});
-        this.$uploader.submitFiles(this.uploaded)
-        this.compiled = this.selected;
+      OnUpload() {
+        // this.log += "<br> uploaded contracts to server:" + JSON.stringify(this.selected);
+        this.$socket.emit("client", {
+          type: client_Upload,
+          data: this.selected
+        });
+        this.$uploader.submitFiles(this.files);
+        this.status_upload_start = true;
       },
-      OnCompile(e) {
-        console.log(e);
-        this.$socket.emit("client",{type:client_Compile, data: this.compiled});
-        this.log +="<br> compiled:" + JSON.stringify(this.compiled);
-        for (var instance of this.compiled) {
+      OnCompile() {
+        this.$socket.emit("client", {
+          type: client_Compile,
+          data: this.selected
+        });
+        this.status_compile_start = true;
+        // this.log += "<br> server compiled " + JSON.stringify(this.selected);
+        for (var instance of this.selected) {
           this.contracts.push({
             value: instance.contract,
             text: instance.contract
           });
-         
-         }
+        }
       },
-      OnDeploy(e) {
-        console.log(client_Deploy);
+      OnDeploy() {
         console.log(client_Call);
         console.log(client_Transaction);
-        console.log(e);
-        this.deployed = this.compiled;
-        this.log +="<br> deployed:" + JSON.stringify(this.selected);
-        // alert(e.toString() + "compiled:" + JSON.stringify(this.selected));
+        if (this.selected_address === "0x") {
+          var deployEvent = {
+            type: client_Deploy,
+            data: {
+              contract: this.selected_contract.split(".sol")[0],
+              address: this.selected_address,
+              func: this.selected_abi.name + "(" + this.selected_abi.inputs + ")",
+              params: JSON.parse("[" + this.$refs.inputs[0].localValue + "]")
+            }
+          }
+          console.log(deployEvent);
+          this.$socket.emit("client", deployEvent);
+          // this.log += "<br> server deployed:" + this.selected_contract;
+        } else {
+          var transactionEvent = {
+            type: client_Transaction,
+            data: {
+              contract: this.selected_contract.split(".sol")[0],
+              address: this.selected_address,
+              func: this.selected_abi.name + "(" + this.selected_abi.inputs + ")",
+              params: JSON.parse("[" + this.$refs.inputs[0].localValue + "]")
+            }
+          }
+          console.log(transactionEvent);
+          this.$socket.emit("client", transactionEvent);
+          // this.log += `<br> server will handle transaction from ${this.selected_contract}`;
+        }
       },
-        
+
       OnSelectContract(e) {
         console.log(e);
+      },
+      OnChangeAbi(){
+        console.log(this.selected_abi);
+        this.labelDeployAndSendTx = this.selected_abi.name==this.selected_contract.split(".sol")[0]?"Deploy":"SendTx";
+        console.log(this.labelDeployAndSendTx);
       },
       types(inputs) {
         let input_types = [];
         if (inputs && inputs.length >= 1)
-            for (let input of inputs)
-                input_types.push(input.type);
+          for (let input of inputs)
+            input_types.push(input.type);
         return input_types.join();
-     },  
-     readonly(field_name) {
-      //  alert( !(field_name === 'inputs'));
+      },
+      readonly(field_name) {
+        //  alert( !(field_name === 'inputs'));
         return !(field_name === 'inputs');
       }
     },
     computed: {
       variant_upload: function () {
-        return this.uploaded.length == 0 ? "primary" : "success";
+        return this.status_upload == false ? "primary" : "success";
       },
       variant_compile: function () {
-        return this.compiled.length == 0 ? "primary" : "success";
+        return this.status_upload == false ? "secondary" : this.status_compile == false ? "primary" : "success";
       },
-      addresses: function(){
-        return [{value: "0x", text: "0x"}];
+      disable_upload: function () {
+        return this.selected.length == 0;
       },
-      abis:function(){
-          var abis = [];
-           for(var fun of this.abi){
-             if(fun.type=="function" || fun.type=="constructor"){
-            fun.inputs = this.types(fun.inputs);
-            fun.outputs = this.types(fun.outputs);
-            if (fun.name==undefined || fun.name==null || fun.name == ""){
-                  abis.push({
-                  value: fun,
-                  text:  this.selected_contract.split(".sol")[0]
-            })}else{ 
-                abis.push({
-                  value: fun,
-                  text:  fun.name
-                })
-            }
+      disable_compile: function () {
+        return this.status_upload == false;
+      },
+      contract_addresses: function () {
+        console.log(`address of ${this.selected_contract}:`);
+        console.log(this.addresses);
+        if (undefined == this.addresses[this.selected_contract.split(".sol")[0]])
+          return [{
+            value: "0x",
+            text: "0x"
+          }];
+        else {
+          let ret = [];
+          for (let address of this.addresses[this.selected_contract.split(".sol")[0]]) {
+            ret.push({
+              value: address,
+              text: address
+            });
+          }
+          return ret;
         }
-           }
-        return abis;
+      },
+      
+      abis: function () {
+        var existConstructorFunction = false;
+        var abis = [];
+        console.log(this.server_data[event_Compile]);
+        console.log(this.server_data[event_Compile][this.selected_contract.split(".sol")[0]]);
+        for (var fun of JSON.parse(JSON.stringify(this.server_data[event_Compile][this.selected_contract.split(".sol")[0]]))) {
+              if (fun.type == "function" || fun.type == "constructor") {
+                  if(fun.type == "constructor"){
+                    existConstructorFunction = true;
+                  }
+                    fun.inputs = this.types(fun.inputs);
+                    fun.outputs = this.types(fun.outputs);
+                    if (fun.name == undefined || fun.name == null || fun.name == "") {
+                          fun.name = this.selected_contract.split(".sol")[0];
+                          abis.push({
+                            value: fun,
+                            text: this.selected_contract.split(".sol")[0]
+                          })
+                    } else {
+                          abis.push({
+                            value: fun,
+                            text: fun.name
+                          })
+                    }
+              }
+        }
+        if(existConstructorFunction==false){
+              abis.push({
+                value:{
+                  name: this.selected_contract.split(".sol")[0], 
+                  inputs: "", 
+                  type: "constructor"
+                  },
+                text: this.selected_contract.split(".sol")[0]
+            });
+        }
+
+        let obj = this;
+        return abis.filter(e =>{
+          return obj.selected_address=="0x"?e.value.type=="constructor":e.value.type!="constructor";
+        });
       }
     },
     props: {
