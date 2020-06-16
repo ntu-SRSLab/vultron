@@ -1,0 +1,359 @@
+const aa = require("aa");
+// var Set = require("collections/set");
+const assert = require("assert");
+const hex2ascii = require('hex2ascii')
+const Machine = require("xstate").Machine;
+const assign = require("xstate").assign;
+const interpret = require("xstate").interpret;
+const createModel = require("@xstate/test").createModel;
+const FiscoFuzzer = require("../connection/fisco/fuzzer.js").FiscoFuzzer;
+const FiscoDeployer = require("../connection/fisco/fuzzer.js").FiscoDeployer;
+let asyncFlag = false;
+
+function revertAsyncFlag() {
+asyncFlag = !asyncFlag;
+}
+
+
+// contract interface 
+
+class BlindAuction {
+constructor(fuzzer) {
+  this.address = "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db";
+  this.name = "BlindAuction";
+  this.fuzzer = fuzzer;
+}
+
+async close() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "close");
+  return fuzz;
+}
+
+async unbid() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "unbid");
+  return fuzz;
+}
+
+async withdraw() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "withdraw");
+  return fuzz;
+}
+
+async reveal() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "reveal");
+  return fuzz;
+}
+
+async cancelRB() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "cancelRB");
+  return fuzz;
+}
+
+async cancelABB() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "cancelABB");
+  return fuzz;
+}
+
+async finish() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "finish");
+  return fuzz;
+}
+
+async bid() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("BlindAuction", "0xe438d331444aa190ca8f8a85f85339b3b1e9a0db", "bid");
+  return fuzz;
+}
+
+}
+// state machine context
+class StateMachineCtx {
+constructor(fuzzer) {
+  this.BlindAuction = new BlindAuction(fuzzer);
+
+  this.state = {
+    "id": "FSM#2"
+  };
+  this.fuzzer = fuzzer;
+}
+static getInstance(fuzzer) {
+  if (!StateMachineCtx.instance)
+    StateMachineCtx.instance = new StateMachineCtx(fuzzer);
+  return StateMachineCtx.instance;
+}
+getState() {
+  //TO DO, set what your state means and how to get the state
+
+}
+// action_functions_mapping
+async action_bid() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retbid = await StateMachineCtx.getInstance().BlindAuction.bid();
+    ret.push(retbid);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_unbid() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retunbid = await StateMachineCtx.getInstance().BlindAuction.unbid();
+    ret.push(retunbid);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_close() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retclose = await StateMachineCtx.getInstance().BlindAuction.close();
+    ret.push(retclose);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_reveal() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retreveal = await StateMachineCtx.getInstance().BlindAuction.reveal();
+    ret.push(retreveal);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_finish() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retfinish = await StateMachineCtx.getInstance().BlindAuction.finish();
+    ret.push(retfinish);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_withdraw() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retwithdraw = await StateMachineCtx.getInstance().BlindAuction.withdraw();
+    ret.push(retwithdraw);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+async action_cancelRB() {
+  let ret = [];
+  if (asyncFlag) {
+    // PreCondition. TO DO
+    let retcancelRB = await StateMachineCtx.getInstance().BlindAuction.cancelRB();
+    ret.push(retcancelRB);
+
+    // PostCondition. TO DO
+  }
+  return ret;
+}
+}
+// state machine 
+const createStateMachine = statectx => {
+return Machine({
+  id: "FSM#2",
+  initial: "initial",
+  context: {
+    ctx: statectx
+  },
+  states: {
+
+    initial: {
+      on: {
+        bid: {
+          target: "ABB",
+          actions: "action_bid"
+        }
+      }
+    },
+    ABB: {
+      on: {
+        bid: {
+          target: "ABB",
+          actions: "action_bid"
+        },
+        unbid: {
+          target: "C",
+          actions: "action_unbid"
+        },
+        close: {
+          target: "RB",
+          actions: "action_close"
+        }
+      }
+    },
+    C: {
+      on: {
+        unbid: {
+          target: "C",
+          actions: "action_unbid"
+        }
+      }
+    },
+    RB: {
+      on: {
+        reveal: {
+          target: "RB",
+          actions: "action_reveal"
+        },
+        finish: {
+          target: "F",
+          actions: "action_finish"
+        },
+        cancelRB: {
+          target: "C",
+          actions: "action_cancelRB"
+        }
+      }
+    },
+    F: {
+      on: {
+        withdraw: {
+          target: "F",
+          actions: "action_withdraw"
+        }
+      }
+    }
+  }
+}, {
+  actions: {
+    action_bid: statectx.action_bid,
+    action_unbid: statectx.action_unbid,
+    action_close: statectx.action_close,
+    action_reveal: statectx.action_reveal,
+    action_finish: statectx.action_finish,
+    action_withdraw: statectx.action_withdraw,
+    action_cancelRB: statectx.action_cancelRB
+  }
+});
+}
+
+
+class FiscoStateMachineFuzzer extends FiscoFuzzer {
+constructor(seed, contract_name, ) {
+  super(seed, contract_name);
+}
+static getInstance(seed, contract_name) {
+  if (!FiscoStateMachineFuzzer.instance) {
+    FiscoStateMachineFuzzer.instance = new FiscoStateMachineFuzzer(seed, contract_name)
+  }
+  return FiscoStateMachineFuzzer.instance;
+}
+async bootstrap(socket) {
+  let stateMachine = createStateMachine(
+    StateMachineCtx.getInstance(
+      FiscoStateMachineFuzzer.getInstance()
+    ));
+  let service = interpret(stateMachine).onTransition(state => {
+    console.log(state.value);
+  });
+  service = aa.promisifyAll(service);
+  const toggleModel = createModel(stateMachine);
+  console.log(JSON.stringify(toggleModel));
+  console.log(toggleModel.machine.context);
+  console.log("******************************");
+  let plans = toggleModel.getShortestPathPlans();
+  console.log("size of shortestpath plans:", plans.length);
+  let index = 1;
+  let final_report = {};
+  final_report.states = new Set();
+  final_report.paths = new Array();
+  final_report.transition = 0;
+  final_report.start_time = (Date.now() / 1000).toFixed(2);
+  for (let plan of plans) {
+    console.log("plan#", index++);
+    for (let path of plan.paths) {
+      console.log(path.description);
+    }
+    for (let path of plan.paths) {
+      if (path.description) {
+        final_report.paths.push(path.description);
+      }
+    }
+  }
+  console.log("******************************");
+  index = 1;
+
+  for (let plan of plans) {
+    console.log("plan#", index++);
+    for (let path of plan.paths) {
+      let start = service.start();
+      let events = path.description.split("via ")[1].split(" → ");
+      console.log(path.description);
+      console.log("transition by event ", events);
+      let state = service.send(events);
+      console.log(state.actions);
+      revertAsyncFlag();
+      let startTime = Date.now() / 1000;
+      let action_index = 0;
+      for (let action of state.actions) {
+        action_index++;
+        final_report.transition++;
+        let ret = await action.exec(start.context, undefined);
+        console.log(action.type, ret);
+        console.log({
+          event: "Action_Report",
+          data: {
+            startTime: startTime,
+            currentTime: Date.now() / 1000,
+            plan: state.actions,
+            action: action.type,
+            index: action_index
+          }
+        });
+        socket.emit("server", {
+          event: "Action_Report",
+          data: {
+            startTime: startTime,
+            currentTime: Date.now() / 1000,
+            plan: state.actions,
+            action: action.type,
+            index: action_index
+          }
+        });
+        // while (ret.length == 0) {
+        //     ret = await action.exec(start.context, undefined);
+        //     console.log(action.type, ret);
+        // }
+      }
+      revertAsyncFlag();
+      service.stop();
+    }
+    final_report.states.add(plan.state.value);
+    console.log("Approaching fsm state->", plan.state.value);
+    console.log("********************************************");
+  }
+  final_report.end_time = (Date.now() / 1000).toFixed(2);
+  socket.emit("server", {
+    event: "event_Test_Done",
+    data: final_report
+  });
+
+  return {
+    callFuns: [],
+    execResults: []
+  };
+}
+
+async _seed_callSequence() {
+  console.log(__filename, "_seed_callSequence");
+  let ret = await super._seed_callSequence();
+  return ret;
+}
+}
+module.exports.FiscoStateMachineFuzzer = FiscoStateMachineFuzzer

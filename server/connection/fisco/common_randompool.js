@@ -41,9 +41,9 @@ class IntPool extends Pool {
     }
     _constant() {
         if (false == this.sign)
-            return [0, 1, 2];
+            return [0, 1, 2,3,4,5,6,7,8, 9];
         else
-            return [-1, 0, 1];
+            return [-1, 0, 1,2,3,4,5,6,7,8];
     }
     _random() {
         return Math.floor(Math.random() * (this.range.end - this.range.start)) + this.range.start;
@@ -56,9 +56,9 @@ class BigIntPool extends Pool {
     }
     _constant() {
         if (false == this.sign)
-            return ["0x0", "0x1", "0x2"];
+            return ["0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7"];
         else
-            return ["-0x1", "0x0", "0x1"];
+            return ["-0x1", "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6"];
     }
     _random() {
         return "0x" + cryptoRandomString({
@@ -74,7 +74,7 @@ class BytePool extends Pool {
         super(range, size, description);
     }
     _constant() {
-        return ["0x0", "0x1", "0x2"];
+        return ["0x0", "0x1", "0x2","0x3", "0x4", "0x5"];
     }
     _random() {
         return "0x" + cryptoRandomString({
@@ -128,10 +128,10 @@ function generate_random(parameter_type) {
     let arrayRegex = /\[([0-9]+)\]/;
     let dynamicArrayRegex = /\[\]/;
     if (parameter_type.match(dynamicArrayRegex)) {
-        let match = parameter_type.match(arrayRegex);
+        let match = parameter_type.match(dynamicArrayRegex);
         // console.log(match);
         let matched = match[0];
-        assert(match[1] == "", "dynamic array should be []")
+        // assert(match[1] == "", "dynamic array should be []")
         let size = const_dynamic_array_size;
         let arr = [];
         let element_type = parameter_type.replace(matched, "");

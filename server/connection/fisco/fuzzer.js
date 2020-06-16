@@ -117,19 +117,32 @@ class FiscoDeployer extends Web3jService {
     }
     async transcation_send(contract_name, address, full_func, params){
         console.log(`send transaction to contract ${contract_name}...`);
-        let receipt = await this.sendRawTransaction(`${address}`, `${full_func}`, params);   
+       
         // console.log(receipt);
         let abi_path = this.addContractInstance(address, contract_name).getContractInstance(contract_name).abi;
+        let receipt = null;
+        let logs = null;
         if (abi_path) {
             let abi =JSON.parse(fs.readFileSync(abi_path, "utf8"));
             assert(abi, "abi is undefined, contract_abi is not well defined");
-            abiDecoder.addABI(abi);
-            let logs = abiDecoder.decodeLogs(receipt.logs);
-
+            let func_abi = abi.filter(e => {
+                return e.name == full_func.split("(")[0]
+            });
+            if (!(func_abi[0].constant || func_abi[0].stateMutability=="view")){
+                       receipt = await this.sendRawTransaction(`${address}`, `${full_func}`, params);   
+                       abiDecoder.addABI(abi);
+                       let logs = abiDecoder.decodeLogs(receipt.logs);
+            }
+            else {
+                        receipt = await this.call(`${address}`, `${full_func}`, params);   
+                        logs = null;
+            }
             console.log(`done`);
             return {receipt:receipt, "logs":logs};
+        }else{
+            receipt = await this.sendRawTransaction(`${address}`, `${full_func}`, params);   
         }
-        return receipt;
+        return {receipt:receipt, "logs":null};
     }
 
     getContractInstance(contract_name) {
@@ -195,23 +208,7 @@ class FiscoFuzzer extends Web3jService {
     // initiate a transaction to target contract
     async bootstrap() {
         assert(this.loadContract == true, "function load(...) must be called before");
-        // // we only generate a call sequence
-        // let callFun_list = await this._seed_callSequence();
-        // // Execute the seed call sequence
-        // try {
-        //     /// the call sequence to be executed
-        //     this.g_callsequence_list.push(callFun_list);
-        //     await this.exec_sequence_call();
-        // } catch (e) {
-        //     //console.log(e);
-        // }
-        // this.bootstrapContract = true;
-        // let execResult_list = "successful!";
-        // return {
-        //     callFuns: callFun_list,
-        //     execResults: execResult_list
-        // };
-        this.bootstrapContract = true;
+         this.bootstrapContract = true;
         return {
             callFuns: [],
             execResults: []
@@ -245,16 +242,18 @@ class FiscoFuzzer extends Web3jService {
         let instance = FiscoDeployer.getInstance().addContractInstance(address, name).getContractInstance(name);
         let raw_tx = await this._fuzz_fun(instance.address, readJSON(instance.abi), fun_name, option);
         let abi = readJSON(instance.abi).filter(e => {
-            return e.name == fun_name
+            return e.name == fun_name.split("(")[0]
         });
+        console.log(fun_name, abi);
         // console.log(abi.constant, abi.stateMutability);
-        if (abi[0].constant) {
+        if (abi[0].constant || abi[0].stateMutability=="view") {
             let receipt = await this._send_call(raw_tx, readJSON(instance.abi));
-            return {raw_tx: raw_tx, receipt:receipt};
+            // return {raw_tx: raw_tx, receipt:receipt};
+            return {receipt: receipt, logs: null, raw_tx:raw_tx};
         } else {
             let receipt = await this._send_tx(raw_tx, readJSON(instance.abi));
             let log = await this._parse_receipt(receipt);
-            return {raw_tx:raw_tx, events:log};
+            return {receipt: receipt,  logs: log, raw_tx:raw_tx};
         }
     }
 
