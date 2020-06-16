@@ -4,7 +4,7 @@
       <b-tabs v-model="tabIndex" card>
         <b-tab title="HOME" :title-link-class="linkClass(0)" active><Home></Home></b-tab>
         <b-tab title="TEST" :title-link-class="linkClass(1)"><ModelTest></ModelTest></b-tab>
-        <b-tab title="test" :title-link-class="linkClass(2)"><Test></Test></b-tab>
+        <!-- <b-tab title="test" :title-link-class="linkClass(2)"><Test></Test></b-tab> -->
       </b-tabs>
     </b-card>
   </div>
@@ -15,12 +15,12 @@
 // import BotFooter from "./components/BotFooter";
 import Home from "./tabs/Home";
 import ModelTest from "./tabs/Test";
-import Test from "./Test"
+// import Test from "./Test"
 export default {
   name: "Tab",
   components: {
     Home,
-    Test,
+    // Test,
     ModelTest
   },
   data() {

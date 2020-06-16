@@ -4,6 +4,7 @@
       <b-col align-v="center" cols="5"  :md="2">
         <b-container >
         <b-form inline>
+          <span class = "secondary mt-2 mr-2" >Specification </span>
           <b-form-group  class="mt-2"  id="fieldset-1"
       label="example:"
       label-for="select_example">
@@ -17,12 +18,42 @@
           </b-container>
       </b-col>
       <b-col align-v="center" cols="5"  :md="5">
-        <b-row  v-show="!mouseOverFSM&&!mouseOverCode" >
+         <span class = "secondary mt-2 mr-2" >Control Panel </span>
+        <b-row  v-show="!mouseOverFSM" >
               <div class="container"  style="width:100%; height: 500px; border:thin;"  v-html="lSVGInAString">
               </div>
         </b-row>
-        <b-row v-if="lSVGInAString "  v-show="!mouseOverFSM&&!mouseOverCode" >
-          <div class="container" style="width: 100%; height:300px">
+        <b-row v-if="lSVGInAString "  v-show="!mouseOverFSM" >
+        <div class="container" style="width: 100%; height:300px">
+          <b-row>
+              <b-col>
+               <b-form-group  class="align-baseline text-left" label="Strategy" >
+                  <b-form-radio-group id="strategy-radio-group" v-model="covering_strategy" name="strategy-radios"  @input="OnCoverStrategy" stacked>
+                      <b-form-radio   class="text-left mr-3"  value="States"   >Cover State</b-form-radio>
+                      <b-form-radio   class="text-left mr-5"  value="Transitions-Without-Loop"     >Cover Transition</b-form-radio>
+                      <b-form-radio   class="text-left mr-5"   value="Transitions-With-Loop"     >Cover Transition(Loop)</b-form-radio>
+                  </b-form-radio-group>   
+                </b-form-group>
+              </b-col>
+              <b-col>
+               <b-form-group  class="text-left" label="Test Case Priority on State/Transition" >
+                 <b-form inline class="mt-2 mb-2">
+                  <label class="mr-sm-2" for="inline-form-custom-select-state">State: </label>
+                  <b-form-select id="inline-form-custom-select-state" v-model="selected_state" :options="states"
+                    class="mb-2 mr-sm-2 mb-sm-0 col-sm-2" ></b-form-select>
+                 </b-form>
+                 <b-form inline  class="mt-2 mb-2">
+                     <label class="mr-sm-2">Transition: </label>
+                       <b-form-select v-model="selected_transition_startstate" :options="states" @change="OnTransitions"
+                                class="mb-2 mr-sm-2 mb-sm-0 col-sm-2" ></b-form-select>
+                        <span> --> </span>
+                        <b-form-select v-model="selected_transition"  :options="transitions"
+                                class="mb-2 mr-sm-2 mb-sm-0  col-sm-2" ></b-form-select>
+                 </b-form> 
+               
+                </b-form-group>
+              </b-col>
+          </b-row>
             <b-form inline>
                         <b-form-checkbox
                           id="checkbox-1"
@@ -32,7 +63,7 @@
                           value="confirmed"
                           unchecked-value="not_confirmed"
                         >
-                              Confirm your FSM
+                              Confirm the FSM above
                        </b-form-checkbox>
                        <b-form-checkbox
                                 id="checkbox-2"
@@ -42,17 +73,18 @@
                                 value="confirmed"
                                 unchecked-value="not_confirmed"
                               >
-                              Confirm model testing scripts
+                              Confirm the Model righthand
                     </b-form-checkbox>
-                    <!-- <b-button class="mr-2   mb-2 col-sm-2" size="lg" variant="primary">Upload</b-button> -->
-                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="lg" variant="secondary" @click="OnTest()">Test</b-button>
+                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="lg" :variant="variantTest" @click="OnTest()">Test</b-button>
+                     <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="lg" :variant="variantRandomTest" @click="OnRandomTest()">Random Test</b-button>
             </b-form>
-             <b-table outlined=true hover :items="test_results"></b-table>
+             <b-table outlined=true  sticky-header=true hover :items="test_results"></b-table>
           </div>
         </b-row>
 
       </b-col>
       <b-col  cols="6"  md="5">
+           <span class = "secondary mt-2 mr-2" > Model Driver </span>
           <b-container  class ="normal"  >
                  <codemirror   class="ModelCodeMirror" v-model="model"  :options="cmOptions"  />
           </b-container> 
@@ -111,9 +143,9 @@
   import 'codemirror/addon/fold/markdown-fold.js'
   import 'codemirror/addon/fold/xml-fold.js'
 
-  import cat from '../../assets/cat.json';
   import credit from '../../assets/wecredit.json'
   import blindAction from '../../assets/blindAuction.json'
+  import dummyAction from '../../assets/dummyAuction.json'
   export default {
     name: "ModelTest",
     data: function () {
@@ -125,18 +157,26 @@
         fsm_status:"not_confirmed",
         model_status: "not_confirmed",
         lSVGInAString: null,
-        mouseOverFSM: false,
-        mouseOverCode: false,
-        log: "<p>this is the place to show running log </p>" + this.$smcat,
-        // FSM# States# Paths# TransitionsTime (s)
+        mouseOverFSM: false, // if mouse over fsm box
+        status_test: false,  // if test completed
+        status_randomtest: false, // if random test finished
+        covering_strategy: null, // which covering strategy  is selected
+        
+        // test case priority
+        states:[],
+        selected_state: null, 
+        selected_transition_startstate: null, 
+        transitions: null,
+        selected_transition: null, 
+
+         log: "<p>this is the place to show running log </p>" + this.$smcat,
          test_results: [
-          // { FSM: "fsm#1", "#States": 'Dickerson', "#Paths": 'Macdonald' , "#Transitions": "0", "Times(s)": 0},
-          // { FSM: "fsm#1", "#States": 'Dickerson', "#Paths": 'Macdonald' , "#Transitions": "0", "Times(s)": 0},  
          ],
+         test_priority: {}, 
           options: [
           { value: blindAction, text: 'blindAction' },
           { value:  credit, text: 'credit' },
-          {value: cat,      text:"cat"},
+          {value: dummyAction,      text:"dummyAuction"},
           { value: 'null', text: 'Empty' }
         ],
        cmOptions_json: {
@@ -188,33 +228,41 @@
         console.log(event_Test, data);
       } )
       this.$socket.on("server", data =>{
+           alert(JSON.stringify(data));
+           console.log(JSON.stringify(data));
+           if(data.event=="event_Test_Done"){
+                          obj.status_test = true;
+                          console.log(data);
+                          return;
+              }else if (data.event == "RandomTestAction_Report"){
+                          obj.$fsmservice.enable_randomTest();
+              }
               // obj.$fsmservice.add_action_report(data.data)
-              console.log(data.event);
-              const lSVGInAString = obj.$smcat.render(
+           
+               const lSVGInAString = obj.$smcat.render(
                                                                  obj.$fsmservice.add_action_report(data.data).get_sm_cat(), 
-                                                                      {
-                                                                          inputType: "json",
-                                                                          outputType: "svg",
-                                                                          direction: "left-right",
-                                                                        }
-                  ); 
-                obj.test_results.push(obj.$fsmservice.next_result());
-                var  parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(lSVGInAString, "text/xml");
-                // console.log(xmlDoc);
-                xmlDoc.getElementsByTagName("svg")[0].setAttribute("width", "100%");
-                xmlDoc.getElementsByTagName("svg")[0].setAttribute("height", "100%");
-                var s = new XMLSerializer();
-                obj.lSVGInAString= s.serializeToString(xmlDoc);
+                                                                       {
+                                                                           inputType: "json",
+                                                                           outputType: "svg",
+                                                                           direction: "left-right",
+                                                                         }
+                   ); 
+                 var result = obj.$fsmservice.next_result();
+                 if(result)
+                       obj.test_results.push(result);
+                 var  parser = new DOMParser();
+                 var xmlDoc = parser.parseFromString(lSVGInAString, "text/xml");
+                 // console.log(xmlDoc);
+                 xmlDoc.getElementsByTagName("svg")[0].setAttribute("width", "100%");
+                 xmlDoc.getElementsByTagName("svg")[0].setAttribute("height", "100%");
+                 var s = new XMLSerializer();
+                 obj.lSVGInAString= s.serializeToString(xmlDoc);
       });
     },
     methods: {
-      OnSelectExample(){
-        if(this.selected!="null"){
-              this.fsm = stringify(this.selected);
-              try {
-                const lSVGInAString = this.$smcat.render(
-                this.$fsmservice.add_fsm(this.fsm).get_sm_cat()
+      GenerateSVGXMLString(sm_cat_json){
+              const lSVGInAString = this.$smcat.render(
+                sm_cat_json
                 , {
                     inputType: "json",
                     outputType: "svg",
@@ -229,10 +277,18 @@
                 xmlDoc.getElementsByTagName("svg")[0].setAttribute("height", "100%");
                 var s = new XMLSerializer();
                 this.lSVGInAString= s.serializeToString(xmlDoc);
+      },
+      OnSelectExample(){
+        if(this.selected!="null"){
+              this.fsm = stringify(this.selected);
+              try {
+                this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
+                this.states = this.$fsmservice.get_stateOptions();
                 this.status_fsm = true;
                 this.model =  dedent(`${this.$fsmservice.get_model_script()}`);
                 console.log(this.model);
               } catch (pError) {
+                alert(pError);
                 console.error(pError);
               }
         }else{
@@ -243,26 +299,13 @@
       OnStateMachineChange() {
         console.log("OnStateMachineChange");
         try {
-          const lSVGInAString = this.$smcat.render(
-           this.$fsmservice.add_fsm(this.fsm).get_sm_cat()
-           , {
-              inputType: "json",
-              outputType: "svg",
-              direction: "left-right",
-            }
-          );
-          // console.log(lSVGInAString);
-         var  parser = new DOMParser();
-          var xmlDoc = parser.parseFromString(lSVGInAString, "text/xml");
-          // console.log(xmlDoc);
-          xmlDoc.getElementsByTagName("svg")[0].setAttribute("width", "100%");
-           xmlDoc.getElementsByTagName("svg")[0].setAttribute("height", "100%");
-          var s = new XMLSerializer();
-          this.lSVGInAString= s.serializeToString(xmlDoc);
+          this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
+          this.states = this.$fsmservice.get_stateOptions();
           this.status_fsm = true;
-           this.model =  dedent(this.$fsmservice.get_model_script());
+          this.model =  dedent(this.$fsmservice.get_model_script());
+          this.status_test = false;
         } catch (pError) {
-          console.log(pError);
+          alert(pError);
           console.error(pError);
         }
       },
@@ -270,7 +313,27 @@
         const client_Test = "Test_client";
         console.log(client_Test);
         this.$socket.emit("client",{type: client_Test,
-        data: {target_contract:this.$fsmservice.get_fsm().target_contract, file_name: "statemachine.js", model_script: this.model}
+        data: {
+              covering_strategy: this.covering_strategy,
+              test_priority: {state: this.selected_state, transition:this.selected_transition}, 
+              target_contract:this.$fsmservice.get_fsm().target_contract, 
+              file_name: "statemachine.js", 
+              model_script: this.model
+          }
+        });
+    },
+      OnRandomTest(){
+        const client_Test = "Test_client";
+        console.log(client_Test);
+        this.$socket.emit("client",{type: client_Test,
+        data: {
+              random_test: true, 
+              covering_strategy: this.covering_strategy,
+              test_priority: {state: this.selected_state, transition:this.selected_transition}, 
+              target_contract:this.$fsmservice.get_fsm().target_contract, 
+              file_name: "statemachine.js", 
+              model_script: this.model
+          }
         });
     },
       OnMouseOverFSM(){
@@ -282,14 +345,17 @@
         console.log("MouseLeaveFSM");
          this.mouseOverFSM = false;
       },
-       OnMouseOverCode(){
-          console.log("MouseOverCode");
-          this.mouseOverCode = true;
+      OnCoverStrategy(){
+        console.log(`current strategy ${this.covering_strategy}`)
+         this.model = this.$fsmservice.add_covering_strategy(this.covering_strategy).get_model_script();
+         this.GenerateSVGXMLString( this.$fsmservice.get_sm_cat());
       },
-      OnMouseOutCode(){
-        console.log("MouseLeaveCode");
-         this.mouseOverCode = false;
+      OnTransitions(){
+        console.log(this.selected_transition_startstate);
+        this.transitions = this.$fsmservice.get_possible_transitions(this.selected_transition_startstate);
       }
+      
+
     },
     computed: {
       disable_model_script(){
@@ -299,15 +365,16 @@
         console.log( this.mouseOverFSM?"large stack-top": "normal stack-top");
         return this.mouseOverFSM?"large stack-top": "normal stack-top";
       },
-      zoomcode(){
-         console.log( this.mouseOverCode?"large stack-top": "normal stack-top");
-         return this.mouseOverCode?"large stack-top": "normal stack-top";
-      },
       disableTest(){
         console.log(this.fsm_status, this.model_status);
         return !(this. fsm_status == "confirmed" && this.model_status == "confirmed");
+      },
+      variantTest(){
+        return (this. fsm_status == "confirmed" && this.model_status == "confirmed")?this.status_test?"success":"primary": "secondary";
+      },
+      variantRandomTest(){
+        return (this. fsm_status == "confirmed" && this.model_status == "confirmed")?this.status_randomtest?"success":"primary": "secondary";
       }
-     
     },
     props: {
       msg: String

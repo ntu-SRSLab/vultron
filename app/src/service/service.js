@@ -1,58 +1,177 @@
 import assert from "assert";
 var beautify = require('js-beautify').js;
+import {CoverTransitionLoop, BCOS_SUCCESS_STATUS} from "./common.js"
 export default class FSMService {
     constructor() {}
     add_contracts(contracts) {
         this.contracts = contracts;
+        return this;
+    }
+    enable_randomTest(){
+        this.random_test = true;
     }
     get_fsm(){
         return this.fsm;
     }
+    get_stateOptions(){
+        assert(this.fsm);
+        let ret = [];
+        for (let state of this.fsm.states){
+            ret.push({value: state.name, text: state.name});
+        }
+        return ret;
+    }
+    get_possible_transitions(start_state){
+        assert(start_state);
+        let transitions = [];
+         for(let transition of this.fsm.transitions ){
+                        if(transition.from==start_state){
+                            transitions.push({text: transition.to, value: `${transition.action}`});
+                        }
+         }
+        return transitions;
+    }
+    generate_dummy_loop_fsm(){
+        let dummy_states = JSON.parse(JSON.stringify(this.fsm.states));
+        let dummy_transitions = JSON.parse(JSON.stringify(this.fsm.transitions));
+        let loopStates = new Set();
+        let loopTransitions = {};
+        for(let transition of this.fsm.transitions){
+            if(transition.from == transition.to){
+                loopStates.add(transition.from);
+                loopTransitions[transition.from] = transition;
+            }
+        }
+        // add concrete dummy State
+        for (let transition of this.fsm.transitions){
+            if(transition.from != transition.to && loopStates.has(transition.to)){
+                // add concrete dummy state to dummy_states
+                for (let state of this.fsm.states){
+                    if(state.name == transition.to){
+                        let dummyState = JSON.parse(JSON.stringify(state));
+                        // add dummy state
+                        dummyState.name = `dummy_${state.name.trim()}_${transition.from.trim()}`;
+                        dummy_states.push(dummyState);
+
+                       // remove the original transition
+                        for (let dtransition of dummy_transitions){
+                            if(dtransition.from == transition.from && dtransition.to == transition.to &&  dtransition.action == transition.action){
+                                dummy_transitions.splice(dummy_transitions.indexOf(dtransition),1);
+                                break;
+                            }
+                        }
+                        let dummyTransitionFrom =  JSON.parse(JSON.stringify(transition));
+                        dummyTransitionFrom.to = dummyState.name;
+                        let dummyTransitionTo = JSON.parse(JSON.stringify(loopTransitions[transition.to]));
+                        dummyTransitionTo.from = dummyState.name;
+                        // add dummy transtions
+                        dummy_transitions.push(dummyTransitionFrom);
+                        dummy_transitions.push(dummyTransitionTo);
+                    }
+                }
+            }
+        }
+        this.fsm.dummy_states = dummy_states;
+        this.fsm.dummy_transitions = dummy_transitions;
+    }
+    add_covering_strategy(strategy){
+        this.strategy = strategy;
+        this.activate_states =  new Set();
+        this.activate_transition= new Set();
+        this.generate_dummy_loop_fsm();
+        for(let transition of this.fsm.transitions){
+            if(transition.color){
+                transition.color = "black";
+            }
+        }
+        for(let state of this.fsm.states){
+            if(state.color){
+                state.color = "black";
+            }
+        }
+        console.log(this);
+        return this;
+    }
     add_action_report(action_Report){
-        console.log(action_Report);
+        if (this.action_Report)
+                action_Report.test_cases += this.action_Report.test_cases;
         this.action_Report  = action_Report;
-        // let plan = this.action_Report.plan;
-        // console.log(plan);
+        console.log(action_Report);
         let action = this.action_Report.action;
         // validate currentState
         if (!this.currentState){
             this.currentState = "initial";
         }
-        let count = 0;
-        for (let transition of this.fsm.transitions){
-            if (transition.from==this.currentState){
-                count ++;
-            }
-        }
-        if (count ==0)
+        if(this.action_Report.index && 1==this.action_Report.index)
                 this.currentState = "initial";
-        //update currentState
+        
+        let current_transition;
+        let current_to_state;
+         //update currentState
          for (let transition of this.fsm.transitions){
             if (transition.from==this.currentState && `action_${transition.action}` == action){
                 transition.color = "red";
                 this.currentState = transition.to;
+                current_transition = transition;
+                break;
             }
         }
+        for(let state of this.fsm.states){
+            if (state.name == this.currentState){
+                state.color = "red";
+                current_to_state = state;
+            }
+        }
+        if(this.activate_states.has(current_to_state) && this.activate_transition.has(current_transition)){
+            this.isFresh_result = false;
+        }else{
+            this.isFresh_result = true;
+        }
+        this.activate_transition.add(current_transition);
+        this.activate_states.add(current_to_state);
         console.log(this.currentState);
         return this;
     }
     next_result(){
-        let path = [];
-        for(let fullaction of this.action_Report.plan){
-            if (fullaction.type ==this.action_Report.action){
-                path.push(fullaction.type.split("action_")[1]);
-                break;
-            }
-            path.push(fullaction.type.split("action_")[1]);
-        }
-        return {
-            FSM: this.fsm.id,
-            "#States": this.currentState,
-            "#Paths": path,
-            "#Transitions": path.length,
-            "#Times(s)": this.action_Report.currentTime-this.action_Report.startTime
-        };
-    }
+        if(!this.random_test){
+                let path = [];
+                for(let i=0;  i< this.action_Report.index; i++){
+                    let fullaction = this.action_Report.plan[i];
+                    path.push(fullaction.type.split("action_")[1]);
+                }
+                console.log(`fresh result ${this.isFresh_result? "yes":"no"}`);
+                if(this.action_Report && this.isFresh_result == true){
+                        let ret =  {
+                            //  Contract: this.fsm.target_contract,
+                            "#Strategy": this.strategy,
+                            "#States": this.currentState,
+                            "#Paths": path,
+                            // "#Transitions": path.length,
+                            "#Test Cases": this.action_Report.test_cases,
+                            "#Times(s)": (this.action_Report.currentTime-this.action_Report.startTime).toFixed(3)
+                        };
+                        this.action_Report  = null;
+                        return ret;
+                    }else{
+                        return null;
+                    }
+        }else{
+            if(this.action_Report){
+                let ret =  {
+                    //  Contract: this.fsm.target_contract,
+                    "#Strategy": "Random Test",
+                    "#States": this.currentState,
+                    "#Paths": this.action_Report.action,
+                    "#Test Cases": this.action_Report.test_cases,
+                    "#Times(s)": (this.action_Report.currentTime-this.action_Report.startTime).toFixed(3)
+                };
+                this.action_Report  = null;
+                return ret;
+             }
+         }
+   return null;
+}
+
     add_fsm(fsm) {
         this.fsm = JSON.parse(fsm);
         //State Machine cat
@@ -65,13 +184,20 @@ export default class FSMService {
         assert(this.fsm.contracts, "contracts error");
         return this;
     }
+    __get_sm_state(states){
+        let ret = [];
+        for(let state of states){
+            ret.push({name: state.name, type:state.type, color: state.color?state.color: "black"})
+        }
+        return ret;
+    }
     get_sm_cat() {
         console.log(JSON.stringify({
             states: this.fsm.states,
             transitions: this.fsm.transitions
         }));
         return JSON.stringify({
-            states: this.fsm.states,
+            states: this.__get_sm_state(this.fsm.states),
             transitions: this.fsm.transitions
         });
     }
@@ -82,7 +208,7 @@ export default class FSMService {
             if (abi.name && abi.type == "function" && abi.name != abi.name.toUpperCase()) {
                 template_iterface += `
     async ${abi.name}(){
-        let fuzz = await this.fuzzer.full_fuzz_fun("${name}", "${address}", "${abi.name}");
+        let fuzz = await this.fuzzer.full_fuzz_fun("${name}", this.address,  "${abi.name}");
         return fuzz;
     }
         `
@@ -106,104 +232,6 @@ export default class FSMService {
         return template_contract_interfaces;
     }
 
-
-    _get_fsm_fuzzer() {
-        let template_fuzzer = `
-      class FiscoStateMachineFuzzer extends FiscoFuzzer {
-        constructor(seed, contract_name,) {
-            super(seed, contract_name);
-        }
-        static getInstance(seed, contract_name) {
-            if (!FiscoStateMachineFuzzer.instance) {
-                FiscoStateMachineFuzzer.instance = new FiscoStateMachineFuzzer(seed, contract_name)
-            }
-            return FiscoStateMachineFuzzer.instance;
-        }
-        async bootstrap(socket) {
-            let stateMachine = createStateMachine(
-                StateMachineCtx.getInstance(
-                    FiscoStateMachineFuzzer.getInstance()
-                ));
-            // console.log(stateMachine.context);
-            let service = interpret(stateMachine).onTransition(state => {
-                console.log(state.value);
-            });
-            service = aa.promisifyAll(service);
-            // console.log(stateMachine);
-            const toggleModel = createModel(stateMachine);
-            console.log(JSON.stringify(toggleModel));
-            console.log(toggleModel.machine.context);
-            console.log("******************************");
-            let plans = toggleModel.getSimplePathPlans();
-            console.log("size of  simplepath plans:", plans.length);
-            let index = 1;
-            for (let plan of plans) {
-                console.log("plan#", index++);
-                for (let path of plan.paths) {
-                    console.log(path.description);
-                }
-            }
-            console.log("******************************");
-            plans = toggleModel.getShortestPathPlans();
-            console.log("size of shortestpath plans:", plans.length);
-            index = 1;
-            for (let plan of plans) {
-                console.log("plan#", index++);
-                for (let path of plan.paths) {
-                    console.log(path.description);
-                }
-            }
-            console.log("******************************");
-            index = 1;
-            for (let plan of plans) {
-                console.log("plan#", index++);
-                for (let path of plan.paths) {
-                    let start = service.start();
-                    let events = path.description.split("via ")[1].split(" → ");
-                    console.log(path.description);
-                    console.log("transition by event ", events);
-                    let state = service.send(events);
-                    // console.log(state);
-                    console.log(state.actions);
-                    revertAsyncFlag();
-                    let startTime = Date.now()/1000;
-                    for (let action of state.actions) {
-    
-                        let ret = await action.exec(start.context, undefined);
-                        console.log(action.type, ret);
-                        console.log( {event: "Action_Report", data:{startTime: startTime, currentTime: Date.now()/1000, plan:  state.actions,  action: action.type}});
-                        socket.emit("server", {event: "Action_Report", data:{startTime: startTime, currentTime:Date.now()/1000, plan:  state.actions,  action: action.type}});
-                        // while (ret.length == 0) {
-                        //     ret = await action.exec(start.context, undefined);
-                        //     console.log(action.type, ret);
-                        // }
-                    }
-                    revertAsyncFlag();
-                    service.stop();
-                    // console.log(path.segments);
-                }
-                console.log("Approaching fsm state->", plan.state.value);
-                console.log("********************************************");
-                // if (index == 3)
-                //     break;
-            }
-    
-            return {
-                callFuns: [],
-                execResults: []
-            };
-        }
-    
-        async _seed_callSequence() {
-            console.log(__filename, "_seed_callSequence");
-            let ret = await super._seed_callSequence();
-            return ret;
-        }
-    } `;
-
-        return template_fuzzer;
-    }
-
     _get_contracts_interface_instances() {
         let instances = ``;
         for (let contract of Object.keys(this.fsm.contracts)) {
@@ -216,20 +244,60 @@ export default class FSMService {
         for (let contract of Object.keys(funs)) {
             for (let fun of funs[contract]) {
                 ret += `let ret${fun} = await StateMachineCtx.getInstance().${contract}.${fun}();
-                ret.push(ret${fun});\n`
+                ret.push(ret${fun});
+                console.log( "current test case: ", BigInt(ret${fun}.receipt.status.toString())== BigInt(${BCOS_SUCCESS_STATUS})?"success":"failed");
+                executeStatus += BigInt(ret${fun}.receipt.status.toString());`
             }
         }
         return ret;
     }
+    _getPrePostPredicateForAction(action){
+        let prePredication = [];
+        let postPredication = [];
+        for( let transition of this.fsm.transitions){
+            if(action == transition.action){
+                //    prePredication.push(this.fsm.states)
+                for(let state of  this.fsm.states){
+                    if (transition.from == state.name && state.Predicate){
+                            prePredication.push(state.Predicate);
+                    }
+                    if (transition.to == state.name && state.Predicate){
+                           postPredication.push(state.Predicate);
+                    }
+                } 
+            }
+        }
+        return {
+            "prePredicate":   `let preState = await ctx.getState();
+            assert(null==preState||${prePredication.join("||").replace(/state/gi, "preState")}, "preCondition violated: current state is "+preState  );`,
+            "postPredicate": `let postState = await ctx.getState();
+            assert(null==postState||${postPredication.join("||").replace(/state/gi, "postState")},  "postCondition violated: current state is "+postState );`
+        }
+    }
     _get_action_functions_mapping() {
         let mapping = ``;
         for (let action of Object.keys(this.fsm.actions)) {
+             let prepost = this._getPrePostPredicateForAction(action);
             mapping += `async action_${action}(){
                 let ret = [];
                 if(asyncFlag){
-                        // PreCondition. TO DO
+                        // bcos success status:${BCOS_SUCCESS_STATUS}
+                        let executeStatus = BigInt(${BCOS_SUCCESS_STATUS});
+                        let ctx =  StateMachineCtx.getInstance();
+                        let count = 0;
+                        // PreCondition. 
+                        ${prepost.prePredicate}\n
                         ${this.__get_action_functions(this.fsm.actions[action])}
-                        // PostCondition. TO DO
+                        while(executeStatus != ${BCOS_SUCCESS_STATUS}  && count<MAX_COUNT){
+                            count ++;
+                            executeStatus = BigInt(${BCOS_SUCCESS_STATUS});
+                            ${this.__get_action_functions(this.fsm.actions[action])}
+                        }\n
+                        if(count>=MAX_COUNT){
+                            throw "TIMEOUT,  too many failed test cases!";
+                        }
+                        ${prepost.postPredicate}
+                        // PostCondition. 
                 }
                 return ret;
             }`
@@ -241,19 +309,33 @@ export default class FSMService {
     _get_state_machine_ctx() {
         let template_state_machine_ctx = `// state machine context
 class StateMachineCtx{
-    constructor(fuzzer){
+    constructor(fsmreplayer, fuzzer){
         ${this._get_contracts_interface_instances()}
         this.state = {"id": "${this.fsm.id}"};
         this.fuzzer = fuzzer;
+        this.fsmreplayer = fsmreplayer;
     }
-    static getInstance(fuzzer) {
+    async initialize(){
+       this.${this.fsm.target_contract}.address = await  this.fsmreplayer.initialize();
+    }
+    static getInstance(fsmreplayer, fuzzer) {
         if (!StateMachineCtx.instance)
-            StateMachineCtx.instance = new StateMachineCtx(fuzzer);
+            StateMachineCtx.instance = new StateMachineCtx(fsmreplayer, fuzzer);
         return StateMachineCtx.instance;
     }
-    getState(){
+    async getState(){
         //TO DO, set what your state means and how to get the state
-        
+        if(this.${this.fsm.target_contract}.state){
+            let ret = await  this.${this.fsm.target_contract}.state();
+            this.state = BigInt(ret.receipt.result.output.toString());
+        }else if(this.${this.fsm.target_contract}.stage){
+            let ret =await  this.${this.fsm.target_contract}.stage();
+            this.state = BigInt(ret.receipt.result.output.toString());
+        }else {
+            this.state = null;
+        }
+        console.log("state:", this.state);
+        return this.state;
     }
     // action_functions_mapping
     ${this._get_action_functions_mapping()}
@@ -263,10 +345,12 @@ class StateMachineCtx{
 
     __get_xstates() {
         let ret = ``;
-        for (let state of this.fsm.states) {
+        let states = this.strategy==CoverTransitionLoop? this.fsm.dummy_states:this.fsm.states;
+        let transitions =  this.strategy == CoverTransitionLoop? this.fsm.dummy_transitions: this.fsm.transitions; 
+        for (let state of states ) {
             let ons = ``;
             let count = 0;
-            for (let transition of this.fsm.transitions) {
+            for (let transition of transitions ) {
                 if (transition.from == state.name) {
                     count++;
                     ons +=
@@ -327,32 +411,30 @@ const createStateMachine = statectx =>{
         // console.log(this.contracts);
         let model_script = "";
         // TO DO
-        let template_requires = `const aa = require("aa");
-const assert = require("assert");
+        let template_requires = `const assert = require("assert");
 const hex2ascii = require('hex2ascii')
 const Machine = require("xstate").Machine;
-const assign = require("xstate").assign;
-const interpret = require("xstate").interpret;
 const createModel = require("@xstate/test").createModel;
-const FiscoFuzzer = require("../connection/fisco/fuzzer.js").FiscoFuzzer;
-const FiscoDeployer = require("../connection/fisco/fuzzer.js").FiscoDeployer;
+
 let asyncFlag = false;
+const MAX_COUNT= 60;
 function revertAsyncFlag() {
     asyncFlag = !asyncFlag;
 }
 \n`;
-
         model_script = template_requires + "\n" +
             this._get_contract_interface() + "\n" +
             this._get_state_machine_ctx() + "\n" +
             this._get_state_machine() + "\n" +
-            this._get_fsm_fuzzer() + "\n" +
-            "module.exports.FiscoStateMachineFuzzer = FiscoStateMachineFuzzer";   
+            "module.exports.StateMachineCtx = StateMachineCtx\n"+
+            "module.exports.revertAsyncFlag = revertAsyncFlag;\n" + 
+            "module.exports.createStateMachine = createStateMachine";   
         return beautify(model_script, {
             indent_size: 2,
             space_in_empty_paren: true
         });
     }
+    
     to_sm_Xstate() {
 
     }

@@ -1,3 +1,4 @@
+//source: https://arxiv.org/pdf/1711.09327
 contract BlindAuction {
     // States definition 
     enum States {
@@ -6,16 +7,14 @@ contract BlindAuction {
         F,
         C
     }
-    States private state = States.ABB;
+    States public  state = States.ABB;
     // Variables definition 
     struct Bid {
         bytes32 blindedBid;
         uint deposit;
     }
-    mapping(address => Bid[])
-    private bids;
-    mapping(address => uint)
-    private pendingReturns;
+    mapping(address => Bid[])   private bids;
+    mapping(address => uint)    private pendingReturns;
     address private highestBidder;
     uint private highestBid;
     uint private creationTime = now;
@@ -48,7 +47,7 @@ contract BlindAuction {
     function close(uint nextTransitionNumber)  public locking transitionCounting(nextTransitionNumber) {
         require(state == States.ABB);
         // Guards
-        require(now >= creationTime + 5 days);
+        // require(now >= creationTime + 5 days);
         //State change
         state = States.RB;
     }
@@ -74,7 +73,7 @@ contract BlindAuction {
     function finish(uint nextTransitionNumber) public locking transitionCounting(nextTransitionNumber) {
         require(state == States.RB);
         // Guards 
-        require(now >= creationTime + 10 days);
+        // require(now >= creationTime + 10 days);
         //State change 
         state = States.F;
     }

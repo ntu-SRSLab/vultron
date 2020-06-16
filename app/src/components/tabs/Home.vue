@@ -26,7 +26,7 @@
         <b-form class="mt-3" inline v-if="status_compile">
           <label class="mr-sm-2" for="inline-form-custom-select-contract">contract </label>
           <b-form-select id="inline-form-custom-select-contract" v-model="selected_contract" :options="contracts"
-            class="mb-2 mr-sm-2 mb-sm-0" @click="OnSelectContract"></b-form-select>
+            class="mb-2 mr-sm-2 mb-sm-0" @change="OnSelectContract"></b-form-select>
 
           <label v-if="selected_contract" class="mr-sm-2" for="inline-form-custom-select-contract-address">address
           </label>
@@ -45,7 +45,7 @@
             </b-form-input>
           </b-form-group>
         </div>
-        <b-button v-if="status_compile"  :disabled="!selected_abi" block variant="outline-primary" @click="OnDeploy" class="mt-2">  {{select_abi?selected_abi.name==selected_contract.split(".sol")[0]?"Deploy":"SendTx":"Deploy Or SendTransaction"}}</b-button>
+        <b-button v-if="status_compile"  :disabled="!selected_abi" block variant="outline-primary" @click="OnDeploy" class="mt-2">  {{selected_abi?selected_abi.name==selected_contract.split(".sol")[0]?"Deploy":"SendTx":"Deploy Or SendTransaction"}}</b-button>
         <!-- <b-table striped hover :items="deployed"></b-table> -->
         <b-card class="mt-3" header="Log Result">
           <span v-html="log"></span>
@@ -95,6 +95,7 @@
         status_deploy: false,
         options: [],
         contracts: [],
+        contract_addresses: [], 
         selected_contract: null,
         selected_abi: null,
         selected_address: null,
@@ -130,6 +131,17 @@
           obj.addresses[`${data.name}`] = [];
         }
         obj.addresses[`${data.name}`].push(`${data.address}`);
+        if (obj.contract_addresses[0].value=="0x"){
+            obj.contract_addresses = [{
+                value: data.address,
+                text: data.address
+            }];
+        }else {
+            obj.contract_addresses.push({
+                value: data.address,
+                text: data.address
+            });
+        }
 
         if (!obj.server_data)
           obj.server_data = {};
@@ -237,6 +249,24 @@
 
       OnSelectContract(e) {
         console.log(e);
+        console.log(`address of ${this.selected_contract}:`);
+        console.log(this.addresses);
+        if (undefined == this.addresses[this.selected_contract.split(".sol")[0]])
+           this.contract_addresses = [{
+            value: "0x",
+            text: "0x"
+          }];
+        else {
+          let ret = [];
+          for (let address of this.addresses[this.selected_contract.split(".sol")[0]]) {
+            ret.push({
+              value: address,
+              text: address
+            });
+          }
+          this.contract_addresses = ret;
+        }
+
       },
       OnChangeAbi(){
         console.log(this.selected_abi);
@@ -268,25 +298,25 @@
       disable_compile: function () {
         return this.status_upload == false;
       },
-      contract_addresses: function () {
-        console.log(`address of ${this.selected_contract}:`);
-        console.log(this.addresses);
-        if (undefined == this.addresses[this.selected_contract.split(".sol")[0]])
-          return [{
-            value: "0x",
-            text: "0x"
-          }];
-        else {
-          let ret = [];
-          for (let address of this.addresses[this.selected_contract.split(".sol")[0]]) {
-            ret.push({
-              value: address,
-              text: address
-            });
-          }
-          return ret;
-        }
-      },
+      // contract_addresses: function () {
+      //   console.log(`address of ${this.selected_contract}:`);
+      //   console.log(this.addresses);
+      //   if (undefined == this.addresses[this.selected_contract.split(".sol")[0]])
+      //     return [{
+      //       value: "0x",
+      //       text: "0x"
+      //     }];
+      //   else {
+      //     let ret = [];
+      //     for (let address of this.addresses[this.selected_contract.split(".sol")[0]]) {
+      //       ret.push({
+      //         value: address,
+      //         text: address
+      //       });
+      //     }
+      //     return ret;
+      //   }
+      // },
       
       abis: function () {
         var existConstructorFunction = false;
