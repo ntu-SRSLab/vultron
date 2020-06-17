@@ -1,0 +1,274 @@
+const assert = require("assert");
+const hex2ascii = require('hex2ascii')
+const Machine = require("xstate").Machine;
+const createModel = require("@xstate/test").createModel;
+
+let asyncFlag = false;
+const MAX_COUNT = 40;
+
+function revertAsyncFlag() {
+  asyncFlag = !asyncFlag;
+}
+
+
+// contract interface 
+
+class StateMachine {
+  constructor(fuzzer) {
+    this.address = "0x00";
+    this.name = "StateMachine";
+    this.fuzzer = fuzzer;
+  }
+
+  async approve() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("StateMachine", this.address, "approve");
+    return fuzz;
+  }
+
+  async initiate() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("StateMachine", this.address, "initiate");
+    return fuzz;
+  }
+
+  async receive() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("StateMachine", this.address, "receive");
+    return fuzz;
+  }
+
+  async stage() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("StateMachine", this.address, "stage");
+    return fuzz;
+  }
+
+  async finish() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("StateMachine", this.address, "finish");
+    return fuzz;
+  }
+
+}
+// state machine context
+class StateMachineCtx {
+  constructor(fsmreplayer, fuzzer) {
+    this.StateMachine = new StateMachine(fuzzer);
+
+    this.state = {
+      "id": "FSM#2"
+    };
+    this.fuzzer = fuzzer;
+    this.fsmreplayer = fsmreplayer;
+  }
+  async initialize() {
+    this.StateMachine.address = await this.fsmreplayer.initialize();
+  }
+  static getInstance(fsmreplayer, fuzzer) {
+    if (!StateMachineCtx.instance)
+      StateMachineCtx.instance = new StateMachineCtx(fsmreplayer, fuzzer);
+    return StateMachineCtx.instance;
+  }
+  async getState() {
+    //TO DO, set what your state means and how to get the state
+    if (this.StateMachine.state) {
+      let ret = await this.StateMachine.state();
+      this.state = BigInt(ret.receipt.result.output.toString());
+    } else if (this.StateMachine.stage) {
+      let ret = await this.StateMachine.stage();
+      this.state = BigInt(ret.receipt.result.output.toString());
+    } else {
+      this.state = null;
+    }
+    console.log("state:", this.state);
+    return this.state;
+  }
+  // action_functions_mapping
+  async action_initiate() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 0, "preCondition violated: current state is " + preState);
+
+      let retinitiate = await StateMachineCtx.getInstance().StateMachine.initiate();
+      ret.push(retinitiate);
+      console.log("current test case: ", BigInt(retinitiate.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retinitiate.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retinitiate = await StateMachineCtx.getInstance().StateMachine.initiate();
+        ret.push(retinitiate);
+        console.log("current test case: ", BigInt(retinitiate.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retinitiate.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 1, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_approve() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 1, "preCondition violated: current state is " + preState);
+
+      let retapprove = await StateMachineCtx.getInstance().StateMachine.approve();
+      ret.push(retapprove);
+      console.log("current test case: ", BigInt(retapprove.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retapprove.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retapprove = await StateMachineCtx.getInstance().StateMachine.approve();
+        ret.push(retapprove);
+        console.log("current test case: ", BigInt(retapprove.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retapprove.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 2, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_receive() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 2, "preCondition violated: current state is " + preState);
+
+      let retreceive = await StateMachineCtx.getInstance().StateMachine.receive();
+      ret.push(retreceive);
+      console.log("current test case: ", BigInt(retreceive.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retreceive.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retreceive = await StateMachineCtx.getInstance().StateMachine.receive();
+        ret.push(retreceive);
+        console.log("current test case: ", BigInt(retreceive.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retreceive.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 3, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_finish() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 3, "preCondition violated: current state is " + preState);
+
+      let retfinish = await StateMachineCtx.getInstance().StateMachine.finish();
+      ret.push(retfinish);
+      console.log("current test case: ", BigInt(retfinish.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retfinish.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retfinish = await StateMachineCtx.getInstance().StateMachine.finish();
+        ret.push(retfinish);
+        console.log("current test case: ", BigInt(retfinish.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retfinish.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 4, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+}
+// state machine 
+const createStateMachine = statectx => {
+  return Machine({
+    id: "FSM#2",
+    initial: "Applied",
+    context: {
+      ctx: statectx
+    },
+    states: {
+
+      Applied: {
+        on: {
+          initiate: {
+            target: "Initiated",
+            actions: "action_initiate"
+          }
+        }
+      },
+      Initiated: {
+        on: {
+          approve: {
+            target: "Approved",
+            actions: "action_approve"
+          }
+        }
+      },
+      Approved: {
+        on: {
+          receive: {
+            target: "Received",
+            actions: "action_receive"
+          }
+        }
+      },
+      Received: {
+        on: {
+          finish: {
+            target: "Finished",
+            actions: "action_finish"
+          }
+        }
+      },
+      Finished: {
+        type: "final"
+      }
+    }
+  }, {
+    actions: {
+      action_initiate: statectx.action_initiate,
+      action_approve: statectx.action_approve,
+      action_receive: statectx.action_receive,
+      action_finish: statectx.action_finish
+    }
+  });
+}
+
+module.exports.StateMachineCtx = StateMachineCtx
+module.exports.revertAsyncFlag = revertAsyncFlag;
+module.exports.createStateMachine = createStateMachine

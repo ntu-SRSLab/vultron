@@ -82,6 +82,22 @@ class BytePool extends Pool {
         });
     }
 }
+
+class BoolPool extends Pool {
+    //range.start -> range.end
+    // eg.  byte4.  range.start =1, range.end = 4
+    // eg.   bytes.  range.start = 1,  range.end = 10;
+    constructor(range, size, description) {
+        super(range, size, description);
+    }
+    _constant() {
+        return [false, false, false, false, false, false, true,  true,  true];
+    }
+    _random() {
+        return  true;
+    }
+}
+
 class AddressPool extends Pool {
     //range.start -> range.end
     // eg.  byte4.  range.start =1, range.end = 4
@@ -155,6 +171,7 @@ function generate_random(parameter_type) {
         let byteRegex = /byte$/;
         let stringRegex = /string$/;
         let addressRegex = /address$/;
+        let boolRegex = /bool$/;
         if (parameter_type.match(uintXXXRegex)) {
             let match = parameter_type.match(uintXXXRegex);
             // console.log(match);
@@ -233,7 +250,18 @@ function generate_random(parameter_type) {
                 }, const_pool_size, "random pools for" + parameter_type);
             }
             return Pools[parameter_type].random();
-        } else {
+        } else if (parameter_type.match(boolRegex)) {
+            let match = parameter_type.match(boolRegex);
+            // console.log(match);
+            if (false == (parameter_type in Pools)) {
+                Pools[parameter_type] = new BoolPool({
+                    start: 1,
+                    end: 1
+                }, const_pool_size, "random pools for" + parameter_type);
+            }
+            return Pools[parameter_type].random();
+        } 
+        else {
             assert(false, "unsupported type:" + parameter_type);
             return "0x0";
         }

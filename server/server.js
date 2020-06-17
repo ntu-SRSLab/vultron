@@ -173,7 +173,7 @@ class FiscoStateMachineTestEngine extends FiscoFuzzer {
     return FiscoStateMachineTestEngine.instance;
   }
   _getRandomInt(max) {
-    return Math.floor(Math.random() * Math.floor(max));
+    return Math.floor((1-Math.random()) * Math.floor(max));
   }
   async randomTest(createStateMachine, StateMachineCtx, revertAsyncFlag,  covering_strategy, test_priority, socket) {
     let stateMachine = createStateMachine(
@@ -198,8 +198,10 @@ class FiscoStateMachineTestEngine extends FiscoFuzzer {
         }
       }
       revertAsyncFlag();
+      await StateMachineCtx.getInstance().initialize();
+      let startTime = Date.now()/1000;
+      let count = 0;
       for(let i=0;  i<MAX_COUNT;  i++){
-          let startTime = Date.now()/1000;
           try{
             let action = actions_pool[this._getRandomInt(actions_pool.length)];
             let ret  =  await  action.exec();
@@ -210,16 +212,17 @@ class FiscoStateMachineTestEngine extends FiscoFuzzer {
               action: action.type, 
               state: state.toString()
             }});
-
             socket.emit("server", {event: "RandomTestAction_Report", data:{
                 startTime: startTime, 
                 currentTime:Date.now()/1000, 
-                test_cases: ret.length,
+                test_cases: ret.length + count*MAX_COUNT,
                 action: action.type, 
                 state: state.toString()
               }});
+              count = 0;
           }catch(err){
               console.error(err);
+              count ++;
               continue;
           }
       }
@@ -253,26 +256,30 @@ class FiscoStateMachineTestEngine extends FiscoFuzzer {
             let start = service.start();
             let events = path.description.split("via ")[1].split(" → ");
             console.log(path.description);
-            console.log("transition by event ", events);
+            // console.log("transition by event ", events);
             let state = service.send(events);
-            console.log(state.actions);
+            // console.log(state.actions);
             revertAsyncFlag();
             let startTime = Date.now()/1000;
             let action_index = 0;
+            let count = 0;// count how many errors when handling 
             try{
                 for (let action of state.actions) {
                     action_index ++;
-                    let ret = await action.exec(start.context, undefined);
-                    console.log(action.type, ret);
-                    console.log( {event: "Action_Report", data:{startTime: startTime, currentTime: Date.now()/1000,      test_cases: ret.length, plan:  state.actions,  action: action.type, index:action_index}});
+                    let ret = await action.exec();
+                    // console.log(action.type, ret);
+                    // console.log( {event: "Action_Report", data:{startTime: startTime, currentTime: Date.now()/1000,      test_cases: ret.length, plan:  state.actions,  action: action.type, index:action_index}});
                     socket.emit("server", {event: "Action_Report", data:{
                       startTime: startTime, currentTime:Date.now()/1000, 
-                      test_cases: ret.length,
+                      test_cases: ret.length+count*MAX_COUNT,
                       plan:  state.actions,  
                       action: action.type, 
                       index: action_index}});
+                      count = 0;
                 }
             }catch(err){
+                if(err.indexOf("TIMEOUT")!=-1)
+                      count ++;
                 console.log(err);
             }
             revertAsyncFlag();

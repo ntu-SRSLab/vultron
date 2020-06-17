@@ -104,6 +104,7 @@ class FiscoDeployer extends Web3jService {
         assert(fs.existsSync(path.join(this.workdir, contract_name, contract_name + ".sol")), "contract not exist");
         let instance = await this.deploy_precompiled_params(path.join(this.workdir, contract_name, contract_name + ".sol"),
             path.join(this.workdir, contract_name), full_func, params);
+        // console.log(instance);
         write2file(path.join(this.workdir, contract_name, instance.contractAddress), JSON.stringify(instance));
         contract_mapping[contract_name] = {
             path: path.join(this.workdir, contract_name, contract_name + ".sol"),

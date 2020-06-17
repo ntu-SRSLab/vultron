@@ -1,6 +1,7 @@
 #!/usr/local/bin/node
 const fs=require("fs");
 const solc=require("solc");
+const solclatest = require("solc-latest");
 const spath = require('path');
 const shell = require("shelljs");
 var input = {
@@ -24,6 +25,12 @@ function write2File(dir, file_name, content){
 		
 }
 let compiledContract = solc.compile({sources: input}, 1);
+console.log(Object.keys(compiledContract.sources));
+if (Object.keys(compiledContract.sources).length==0){
+	//compile failure,
+	// try new version
+	compiledContract =solclatest.compile({sources: input}, 1);
+}
 console.log(compiledContract);
 //console.log(compiledContract);
 //console.log(typeof compiledContract.contracts);

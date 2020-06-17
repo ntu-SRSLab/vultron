@@ -100,7 +100,9 @@ function getSignTx(groupId, account, privateKey, to, func, params, blockLimit) {
         data: txData,
         from: account,
         to: to,
-        gas: 1000000,
+        // change bcos default gas  to bigger one
+        //  gas: 1000000,
+        gas: 100000000,
         randomid: genRandomID(),
         blockLimit: blockLimit,
         chainId: 1,

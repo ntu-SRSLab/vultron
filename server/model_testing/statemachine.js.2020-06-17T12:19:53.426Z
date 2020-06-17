@@ -1,0 +1,359 @@
+const assert = require("assert");
+const hex2ascii = require('hex2ascii')
+const Machine = require("xstate").Machine;
+const createModel = require("@xstate/test").createModel;
+
+let asyncFlag = false;
+const MAX_COUNT = 60;
+
+function revertAsyncFlag() {
+  asyncFlag = !asyncFlag;
+}
+
+
+// contract interface 
+
+class Betting {
+  constructor(fuzzer) {
+    this.address = "0xa66ee04ef1c1af0046122fb02810e94719f33a62";
+    this.name = "Betting";
+    this.fuzzer = fuzzer;
+  }
+
+  async placeBet() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "placeBet");
+    return fuzz;
+  }
+
+  async claim_reward() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "claim_reward");
+    return fuzz;
+  }
+
+  async priceCallback() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "priceCallback");
+    return fuzz;
+  }
+
+  async winnerPoolTotal() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "winnerPoolTotal");
+    return fuzz;
+  }
+
+  async changeOwnership() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "changeOwnership");
+    return fuzz;
+  }
+
+  async forceVoidExternal() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "forceVoidExternal");
+    return fuzz;
+  }
+
+  async version() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "version");
+    return fuzz;
+  }
+
+  async refund() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "refund");
+    return fuzz;
+  }
+
+  async getChronus() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "getChronus");
+    return fuzz;
+  }
+
+  async getCoinIndex() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "getCoinIndex");
+    return fuzz;
+  }
+
+  async chronus() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "chronus");
+    return fuzz;
+  }
+
+  async setupRace() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "setupRace");
+    return fuzz;
+  }
+
+  async owner() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "owner");
+    return fuzz;
+  }
+
+  async reward_total() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "reward_total");
+    return fuzz;
+  }
+
+  async state() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "state");
+    return fuzz;
+  }
+
+  async checkReward() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "checkReward");
+    return fuzz;
+  }
+
+  async total_reward() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "total_reward");
+    return fuzz;
+  }
+
+  async recovery() {
+    let fuzz = await this.fuzzer.full_fuzz_fun("Betting", this.address, "recovery");
+    return fuzz;
+  }
+
+}
+// state machine context
+class StateMachineCtx {
+  constructor(fsmreplayer, fuzzer) {
+    this.Betting = new Betting(fuzzer);
+
+    this.state = {
+      "id": "FSM#2"
+    };
+    this.fuzzer = fuzzer;
+    this.fsmreplayer = fsmreplayer;
+  }
+  async initialize() {
+    this.Betting.address = await this.fsmreplayer.initialize();
+  }
+  static getInstance(fsmreplayer, fuzzer) {
+    if (!StateMachineCtx.instance)
+      StateMachineCtx.instance = new StateMachineCtx(fsmreplayer, fuzzer);
+    return StateMachineCtx.instance;
+  }
+  async getState() {
+    //TO DO, set what your state means and how to get the state
+    if (this.Betting.state) {
+      let ret = await this.Betting.state();
+      this.state = BigInt(ret.receipt.result.output.toString());
+    } else if (this.Betting.stage) {
+      let ret = await this.Betting.stage();
+      this.state = BigInt(ret.receipt.result.output.toString());
+    } else {
+      this.state = null;
+    }
+    console.log("state:", this.state);
+    return this.state;
+  }
+  // action_functions_mapping
+  async action_priceCallback() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 1 || preState == 2 || preState == 2 || preState == 0, "preCondition violated: current state is " + preState);
+
+      let retpriceCallback = await StateMachineCtx.getInstance().Betting.priceCallback();
+      ret.push(retpriceCallback);
+      console.log("current test case: ", BigInt(retpriceCallback.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retpriceCallback.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retpriceCallback = await StateMachineCtx.getInstance().Betting.priceCallback();
+        ret.push(retpriceCallback);
+        console.log("current test case: ", BigInt(retpriceCallback.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retpriceCallback.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 2 || postState == 2 || postState == 3 || postState == 4, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_setupRace() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 0, "preCondition violated: current state is " + preState);
+
+      let retsetupRace = await StateMachineCtx.getInstance().Betting.setupRace();
+      ret.push(retsetupRace);
+      console.log("current test case: ", BigInt(retsetupRace.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retsetupRace.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retsetupRace = await StateMachineCtx.getInstance().Betting.setupRace();
+        ret.push(retsetupRace);
+        console.log("current test case: ", BigInt(retsetupRace.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retsetupRace.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 1, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_forceVoidExternal() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 0 || preState == 1 || preState == 3, "preCondition violated: current state is " + preState);
+
+      let retforceVoidExternal = await StateMachineCtx.getInstance().Betting.forceVoidExternal();
+      ret.push(retforceVoidExternal);
+      console.log("current test case: ", BigInt(retforceVoidExternal.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retforceVoidExternal.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retforceVoidExternal = await StateMachineCtx.getInstance().Betting.forceVoidExternal();
+        ret.push(retforceVoidExternal);
+        console.log("current test case: ", BigInt(retforceVoidExternal.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retforceVoidExternal.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 4 || postState == 4 || postState == 4, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+  async action_refund() {
+    let ret = [];
+    if (asyncFlag) {
+      // bcos passed status:0
+      let executeStatus = BigInt(0);
+      let ctx = StateMachineCtx.getInstance();
+      let count = 0;
+      // PreCondition. 
+      let preState = await ctx.getState();
+      assert(null == preState || preState == 1, "preCondition violated: current state is " + preState);
+
+      let retrefund = await StateMachineCtx.getInstance().Betting.refund();
+      ret.push(retrefund);
+      console.log("current test case: ", BigInt(retrefund.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retrefund.receipt.status.toString());
+      while (executeStatus != 0 && count < MAX_COUNT) {
+        count++;
+        executeStatus = BigInt(0);
+        let retrefund = await StateMachineCtx.getInstance().Betting.refund();
+        ret.push(retrefund);
+        console.log("current test case: ", BigInt(retrefund.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+        executeStatus += BigInt(retrefund.receipt.status.toString());
+      }
+
+      if (count >= MAX_COUNT) {
+        throw "TIMEOUT,  too many failed test cases!";
+      }
+      let postState = await ctx.getState();
+      assert(null == postState || postState == 4, "postCondition violated: current state is " + postState);
+      // PostCondition. 
+    }
+    return ret;
+  }
+}
+// state machine 
+const createStateMachine = statectx => {
+  return Machine({
+    id: "FSM#2",
+    initial: "INITIAL",
+    context: {
+      ctx: statectx
+    },
+    states: {
+
+      INITIAL: {
+        on: {
+          setupRace: {
+            target: "BET_OPEN",
+            actions: "action_setupRace"
+          },
+          priceCallback: {
+            target: "VOIDED_BET",
+            actions: "action_priceCallback"
+          },
+          forceVoidExternal: {
+            target: "VOIDED_BET",
+            actions: "action_forceVoidExternal"
+          }
+        }
+      },
+      BET_OPEN: {
+        on: {
+          priceCallback: {
+            target: "RACE_START",
+            actions: "action_priceCallback"
+          },
+          forceVoidExternal: {
+            target: "VOIDED_BET",
+            actions: "action_forceVoidExternal"
+          },
+          refund: {
+            target: "VOIDED_BET",
+            actions: "action_refund"
+          }
+        }
+      },
+      RACE_START: {
+        on: {
+          priceCallback: {
+            target: "RACE_START",
+            actions: "action_priceCallback"
+          },
+          priceCallback: {
+            target: "RACE_END",
+            actions: "action_priceCallback"
+          }
+        }
+      },
+      RACE_END: {
+        on: {
+          forceVoidExternal: {
+            target: "VOIDED_BET",
+            actions: "action_forceVoidExternal"
+          }
+        }
+      },
+      VOIDED_BET: {
+        type: "final"
+      }
+    }
+  }, {
+    actions: {
+      action_priceCallback: statectx.action_priceCallback,
+      action_setupRace: statectx.action_setupRace,
+      action_forceVoidExternal: statectx.action_forceVoidExternal,
+      action_refund: statectx.action_refund
+    }
+  });
+}
+
+module.exports.StateMachineCtx = StateMachineCtx
+module.exports.revertAsyncFlag = revertAsyncFlag;
+module.exports.createStateMachine = createStateMachine

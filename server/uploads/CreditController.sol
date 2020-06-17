@@ -28,7 +28,7 @@ contract CreditController is CommonLib {
 
     AccountController _accountController;
     CreditMap _creditMap;
-
+ 
     event creditEvent(bytes32[] bytes32Array, uint128 sccAmt, address owner, address credit, uint256 timestamp, uint32 status);
 
     Credit target;
@@ -37,24 +37,17 @@ contract CreditController is CommonLib {
      */
     event creditStateEvent(address sender, bytes4 msg_sig, bytes msg_data, bytes32 holding_status, bytes32 clearing_status, bytes32 valid_status);
     event creditInvariantEvent(address sender, bytes4 msg_sig, bytes msg_data, uint128 sccAmt, address owner);
-    modifier preCreateCredit() {
-        _;
-    }
-    modifier postCreateCredit(uint128 sccAmt) {
-	 _;
-        if (!(target.getCreditSccHoldingStatus() == H1 &&
-                target.getCreditSccClearingStatus() == C2 &&
-                target.getCreditSccValidStatus() == V1)) {
-            creditStateEvent(msg.sender, msg.sig, msg.data, target.getCreditSccHoldingStatus(),
-                target.getCreditSccClearingStatus(),
-                target.getCreditSccValidStatus());
-        }
-        if (!(target.getCreditOwner() == tx.origin &&
-                target.getCreditAmt() == sccAmt)) {
-            creditInvariantEvent(msg.sender, msg.sig, msg.data, sccAmt, target.getCreditOwner());
-        }
+ 
 
+  enum States {
+        INITIAL,
+        CREATED,
+        DISCOUNTED,
+        EXPIRED,
+        CLEARED,
+        CLOSED
     }
+    States public  state = States.INITIAL;
 
     function CreditController(address accountControllerAddress) public {
         _accountController = AccountController(accountControllerAddress);
@@ -66,25 +59,30 @@ contract CreditController is CommonLib {
         uint128 sccAmt,
         string custDataHash
     )
-    public preCreateCredit postCreateCredit(sccAmt) 
+    public
     returns(Credit) {
+        require(state == States.INITIAL);
+
         uint32 retCode = accountIsOk(bytes32Array[5]);
         if (retCode != ACCOUNT_OK) {
             commonCheckEvent(bytes32Array[8], bytes32Array[1], retCode, CREATE_WECREDIT);
-            return;
+            // return;
+            revert();
         }
 
         Account account = Account(_accountController.getAccountMap().getAccount(bytes32Array[5]));
         if (!account.hashAuth(tx.origin)) {
             commonCheckEvent(bytes32Array[8], bytes32Array[1], ACCOUNT_NO_AUTH, CREATE_WECREDIT);
-            return;
+            // return;
+            revert();
         }
 
 	
 
         if (_creditMap.creditExists(bytes32Array[1])) {
             commonCheckEvent(bytes32Array[8], bytes32Array[1], CREDIT_EXISTS, CREATE_WECREDIT);
-            return;
+            // return;
+            revert();
         }
 
         bytes32[11] memory tempBytes32Array;
@@ -100,8 +98,8 @@ contract CreditController is CommonLib {
 
         creditEvent(staticArrayToDynamicArray(tempBytes32Array), sccAmt, tx.origin, credit, now, CREATE_CREDIT);
         commonCheckEvent(bytes32Array[8], bytes32Array[1], TRANSACTION_SUCCESS, CREATE_WECREDIT);
-
-	target = credit;
+       
+        state = States.CREATED;
         return credit;
     }
 
@@ -114,8 +112,11 @@ contract CreditController is CommonLib {
     )
     public
     returns(bool) {
+        require(state == States.CREATED);
+
         if (!transferAndDiscountCheck(bytes32Array[0], bytes32Array[1], bytes32Array[2], bytes32Array[5], transferAmt, TRANSFER_WECREDIT)) {
-            return false;
+            // return false;
+            revert();
         }
         // bytes32Array[0]: sccNo 
         Credit credit = Credit(_creditMap.getCredit(bytes32Array[0]));
@@ -123,7 +124,8 @@ contract CreditController is CommonLib {
         uint32 targetAccountCheckCode = accountIsOk(bytes32Array[3]);
         if (targetAccountCheckCode != ACCOUNT_OK) {
             commonCheckEvent(bytes32Array[5], bytes32Array[3], targetAccountCheckCode, TRANSFER_WECREDIT);
-            return false;
+            // return false;
+            revert();
         }
 
         uint128 sourceNewAmt = credit.getCreditAmt() - transferAmt;
@@ -166,8 +168,12 @@ contract CreditController is CommonLib {
     )
     public
     returns(bool) {
+
+        require(state == States.CREATED);
+
         if (!transferAndDiscountCheck(bytes32Array[0], bytes32Array[1], bytes32Array[2], bytes32Array[4], discountAmt, DISCOUNT_WECREDIT)) {
-            return false;
+            // return false;
+            revert();
         }
 
         Credit credit = Credit(_creditMap.getCredit(bytes32Array[0]));
@@ -194,45 +200,65 @@ contract CreditController is CommonLib {
         credit.updateCreditHoldingStatus(CREDIT_HOLAING_INVALID_STATUS);
         creditEvent(staticArrayToDynamicArray(credit.getCreditBytes32Array()), credit.getCreditAmt(), credit.getCreditOwner(), credit, now, DISCOUNT_CREDIT_SOURCE);
         commonCheckEvent(bytes32Array[4], bytes32Array[0], TRANSACTION_SUCCESS, DISCOUNT_WECREDIT);
+        
+        state = States.DISCOUNTED;
         return true;
     }
 
     function expireOrClearOrCloseCredit(bytes32 sysSeqNo, bytes32 sccId, uint32 txTagCode, uint32 txCode) public returns(bool) {
+        require(state == States.CREATED || state == States.DISCOUNTED );
+
         if (!_creditMap.creditExists(sccId)) {
             commonCheckEvent(sysSeqNo, sccId, CREDIT_NOT_EXISTS, txTagCode);
-            return false;
+            // return false;
+             revert();
         }
 
         Credit credit = Credit(_creditMap.getCredit(sccId));
         if (credit.getCreditSccHoldingStatus() == CREDIT_HOLAING_INVALID_STATUS) {
             commonCheckEvent(sysSeqNo, sccId, CREDIT_INVAILD, txTagCode);
-            return false;
+            // return false;
+            revert();
         }
 
         if (txCode == EXPIRE_CREDIT && credit.getCreditSccValidStatus() == CREDIT_VALID_EXPIRED_STATUS) {
             commonCheckEvent(sysSeqNo, sccId, CREDIT_EXPIRED, txTagCode);
-            return false;
+            // return false;
+            revert();
         }
 
         if (txCode == CLEAR_CREDIT && credit.getCreditSccClearingStatus() == CREDIT_CLEARING_CLEARED_STATUS) {
             commonCheckEvent(sysSeqNo, sccId, CREDIT_CLEARED, txTagCode);
-            return false;
+            // return false;
+            revert();
         }
 
         if (txCode == CLOSE_CREDIT && credit.getCreditSccValidStatus() == CREDIT_VALID_CLOSED_STATUS) {
             commonCheckEvent(sysSeqNo, sccId, CREDIT_CLOSED, txTagCode);
-            return false;
+            // return false;
+            revert();
         }
 
         if ((txCode == EXPIRE_CREDIT && !credit.updateCreditValidStatus(CREDIT_VALID_EXPIRED_STATUS)) ||
             (txCode == CLEAR_CREDIT && !credit.updateCreditClearingStatus(CREDIT_CLEARING_CLEARED_STATUS)) ||
             (txCode == CLOSE_CREDIT && !credit.updateCreditValidStatus(CREDIT_VALID_CLOSED_STATUS))) {
             commonCheckEvent(sysSeqNo, sccId, TRANSACTION_FAILED, txTagCode);
-            return false;
+            // return false;
+            revert();
         }
-
+        
         creditEvent(staticArrayToDynamicArray(credit.getCreditBytes32Array()), credit.getCreditAmt(), credit.getCreditOwner(), credit, now, txCode);
         commonCheckEvent(sysSeqNo, sccId, TRANSACTION_SUCCESS, txTagCode);
+        
+        if(txCode == EXPIRE_CREDIT){
+            state = States.EXPIRED;
+        }else if(txCode == CLEAR_CREDIT){
+            state = States.CLEARED;
+        }else if(txCode == CLOSE_CREDIT){
+            state = States.CLOSED;
+        }else {
+            revert();
+        }
         return true;
     }
 

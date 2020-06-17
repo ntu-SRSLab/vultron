@@ -4,6 +4,7 @@ const fs = require("fs");
 const solc = require("solc");
 const spath = require('path');
 const shell = require("shelljs");
+const solclatest = require("solc-latest");
 
 function write2File(dir, file_name, content) {
 	if (!fs.existsSync(dir)) {
@@ -87,6 +88,46 @@ function compile(folder, contracts) {
 	let compiledContract = solc.compile({
 		sources: input
 	}, 1);
+	console.log("keys:", Object.keys(compiledContract.sources));
+	if (Object.keys(compiledContract.sources).length==0){
+		//compile failure,
+		// try new version
+		let standardInput = { language: "Solidity"};
+		standardInput.sources = {};
+		standardInput.settings = {
+			outputSelection: {
+			  '*': {
+				'*': ['*']
+			  }
+			  }
+		  };
+		for (let contract of Object.keys(input)){
+			standardInput.sources[contract]={
+				content: input[contract]
+			}
+		}
+		compiledContract =JSON.parse(solclatest.compile(JSON.stringify(standardInput)));
+		
+		for (let source  of Object.keys(compiledContract.contracts)){
+			// console.log(source, compiledContract.contracts[source]);
+			let file_name = source.split(".")[0];
+			for(let contract_name of Object.keys(compiledContract.contracts[source])){
+					if(contract_name == file_name){
+						console.log(file_name, " to compile");
+						let content = compiledContract.contracts[source][contract_name];
+						content.sourcePath = spath.join(__dirname, "../" + folder, file_name + ".sol");
+						console.log(content.sourcePath);
+						write2File("./deployed_contract/" + file_name, file_name + ".abi", JSON.stringify(content.abi));
+						// console.log(content.evm.bytecode);
+						write2File("./deployed_contract/" + file_name, file_name + ".bin", JSON.stringify(content.evm.bytecode));
+						 write2File("./deployed_contract/" + file_name, file_name + ".artifact", JSON.stringify(content));
+						 shell.cp("-f",content.sourcePath, spath.join(__dirname,"../deployed_contract/", file_name));
+						 output[contract_name] = content.abi;
+					}
+			}
+		}
+		return output;
+	}
 	console.log(compiledContract);
 	for (let contract of Object.keys(compiledContract.contracts)) {
 		let name = contract;
