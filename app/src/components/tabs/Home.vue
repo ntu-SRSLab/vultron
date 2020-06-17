@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <b-card class="mt-3" header="Vultron" header-bg-variant="light" header-text-variant="muted">
+    <b-card class="mt-3" header="ModCon: The Model-based Platforms for Smart Contract."  header-class= "lg"   header-bg-variant="light" header-text-variant="default">
       <b-form>
         <b-form-group id="input-group-1" label-align="left" label="Contracts(.sol):" label-for="input-select-upload"
           description="We'll never share your software asset with anyone else.">
@@ -47,7 +47,7 @@
         </div>
         <b-button v-if="status_compile"  :disabled="!selected_abi" block variant="outline-primary" @click="OnDeploy" class="mt-2">  {{selected_abi?selected_abi.name==selected_contract.split(".sol")[0]?"Deploy":"SendTx":"Deploy Or SendTransaction"}}</b-button>
         <!-- <b-table striped hover :items="deployed"></b-table> -->
-        <b-card class="mt-3" header="Log Result">
+        <b-card class="mt-3" header="Result">
           <span v-html="log"></span>
         </b-card>
       </b-form>
@@ -326,10 +326,11 @@
         for (var fun of JSON.parse(JSON.stringify(this.server_data[event_Compile][this.selected_contract.split(".sol")[0]]))) {
               if (fun.type == "function" || fun.type == "constructor") {
                   if(fun.type == "constructor"){
-                    existConstructorFunction = true;
+                        existConstructorFunction = true;
                   }
                     fun.inputs = this.types(fun.inputs);
                     fun.outputs = this.types(fun.outputs);
+                    console.log(fun);
                     if (fun.name == undefined || fun.name == null || fun.name == "") {
                           fun.name = this.selected_contract.split(".sol")[0];
                           abis.push({

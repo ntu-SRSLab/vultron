@@ -1,12 +1,20 @@
-pragma solidity ^0.5.2;
-import "./lib/SafeMath.sol";
+pragma solidity ^0.4.11;
+import "SafeMath.sol";
 
 contract Betting{
     using SafeMath for uint256; //using safemath
+ 
+
+    enum States {
+        INITIAL,
+        BET_OPEN,
+        RACE_START,
+        RACE_END,
+        VOIDED_BET
+    }
+    States public  state = States.INITIAL;
 
     address public owner; //owner address
-    address payable house_takeout = 0xf783A81F046448c38f3c863885D9e99D10209779;
-    address payable ethouse_takeout = 0xAcBC1971AF62f42EE1eD89bc79308828e6b044f1;
 
     uint public winnerPoolTotal;
     string public constant version = "0.2.5";
@@ -22,38 +30,8 @@ contract Betting{
         uint32 voided_timestamp;
     }
 
-    struct horses_info{
-        int64  BTC_delta; //horses.BTC delta value
-        int64  ETH_delta; //horses.ETH delta value
-        int64  LTC_delta; //horses.LTC delta value
-        bytes32 BTC; //32-bytes equivalent of horses.BTC
-        bytes32 ETH; //32-bytes equivalent of horses.ETH
-        bytes32 LTC;  //32-bytes equivalent of horses.LTC
-    }
-
-    struct bet_info{
-        bytes32 horse; // coin on which amount is bet on
-        uint amount; // amount bet by Bettor
-    }
-    struct coin_info{
-        uint256 pre; // locking price
-        uint256 post; // ending price
-        uint160 total; // total coin pool
-        uint32 count; // number of bets
-        bool price_check;
-    }
-    struct voter_info {
-        uint160 total_bet; //total amount of bet placed
-        bool rewarded; // boolean: check for double spending
-        mapping(bytes32=>uint) bets; //array of bets
-    }
-
-    mapping (bytes32 => coin_info) public coinIndex; // mapping coins with pool information
-    mapping (address => voter_info) voterIndex; // mapping voter address with Bettor information
-
     uint public total_reward; // total reward to be awarded
     uint32 total_bettors;
-    mapping (bytes32 => bool) public winner_horse;
 
 
     // tracking events
@@ -62,17 +40,17 @@ contract Betting{
     event PriceCallback(bytes32 coin_pointer, uint256 result, bool isPrePrice);
     event RefundEnabled(string reason);
 
+    chronus_info public chronus;
+
     // constructor
     constructor() public payable {
         owner = msg.sender;
-        horses.BTC = bytes32("BTC");
-        horses.ETH = bytes32("ETH");
-        horses.LTC = bytes32("LTC");
+        chronus.betting_open = false;
+        chronus.race_start = false;
+        chronus.race_end = false;
+        chronus.voided_bet = false;
     }
 
-    // data access structures
-    horses_info public horses;
-    chronus_info public chronus;
 
     // modifiers for restricting access to methods
     modifier onlyOwner {
@@ -103,172 +81,74 @@ contract Betting{
     }
 
     function priceCallback (bytes32 coin_pointer, uint256 result, bool isPrePrice ) external onlyOwner {
+        require(state == States.INITIAL || state == States.BET_OPEN || state == States.RACE_START );
+
         require (!chronus.race_end);
         emit PriceCallback(coin_pointer, result, isPrePrice);
         chronus.race_start = true;
         chronus.betting_open = false;
-        if (isPrePrice) {
+        
+        state = States.RACE_START;
+
+          if (isPrePrice) {
             if (now >= chronus.starting_time+chronus.betting_duration+ 60 minutes) {
                 emit RefundEnabled("Late start price");
                 forceVoidRace();
             } else {
-                coinIndex[coin_pointer].pre = result;
             }
         } else if (!isPrePrice){
-            if (coinIndex[coin_pointer].pre > 0 ){
-                if (now >= chronus.starting_time+chronus.race_duration+ 60 minutes) {
-                    emit RefundEnabled("Late end price");
-                    forceVoidRace();
-                } else {
-                    coinIndex[coin_pointer].post = result;
-                    coinIndex[coin_pointer].price_check = true;
-
-                    if (coinIndex[horses.ETH].price_check && coinIndex[horses.BTC].price_check && coinIndex[horses.LTC].price_check) {
-                        reward();
-                    }
-                }
-            } else {
-                emit RefundEnabled("End price came before start price");
-                forceVoidRace();
-            }
+                    reward();
         }
     }
 
     // place a bet on a coin(horse) lockBetting
     function placeBet(bytes32 horse) external duringBetting payable  {
         require(msg.value >= 0.01 ether);
-        if (voterIndex[msg.sender].total_bet==0) {
-            total_bettors+=1;
-        }
-        uint _newAmount = voterIndex[msg.sender].bets[horse] + msg.value;
-        voterIndex[msg.sender].bets[horse] = _newAmount;
-        voterIndex[msg.sender].total_bet += uint160(msg.value);
-        uint160 _newTotal = coinIndex[horse].total + uint160(msg.value);
-        uint32 _newCount = coinIndex[horse].count + 1;
-        coinIndex[horse].total = _newTotal;
-        coinIndex[horse].count = _newCount;
-        emit Deposit(msg.sender, msg.value, horse, now);
     }
 
     // method to place the oraclize queries
     function setupRace(uint32 _bettingDuration, uint32 _raceDuration) onlyOwner beforeBetting external payable {
+    // function setupRace(uint32 _bettingDuration, uint32 _raceDuration)  external payable {
+           require(state == States.INITIAL);
+
             chronus.starting_time = uint32(block.timestamp);
             chronus.betting_open = true;
             chronus.betting_duration = _bettingDuration;
             chronus.race_duration = _raceDuration;
+           
+            state = States.BET_OPEN;
     }
 
     // method to calculate reward (called internally by callback)
     function reward() internal {
-        /*
-        calculating the difference in price with a precision of 5 digits
-        not using safemath since signed integers are handled
-        */
-        horses.BTC_delta = int64(coinIndex[horses.BTC].post - coinIndex[horses.BTC].pre)*100000/int64(coinIndex[horses.BTC].pre);
-        horses.ETH_delta = int64(coinIndex[horses.ETH].post - coinIndex[horses.ETH].pre)*100000/int64(coinIndex[horses.ETH].pre);
-        horses.LTC_delta = int64(coinIndex[horses.LTC].post - coinIndex[horses.LTC].pre)*100000/int64(coinIndex[horses.LTC].pre);
 
-        total_reward = (coinIndex[horses.BTC].total) + (coinIndex[horses.ETH].total) + (coinIndex[horses.LTC].total);
-        if (total_bettors <= 1) {
-            emit RefundEnabled("Not enough participants");
-            forceVoidRace();
-        } else {
-            // house takeout
-            uint house_fee = total_reward.mul(5).div(100);
-            require(house_fee < address(this).balance);
-            total_reward = total_reward.sub(house_fee);
-            house_takeout.transfer(house_fee);
-
-            // ethouse takeout
-            uint ethouse_fee = house_fee/2;
-            require(ethouse_fee < address(this).balance);
-            total_reward = total_reward.sub(ethouse_fee);
-            ethouse_takeout.transfer(ethouse_fee);
-        }
-
-        if (horses.BTC_delta > horses.ETH_delta) {
-            if (horses.BTC_delta > horses.LTC_delta) {
-                winner_horse[horses.BTC] = true;
-                winnerPoolTotal = coinIndex[horses.BTC].total;
-            }
-            else if(horses.LTC_delta > horses.BTC_delta) {
-                winner_horse[horses.LTC] = true;
-                winnerPoolTotal = coinIndex[horses.LTC].total;
-            } else {
-                winner_horse[horses.BTC] = true;
-                winner_horse[horses.LTC] = true;
-                winnerPoolTotal = coinIndex[horses.BTC].total + (coinIndex[horses.LTC].total);
-            }
-        } else if(horses.ETH_delta > horses.BTC_delta) {
-            if (horses.ETH_delta > horses.LTC_delta) {
-                winner_horse[horses.ETH] = true;
-                winnerPoolTotal = coinIndex[horses.ETH].total;
-            }
-            else if (horses.LTC_delta > horses.ETH_delta) {
-                winner_horse[horses.LTC] = true;
-                winnerPoolTotal = coinIndex[horses.LTC].total;
-            } else {
-                winner_horse[horses.ETH] = true;
-                winner_horse[horses.LTC] = true;
-                winnerPoolTotal = coinIndex[horses.ETH].total + (coinIndex[horses.LTC].total);
-            }
-        } else {
-            if (horses.LTC_delta > horses.ETH_delta) {
-                winner_horse[horses.LTC] = true;
-                winnerPoolTotal = coinIndex[horses.LTC].total;
-            } else if(horses.LTC_delta < horses.ETH_delta){
-                winner_horse[horses.ETH] = true;
-                winner_horse[horses.BTC] = true;
-                winnerPoolTotal = coinIndex[horses.ETH].total + (coinIndex[horses.BTC].total);
-            } else {
-                winner_horse[horses.LTC] = true;
-                winner_horse[horses.ETH] = true;
-                winner_horse[horses.BTC] = true;
-                winnerPoolTotal = coinIndex[horses.ETH].total + (coinIndex[horses.BTC].total) + (coinIndex[horses.LTC].total);
-            }
-        }
-        chronus.race_end = true;
+       chronus.race_end = true;
+       state = States.RACE_END;
     }
 
     // method to calculate an invidual's reward
     function calculateReward(address candidate) internal afterRace view returns(uint winner_reward) {
-        voter_info storage bettor = voterIndex[candidate];
-        if(chronus.voided_bet) {
-            winner_reward = bettor.total_bet;
-        } else {
-            uint winning_bet_total;
-            if(winner_horse[horses.BTC]) {
-                winning_bet_total += bettor.bets[horses.BTC];
-            } if(winner_horse[horses.ETH]) {
-                winning_bet_total += bettor.bets[horses.ETH];
-            } if(winner_horse[horses.LTC]) {
-                winning_bet_total += bettor.bets[horses.LTC];
-            }
-            winner_reward += (((total_reward.mul(10000000)).div(winnerPoolTotal)).mul(winning_bet_total)).div(10000000);
-        }
+       winner_reward = 0;
     }
 
     // method to just check the reward amount
     function checkReward() afterRace external view returns (uint) {
-        require(!voterIndex[msg.sender].rewarded);
-        return calculateReward(msg.sender);
+          return calculateReward(msg.sender);
     }
 
     // method to claim the reward amount
     function claim_reward() afterRace external {
-        require(!voterIndex[msg.sender].rewarded);
-        uint transfer_amount = calculateReward(msg.sender);
-        require(address(this).balance >= transfer_amount);
-        voterIndex[msg.sender].rewarded = true;
-        msg.sender.transfer(transfer_amount);
-        emit Withdraw(msg.sender, transfer_amount);
+
     }
 
     function forceVoidRace() internal {
+       require(state == States.INITIAL || state == States.BET_OPEN || state == States.RACE_START || state == States.RACE_END);
         require(!chronus.voided_bet);
         chronus.voided_bet=true;
         chronus.race_end = true;
         chronus.voided_timestamp=uint32(now);
+
+        state = States.VOIDED_BET;
     }
 
     //this methohd can only be called by controller contract in case of timestamp errors
@@ -279,20 +159,12 @@ contract Betting{
 
     // exposing the coin pool details for DApp
     function getCoinIndex(bytes32 index, address candidate) external view returns (uint, uint, uint, bool, uint) {
-        uint256 coinPrePrice;
-        uint256 coinPostPrice;
-        if (coinIndex[horses.ETH].pre > 0 && coinIndex[horses.BTC].pre > 0 && coinIndex[horses.LTC].pre > 0) {
-            coinPrePrice = coinIndex[index].pre;
-        }
-        if (coinIndex[horses.ETH].post > 0 && coinIndex[horses.BTC].post > 0 && coinIndex[horses.LTC].post > 0) {
-            coinPostPrice = coinIndex[index].post;
-        }
-        return (coinIndex[index].total, coinPrePrice, coinPostPrice, coinIndex[index].price_check, voterIndex[candidate].bets[index]);
+       return (0, 0, 0, true, 0);
     }
 
     // exposing the total reward amount for DApp
     function reward_total() external view returns (uint) {
-        return ((coinIndex[horses.BTC].total) + (coinIndex[horses.ETH].total) + (coinIndex[horses.LTC].total));
+        return  0;
     }
 
     function getChronus() external view returns (uint32[] memory) {
@@ -306,18 +178,22 @@ contract Betting{
 
     // in case of any errors in race, enable full refund for the Bettors to claim
     function refund() external onlyOwner {
-        require(now > chronus.starting_time + chronus.race_duration + 60 minutes);
+        require(state == States.BET_OPEN || state == States.RACE_START);
+        
+        // require(now > chronus.starting_time + chronus.race_duration + 60 minutes);
+        
         require((chronus.betting_open && !chronus.race_start)
             || (chronus.race_start && !chronus.race_end));
         chronus.voided_bet = true;
         chronus.race_end = true;
         chronus.voided_timestamp=uint32(now);
+
+        state = States.VOIDED_BET;
     }
 
     // method to claim unclaimed winnings after 30 day notice period
     function recovery() external onlyOwner{
         require((chronus.race_end && now > chronus.starting_time + chronus.race_duration + (30 days))
             || (chronus.voided_bet && now > chronus.voided_timestamp + (30 days)));
-        house_takeout.transfer(address(this).balance);
     }
 }

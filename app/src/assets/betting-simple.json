@@ -1,0 +1,83 @@
+{
+  "id": "FSM#2",
+  "target_contract": "Betting",
+  "contracts": {"Betting": {"address": "0xa66ee04ef1c1af0046122fb02810e94719f33a62", "name": "Betting"}},
+  "actions": {
+    "priceCallback": {"Betting": ["priceCallback"]},
+    "setupRace": {"Betting": ["setupRace"]},
+    "forceVoidExternal": {"Betting": ["forceVoidExternal"]},
+    "refund": {"Betting": ["refund"]}
+  },
+  "states": [
+    {"name": "INITIAL", "type": "initial", "Predicate": "state==0"},
+    {"name": "BET_OPEN", "type": "regular", "Predicate": "state==1"},
+    {"name": "RACE_START", "type": "regular", "Predicate": "state==2"},
+    {"name": "RACE_END", "type": "regular", "Predicate": "state==3"},
+    {"name": "VOIDED_BET", "type": "regular", "Predicate": "state==4"}
+  ],
+  "transitions": [
+    {
+      "from": "INITIAL",
+      "to": "BET_OPEN",
+      "label": "setupRace",
+      "event": "setupRace",
+      "action": "setupRace"
+    },
+    {
+      "from": "BET_OPEN",
+      "to": "RACE_START",
+      "label": "priceCallback",
+      "event": "priceCallback",
+      "action": "priceCallback"
+    },
+    {
+      "from": "RACE_START",
+      "to": "RACE_START",
+      "label": "priceCallback",
+      "event": "priceCallback",
+      "action": "priceCallback"
+    },
+    {
+      "from": "RACE_START",
+      "to": "RACE_END",
+      "label": "priceCallback",
+      "event": "priceCallback",
+      "action": "priceCallback"
+    },
+    {
+      "from": "INITIAL",
+      "to": "VOIDED_BET",
+      "label": "priceCallback",
+      "event": "priceCallback",
+      "action": "priceCallback"
+    },
+    {
+      "from": "INITIAL",
+      "to": "VOIDED_BET",
+      "label": "forceVoidExternal",
+      "event": "forceVoidExternal",
+      "action": "forceVoidExternal"
+    },
+    {
+      "from": "BET_OPEN",
+      "to": "VOIDED_BET",
+      "label": "forceVoidExternal",
+      "event": "forceVoidExternal",
+      "action": "forceVoidExternal"
+    },
+    {
+      "from": "RACE_END",
+      "to": "VOIDED_BET",
+      "label": "forceVoidExternal",
+      "event": "forceVoidExternal",
+      "action": "forceVoidExternal"
+    },
+    {
+      "from": "BET_OPEN",
+      "to": "VOIDED_BET",
+      "label": "refund",
+      "event": "refund",
+      "action": "refund"
+    }
+  ]
+}

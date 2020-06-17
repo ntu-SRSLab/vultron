@@ -1,13 +1,15 @@
 //source: https://arxiv.org/pdf/1711.09327
 contract BlindAuction {
     // States definition 
-    enum States {
+       enum States {
         ABB,
         RB,
         F,
         C
     }
     States public  state = States.ABB;
+
+
     // Variables definition 
     struct Bid {
         bytes32 blindedBid;

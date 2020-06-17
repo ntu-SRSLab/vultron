@@ -20,18 +20,18 @@
       <b-col align-v="center" cols="5"  :md="5">
          <span class = "secondary mt-2 mr-2" >Control Panel </span>
         <b-row  v-show="!mouseOverFSM" >
-              <div class="container"  style="width:100%; height: 500px; border:thin;"  v-html="lSVGInAString">
+              <div v-if = "fsm" class="container"  style="width:100%; height: 350px; border:solid thin;"  v-html="lSVGInAString">
               </div>
         </b-row>
         <b-row v-if="lSVGInAString "  v-show="!mouseOverFSM" >
-        <div class="container" style="width: 100%; height:300px">
+        <div class="container" style="width: 100%; height:450px">
           <b-row>
               <b-col>
                <b-form-group  class="align-baseline text-left" label="Strategy" >
                   <b-form-radio-group id="strategy-radio-group" v-model="covering_strategy" name="strategy-radios"  @input="OnCoverStrategy" stacked>
                       <b-form-radio   class="text-left mr-3"  value="States"   >Cover State</b-form-radio>
                       <b-form-radio   class="text-left mr-5"  value="Transitions-Without-Loop"     >Cover Transition</b-form-radio>
-                      <b-form-radio   class="text-left mr-5"   value="Transitions-With-Loop"     >Cover Transition(Loop)</b-form-radio>
+                      <b-form-radio   class="text-left mr-5"   value="Transitions-With-Loop"     >Cover Transition (Loop)</b-form-radio>
                   </b-form-radio-group>   
                 </b-form-group>
               </b-col>
@@ -57,7 +57,7 @@
             <b-form inline>
                         <b-form-checkbox
                           id="checkbox-1"
-                          class = "mr-5 mb-2"
+                          class = "mr-3 mb-2"
                           v-model="fsm_status"
                           name="checkbox-1"
                           value="confirmed"
@@ -67,7 +67,7 @@
                        </b-form-checkbox>
                        <b-form-checkbox
                                 id="checkbox-2"
-                                class = "mr-5 mb-2"
+                                class = "mr-3 mb-2"
                                 v-model="model_status"
                                 name="checkbox-2"
                                 value="confirmed"
@@ -75,8 +75,18 @@
                               >
                               Confirm the Model righthand
                     </b-form-checkbox>
-                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="lg" :variant="variantTest" @click="OnTest()">Test</b-button>
-                     <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="lg" :variant="variantRandomTest" @click="OnRandomTest()">Random Test</b-button>
+                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantTest" @click="OnTest()">Test</b-button>
+                     <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantRandomTest" @click="OnRandomTest()">Random Test</b-button>
+                     <download-csv
+                                    v-if = "test_results.length>0"
+                                    :data   = "test_results">
+                                     <b-button  class="ml-2   mb-2 "   size="md"  variant="secondary"  >
+                                          <b-icon icon="download" aria-hidden="true"></b-icon> 
+                                          <!-- export table -->
+                                            (.csv)
+                                    </b-button>
+                                    
+                      </download-csv>
             </b-form>
              <b-table outlined=true  sticky-header=true hover :items="test_results"></b-table>
           </div>
@@ -145,7 +155,8 @@
 
   import credit from '../../assets/wecredit.json'
   import blindAction from '../../assets/blindAuction.json'
-  import dummyAction from '../../assets/dummyAuction.json'
+  import stateMachine from '../../assets/stateMachine.json'
+  import betting  from '../../assets/betting-simple.json'
   export default {
     name: "ModelTest",
     data: function () {
@@ -154,30 +165,35 @@
         status_fsm: false,
         status_fsm_change: false,
 
+       selected: null, 
+
         fsm_status:"not_confirmed",
         model_status: "not_confirmed",
         lSVGInAString: null,
+
         mouseOverFSM: false, // if mouse over fsm box
         status_test: false,  // if test completed
         status_randomtest: false, // if random test finished
         covering_strategy: null, // which covering strategy  is selected
         
         // test case priority
-        states:[],
+        states: [
+          {value: 'null', text: "null"}
+        ],
         selected_state: null, 
         selected_transition_startstate: null, 
         transitions: null,
         selected_transition: null, 
 
          log: "<p>this is the place to show running log </p>" + this.$smcat,
-         test_results: [
-         ],
+         test_results: [],
          test_priority: {}, 
           options: [
-          { value: blindAction, text: 'blindAction' },
           { value:  credit, text: 'credit' },
-          {value: dummyAction,      text:"dummyAuction"},
-          { value: 'null', text: 'Empty' }
+          { value:  betting, text: 'betting' },
+          { value: blindAction, text: 'blindAction' },
+          { value:  stateMachine, text: 'stateMachine' },
+          { value:  "Write your specication here", text: 'empty' }
         ],
        cmOptions_json: {
           mode: {
@@ -228,14 +244,14 @@
         console.log(event_Test, data);
       } )
       this.$socket.on("server", data =>{
-           alert(JSON.stringify(data));
+          //  alert(JSON.stringify(data));
            console.log(JSON.stringify(data));
            if(data.event=="event_Test_Done"){
                           obj.status_test = true;
                           console.log(data);
                           return;
               }else if (data.event == "RandomTestAction_Report"){
-                          obj.$fsmservice.enable_randomTest();
+                          console.log(data.event);
               }
               // obj.$fsmservice.add_action_report(data.data)
            
@@ -248,8 +264,9 @@
                                                                          }
                    ); 
                  var result = obj.$fsmservice.next_result();
-                 if(result)
+                 if(result){
                        obj.test_results.push(result);
+                 }
                  var  parser = new DOMParser();
                  var xmlDoc = parser.parseFromString(lSVGInAString, "text/xml");
                  // console.log(xmlDoc);
@@ -282,14 +299,17 @@
         if(this.selected!="null"){
               this.fsm = stringify(this.selected);
               try {
-                this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
-                this.states = this.$fsmservice.get_stateOptions();
-                this.status_fsm = true;
-                this.model =  dedent(`${this.$fsmservice.get_model_script()}`);
-                console.log(this.model);
+                    this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
+                    this.states = this.$fsmservice.get_stateOptions();
+                    this.status_fsm = true;
+                    this.model =  dedent(`${this.$fsmservice.get_model_script()}`);
+                    console.log(this.model);
               } catch (pError) {
-                alert(pError);
-                console.error(pError);
+                  if(pError.indexOf("abi")!=-1){
+                        alert( "The application has not been deployed before." );
+                  }
+                // alert(pError);
+                   console.error(pError);
               }
         }else{
            this.fsm = null;
@@ -297,21 +317,26 @@
         }
       },
       OnStateMachineChange() {
-        console.log("OnStateMachineChange");
-        try {
-          this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
-          this.states = this.$fsmservice.get_stateOptions();
-          this.status_fsm = true;
-          this.model =  dedent(this.$fsmservice.get_model_script());
-          this.status_test = false;
-        } catch (pError) {
-          alert(pError);
-          console.error(pError);
+        if(this.fsm){
+            console.log("OnStateMachineChange");
+            try {
+              this.GenerateSVGXMLString( this.$fsmservice.add_fsm(this.fsm).get_sm_cat());
+              this.states = this.$fsmservice.get_stateOptions();
+              this.status_fsm = true;
+              this.model =  dedent(this.$fsmservice.get_model_script());
+              this.status_test = false;
+            } catch (pError) {
+                  if(pError.indexOf("abi")!=-1){
+                        alert( "The application has not been deployed before." );
+                  }
+                  console.error(pError);
+            }
         }
       },
       OnTest(){
         const client_Test = "Test_client";
         console.log(client_Test);
+        this.$fsmservice.disable_randomTest();
         this.$socket.emit("client",{type: client_Test,
         data: {
               covering_strategy: this.covering_strategy,
@@ -325,6 +350,7 @@
       OnRandomTest(){
         const client_Test = "Test_client";
         console.log(client_Test);
+        this.$fsmservice.enable_randomTest();
         this.$socket.emit("client",{type: client_Test,
         data: {
               random_test: true, 
@@ -339,11 +365,11 @@
       OnMouseOverFSM(){
           console.log("MouseOverFSM");
           this.mouseOverFSM = true;
-          this.OnStateMachineChange();
       },
       OnMouseOutFSM(){
-        console.log("MouseLeaveFSM");
+         console.log("MouseLeaveFSM");
          this.mouseOverFSM = false;
+         this.OnStateMachineChange();
       },
       OnCoverStrategy(){
         console.log(`current strategy ${this.covering_strategy}`)

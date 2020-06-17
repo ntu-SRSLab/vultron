@@ -1,6 +1,6 @@
 <template>
     <footer id="footer">
-      <p class="text-center">© Vultron 2020,  the ultimate smart contract model based testing framework</p>
+      <p class="text-center">© ModCon 2020,  the ultimate smart contract model based testing framework</p>
     </footer>
 </template>
 <script>

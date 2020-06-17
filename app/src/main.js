@@ -7,6 +7,8 @@ import SocketIO from "socket.io-client"
 import SocketIOFileUpload from 'socketio-file-upload'
 import FSMService from "./service/service.js"
 import VueCodemirror from 'vue-codemirror'
+import JsonCSV from 'vue-json-csv'
+ 
 
 // import base style
 
@@ -22,6 +24,7 @@ Vue.prototype.$uploader = uploader;
 Vue.prototype.$socket = SocketInstance;
 Vue.prototype.$smcat = Smcat;
 
+Vue.component('downloadCsv', JsonCSV)
 Vue.use(VueCodemirror);
 // Install BootstrapVue
 Vue.use(BootstrapVue);

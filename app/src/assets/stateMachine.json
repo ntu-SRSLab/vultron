@@ -1,0 +1,53 @@
+{
+  "id": "FSM#2",
+  "target_contract": "StateMachine",
+  "contracts": {
+    "StateMachine": {
+      "address": "0x00",
+      "name": "StateMachine"
+    }
+  },
+  "actions": {
+    "initiate": {"StateMachine": ["initiate"]},
+    "approve": {"StateMachine": ["approve"]},
+    "receive": {"StateMachine": ["receive"]},
+    "finish": {"StateMachine": ["finish"]}
+  },
+  "states": [
+    {"name": "Applied", "type": "initial", "Predicate": "state==0"},
+    {"name": "Initiated", "type": "regular", "Predicate": "state==1"},
+    {"name": "Approved", "type": "regular", "Predicate": "state==2"},
+    {"name": "Received", "type": "regular", "Predicate": "state==3"},
+    {"name": "Finished", "type": "regular", "Predicate": "state==4"}
+  ],
+  "transitions": [
+    {
+      "from": "Applied",
+      "to": "Initiated",
+      "label": "initiate",
+      "event": "initiate",
+      "action": "initiate"
+    },
+    {
+      "from": "Initiated",
+      "to": "Approved",
+      "label": "approve",
+      "event": "approve",
+      "action": "approve"
+    },
+    {
+      "from": "Approved",
+      "to": "Received",
+      "label": "receive",
+      "event": "receive",
+      "action": "receive"
+    },
+    {
+      "from": "Received",
+      "to": "Finished",
+      "label": "finish",
+      "event": "finish",
+      "action": "finish"
+    }
+  ]
+}

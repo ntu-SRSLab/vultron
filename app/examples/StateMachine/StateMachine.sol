@@ -8,7 +8,6 @@ contract StateMachine {
         Approved,
         Received,
         Finished
-        
     }
 
     // This is the current stage of the contract

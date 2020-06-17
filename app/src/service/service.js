@@ -9,6 +9,11 @@ export default class FSMService {
     }
     enable_randomTest(){
         this.random_test = true;
+        this.add_covering_strategy(this.strategy);
+    }
+    disable_randomTest(){
+        this.random_test = false;
+        this.add_covering_strategy(this.strategy);
     }
     get_fsm(){
         return this.fsm;
@@ -78,6 +83,7 @@ export default class FSMService {
         this.strategy = strategy;
         this.activate_states =  new Set();
         this.activate_transition= new Set();
+        this.currentState = null;
         this.generate_dummy_loop_fsm();
         for(let transition of this.fsm.transitions){
             if(transition.color){
@@ -100,10 +106,10 @@ export default class FSMService {
         let action = this.action_Report.action;
         // validate currentState
         if (!this.currentState){
-            this.currentState = "initial";
+            this.currentState =  this._get_initial_state();
         }
         if(this.action_Report.index && 1==this.action_Report.index)
-                this.currentState = "initial";
+                this.currentState = this._get_initial_state();
         
         let current_transition;
         let current_to_state;
@@ -157,6 +163,10 @@ export default class FSMService {
                     }
         }else{
             if(this.action_Report){
+                this.action_Report.action= [this.action_Report.action.split("action_")[1]];
+                if(this.previous_action_Report){
+                    this.action_Report.action = this.action_Report.action.concat(this.previous_action_Report.action);
+                }
                 let ret =  {
                     //  Contract: this.fsm.target_contract,
                     "#Strategy": "Random Test",
@@ -165,6 +175,7 @@ export default class FSMService {
                     "#Test Cases": this.action_Report.test_cases,
                     "#Times(s)": (this.action_Report.currentTime-this.action_Report.startTime).toFixed(3)
                 };
+                this.previous_action_Report = this.action_Report;
                 this.action_Report  = null;
                 return ret;
              }
@@ -245,7 +256,7 @@ export default class FSMService {
             for (let fun of funs[contract]) {
                 ret += `let ret${fun} = await StateMachineCtx.getInstance().${contract}.${fun}();
                 ret.push(ret${fun});
-                console.log( "current test case: ", BigInt(ret${fun}.receipt.status.toString())== BigInt(${BCOS_SUCCESS_STATUS})?"success":"failed");
+                console.log( "current test case: ", BigInt(ret${fun}.receipt.status.toString())== BigInt(${BCOS_SUCCESS_STATUS})?"passed":"failed");
                 executeStatus += BigInt(ret${fun}.receipt.status.toString());`
             }
         }
@@ -281,7 +292,7 @@ export default class FSMService {
             mapping += `async action_${action}(){
                 let ret = [];
                 if(asyncFlag){
-                        // bcos success status:${BCOS_SUCCESS_STATUS}
+                        // bcos passed status:${BCOS_SUCCESS_STATUS}
                         let executeStatus = BigInt(${BCOS_SUCCESS_STATUS});
                         let ctx =  StateMachineCtx.getInstance();
                         let count = 0;
@@ -389,12 +400,19 @@ class StateMachineCtx{
         ret += `{\n${array.join(",")}\n}`;
         return ret;
     }
+    _get_initial_state(){
+        for(let state of this.fsm.states){
+            if(state.type == "initial")
+                return state.name;
+        }
+        assert(false, "there must be a  initial state defined in model");
+    }
     _get_state_machine() {
         let template_state_machine = `// state machine 
 const createStateMachine = statectx =>{
     return Machine({
         id: "${this.fsm.id}",
-        initial: "initial",
+        initial: "${this._get_initial_state()}",
         context: {
                ctx: statectx
         },
@@ -417,7 +435,7 @@ const Machine = require("xstate").Machine;
 const createModel = require("@xstate/test").createModel;
 
 let asyncFlag = false;
-const MAX_COUNT= 60;
+const MAX_COUNT= 40;
 function revertAsyncFlag() {
     asyncFlag = !asyncFlag;
 }

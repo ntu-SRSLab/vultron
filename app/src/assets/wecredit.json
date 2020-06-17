@@ -1,121 +1,88 @@
 {
-    "id" : "FSM#1",
-    "target_contract": "CreditController",
-    "contracts":{
-       "CreditController":{
-          "address":"0x000",
-          "name":"CreditController"
-       }
-    },
-    "actions":{
-       "CREATE":{
-          "CreditController":[
-             "createCredit"
-          ]
-       },
-       "DISCOUNT":{
-         "CreditController":[
-            "discountCredit"
-         ]
-      },
-      "TRANSFER":{
-         "CreditController":[
-            "transferCredit"
-         ]
-      },
-       "EXPIRE": {"CreditController": ["expireOrClearOrCloseCredit"]},
-       "CLOSE": {"CreditController": ["expireOrClearOrCloseCredit"]},
-       "CLEAR": {"CreditController": ["expireOrClearOrCloseCredit"]}
-    },
-    "states":[
-       {
-          "name":"initial",
-          "type":"initial"
-       },
-       {
-          "name":"created",
-          "type":"regular"
-       },
-       {
-          "name":"discounted",
-          "type":"regular"
-       },
-       {
-          "name":"expired",
-          "type":"regular"
-       },
-       {
-          "name":"cleared",
-          "type":"regular"
-       },
-       {
-          "name":"closed",
-          "type":"regular"
-       }
-    ],
-    "transitions":[
-       {
-          "from":"initial",
-          "to":"created",
-          "label":"CREATE",
-          "event":"CREATE",
-          "action":"CREATE"
-       },
-       {
-          "from":"created",
-          "to":"created",
-          "label":"TRANSFER",
-          "event":"TRANSFER",
-          "action":"TRANFER"
-       },
-       {
-          "from":"created",
-          "to":"discounted",
-          "label":"DISCOUNT",
-          "event":"DISCOUNT",
-          "action":"DISCOUNT"
-       },
-       {
-          "from":"created",
-          "to":"expired",
-          "label":"EXPIRE",
-          "event":"EXPIRE",
-          "action":"EXPIRE"
-       },
-       {
-          "from":"created",
-          "to":"cleared",
-          "label":"CLEAR",
-          "event":"CLEAR",
-          "action":"CLEAR"
-       },
-       {
-          "from":"created",
-          "to":"closed",
-          "label":"CLOSE",
-          "event":"CLOSE",
-          "action":"CLOSE"
-       },
-       {
-          "from":"discounted",
-          "to":"expired",
-          "label":"EXPIRE",
-          "event":"EXPIRE",
-          "action":"EXPIRE"
-       },
-       {
-          "from":"discounted",
-          "to":"cleared",
-          "label":"CLEAR",
-          "event":"CLEAR",
-          "action":"CLEAR"
-       },
-       {
-          "from":"discounted",
-          "to":"closed",
-          "label":"CLOSE",
-          "event":"CLOSE",
-          "action":"CLOSE"
-       }
-    ]
+   "id": "FSM#1",
+   "target_contract": "CreditController",
+   "contracts": {
+     "CreditController": {"address": "0xa7b692824ac1ff30f01c325ec7498005ee13e0bc", "name": "CreditController"}
+   },
+   "actions": {
+     "CREATE": {"CreditController": ["createCredit"]},
+     "DISCOUNT": {"CreditController": ["discountCredit"]},
+     "TRANSFER": {"CreditController": ["transferCredit"]},
+     "EXPIRE": {"CreditController": ["expireOrClearOrCloseCredit"]},
+     "CLOSE": {"CreditController": ["expireOrClearOrCloseCredit"]},
+     "CLEAR": {"CreditController": ["expireOrClearOrCloseCredit"]}
+   },
+   "states": [
+     {"name": "initial", "type": "initial", "Predicate": "state == 0"},
+     {"name": "created", "type": "regular", "Predicate": "state == 1"},
+     {"name": "discounted", "type": "regular", "Predicate": "state == 2"},
+     {"name": "expired", "type": "regular", "Predicate": "state == 3"},
+     {"name": "cleared", "type": "regular", "Predicate": "state == 4"},
+     {"name": "closed", "type": "regular", "Predicate": "state == 5"}
+   ],
+   "transitions": [
+     {
+       "from": "initial",
+       "to": "created",
+       "label": "CREATE",
+       "event": "CREATE",
+       "action": "CREATE"
+     },
+     {
+       "from": "created",
+       "to": "created",
+       "label": "TRANSFER",
+       "event": "TRANSFER",
+       "action": "TRANSFER"
+     },
+     {
+       "from": "created",
+       "to": "discounted",
+       "label": "DISCOUNT",
+       "event": "DISCOUNT",
+       "action": "DISCOUNT"
+     },
+     {
+       "from": "created",
+       "to": "expired",
+       "label": "EXPIRE",
+       "event": "EXPIRE",
+       "action": "EXPIRE"
+     },
+     {
+       "from": "created",
+       "to": "cleared",
+       "label": "CLEAR",
+       "event": "CLEAR",
+       "action": "CLEAR"
+     },
+     {
+       "from": "created",
+       "to": "closed",
+       "label": "CLOSE",
+       "event": "CLOSE",
+       "action": "CLOSE"
+     },
+     {
+       "from": "discounted",
+       "to": "expired",
+       "label": "EXPIRE",
+       "event": "EXPIRE",
+       "action": "EXPIRE"
+     },
+     {
+       "from": "discounted",
+       "to": "cleared",
+       "label": "CLEAR",
+       "event": "CLEAR",
+       "action": "CLEAR"
+     },
+     {
+       "from": "discounted",
+       "to": "closed",
+       "label": "CLOSE",
+       "event": "CLOSE",
+       "action": "CLOSE"
+     }
+   ]
  }

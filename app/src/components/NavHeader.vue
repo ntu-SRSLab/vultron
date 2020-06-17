@@ -4,7 +4,7 @@
         <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-        <a class="navbar-brand" href="#page-top">Vultron</a>
+        <a class="navbar-brand" href="#page-top">ModCon</a>
         
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#my-navbar-collapse">
             <span class="sr-only">Toggle navigation</span>
