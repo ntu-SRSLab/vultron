@@ -16,7 +16,10 @@ const fsmservice = new FSMService();
 Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false
 global.Popper = Popper;
 global.vm = vm; //Define you app variable globally
-const SocketInstance = SocketIO('http://localhost:3000');
+const SocketInstance = SocketIO('http://localhost:3000', {
+  reconnection: true,
+  reconnectionDelay: 3000
+});
 var uploader = new SocketIOFileUpload(SocketInstance);
 
 Vue.prototype.$fsmservice = fsmservice;

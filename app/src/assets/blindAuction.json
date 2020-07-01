@@ -19,10 +19,10 @@
   },
   "states": [
     {"name": "initial", "type": "initial", "Predicate": "state==0"},
-    {"name": "ABB", "type": "regular", "Predicate": "state==0"},
-    {"name": "RB", "type": "regular", "Predicate": "state==1"},
-    {"name": "F", "type": "regular", "Predicate": "state==2"},
-    {"name": "C", "type": "regular", "Predicate": "state==3"}
+    {"name": "ABB", "type": "regular", "Predicate": "state==1"},
+    {"name": "RB", "type": "regular", "Predicate": "state==2"},
+    {"name": "F", "type": "regular", "Predicate": "state==3"},
+    {"name": "C", "type": "regular", "Predicate": "state==4"}
   ],
   "transitions": [
     {

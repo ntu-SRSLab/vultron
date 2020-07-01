@@ -1,0 +1,219 @@
+{
+  "id": "FSM#5",
+  "target_contract": "AssetTransfer",
+  "contracts": {
+    "AssetTransfer": {
+      "address": "0x00",
+      "name": "AssetTransfer"
+    }
+  },
+  "actions": {
+    "Terminate": {"AssetTransfer": ["Terminate"]},
+    "Modify": {"AssetTransfer": ["Modify"]},
+    "MakeOffer": {"AssetTransfer": ["MakeOffer"]},
+    "AcceptOffer": {"AssetTransfer": ["AcceptOffer"]},
+    "Reject": {"AssetTransfer": ["Reject"]},
+    "Accept": {"AssetTransfer": ["Accept"]},
+    "ModifyOffer": {"AssetTransfer": ["ModifyOffer"]},
+    "RescindOffer": {"AssetTransfer": ["RescindOffer"]},
+    "MarkAppraised": {"AssetTransfer": ["MarkAppraised"]},
+    "MarkInspected": {"AssetTransfer": ["MarkInspected"]}
+  },
+  "states": [
+    {"name": "Active", "type": "initial", "Predicate": "state==0"},
+    {"name": "OfferPlaced", "type": "regular", "Predicate": "state==1"},
+    {"name": "PendingInspection", "type": "regular", "Predicate": "state==2"},
+    {"name": "Inspected", "type": "regular", "Predicate": "state==3"},
+    {"name": "Appraised", "type": "regular", "Predicate": "state==4"},
+    {"name": "NotionalAcceptance", "type": "regular", "Predicate": "state==5"},
+    {"name": "BuyerAccepted", "type": "regular", "Predicate": "state==6"},
+    {"name": "SellerAccepted", "type": "regular", "Predicate": "state==7"},
+    {"name": "Accepted", "type": "regular", "Predicate": "state==8"},
+    {"name": "Terminated", "type": "regular", "Predicate": "state==9"}
+  ],
+  "transitions": [
+    {
+      "from": "Active",
+      "to": "Terminated",
+      "label": "Terminate",
+      "event": "Terminate",
+      "action": "Terminate"
+    },
+    {
+      "from": "Active",
+      "to": "OfferPlaced",
+      "label": "MakeOffer",
+      "event": "MakeOffer",
+      "action": "MakeOffer"
+    },
+    {
+      "from": "Active",
+      "to": "Active",
+      "label": "Modify",
+      "event": "Modify",
+      "action": "Modify"
+    },
+    {
+      "from": "OfferPlaced",
+      "to": "PendingInspection",
+      "label": "AcceptOffer",
+      "event": "AcceptOffer",
+      "action": "AcceptOffer"
+    },
+    {
+      "from": "OfferPlaced",
+      "to": "Active",
+      "label": "Reject",
+      "event": "Reject",
+      "action": "Reject"
+    },
+    {
+      "from": "OfferPlaced",
+      "to": "Terminated",
+      "label": "Terminate",
+      "event": "Terminate",
+      "action": "Terminate"
+    },
+    {
+      "from": "OfferPlaced",
+      "to": "Active",
+      "label": "RescindOffer",
+      "event": "RescindOffer",
+      "action": "RescindOffer"
+    }
+    ,
+    {
+      "from": "OfferPlaced",
+      "to": "OfferPlaced",
+      "label": "ModifyOffer",
+      "event": "ModifyOffer",
+      "action": "ModifyOffer"
+    },
+    {
+      "from": "PendingInspection",
+      "to": "Active",
+      "label": "Reject",
+      "event": "Reject",
+      "action": "Reject"
+    },
+    {
+      "from": "PendingInspection",
+      "to": "Terminated",
+      "label": "Terminate",
+      "event": "Terminate",
+      "action": "Terminate"
+    },
+    {
+      "from": "PendingInspection",
+      "to": "Active",
+      "label": "RescindOffer",
+      "event": "RescindOffer",
+      "action": "RescindOffer"
+    },
+    {
+      "from": "PendingInspection",
+      "to": "Inspected",
+      "label": "MarkInspected",
+      "event": "MarkInspected",
+      "action": "MarkInspected"
+    },
+    {
+      "from": "PendingInspection",
+      "to": "Appraised",
+      "label": "MarkAppraised",
+      "event": "MarkAppraised",
+      "action": "MarkAppraised"
+    },
+      {
+      "from": "Appraised",
+      "to": "Active",
+      "label": "Reject",
+      "event": "Reject",
+      "action": "Reject"
+    },
+    {
+      "from": "Appraised",
+      "to": "Terminated",
+      "label": "Terminate",
+      "event": "Terminate",
+      "action": "Terminate"
+    },
+    {
+      "from": "Appraised",
+      "to": "Active",
+      "label": "RescindOffer",
+      "event": "RescindOffer",
+      "action": "RescindOffer"
+    },
+    {
+      "from": "Appraised",
+      "to": "NotionalAcceptance",
+      "label": "MarkInspected",
+      "event": "MarkInspected",
+      "action": "MarkInspected"
+    },
+    {
+      "from": "NotionalAcceptance",
+      "to": "SellerAccepted",
+      "label": "Accept",
+      "event": "Accept",
+      "action": "Accept"
+    },
+    {
+      "from": "NotionalAcceptance",
+      "to": "Active",
+      "label": "Reject",
+      "event": "Reject",
+      "action": "Reject"
+    },
+    {
+      "from": "NotionalAcceptance",
+      "to": "BuyerAccepted",
+      "label": "Accept",
+      "event": "Accept",
+      "action": "Accept"
+    },
+    {
+      "from": "NotionalAcceptance",
+      "to": "Active",
+      "label": "RescindOffer",
+      "event": "RescindOffer",
+      "action": "RescindOffer"
+    },
+    {
+      "from": "BuyerAccepted",
+      "to": "SellerAccepted",
+      "label": "Accept",
+      "event": "Accept",
+      "action": "Accept"
+    },
+    {
+      "from": "BuyerAccepted",
+      "to": "Active",
+      "label": "Reject",
+      "event": "Reject",
+      "action": "Reject"
+    },
+    {
+      "from": "BuyerAccepted",
+      "to": "Terminated",
+      "label": "Terminate",
+      "event": "Terminate",
+      "action": "Terminate"
+    },
+    {
+      "from": "SellerAccepted",
+      "to": "Accepted",
+      "label": "Accept",
+      "event": "Accept",
+      "action": "Accept"
+    },
+    {
+      "from": "SellerAccepted",
+      "to": "Active",
+      "label": "RescindOffer",
+      "event": "RescindOffer",
+      "action": "RescindOffer"
+    }
+  ]
+}

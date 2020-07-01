@@ -102,7 +102,7 @@ async getState() {
   return this.state;
 }
 // action_functions_mapping
-async action_CREATE() {
+async action_create() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -135,7 +135,7 @@ async action_CREATE() {
   }
   return ret;
 }
-async action_DISCOUNT() {
+async action_discount() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -168,7 +168,7 @@ async action_DISCOUNT() {
   }
   return ret;
 }
-async action_TRANSFER() {
+async action_transfer() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -201,7 +201,7 @@ async action_TRANSFER() {
   }
   return ret;
 }
-async action_EXPIRE() {
+async action_expire() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -234,7 +234,7 @@ async action_EXPIRE() {
   }
   return ret;
 }
-async action_CLOSE() {
+async action_close() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -267,7 +267,7 @@ async action_CLOSE() {
   }
   return ret;
 }
-async action_CLEAR() {
+async action_clear() {
   let ret = [];
   if (asyncFlag) {
     // bcos passed status:0
@@ -313,70 +313,70 @@ return Machine({
 
     initial: {
       on: {
-        CREATE: {
-          target: "created",
-          actions: "action_CREATE"
+        create: {
+          target: "CREATED",
+          actions: "action_create"
         }
       }
     },
-    created: {
+    CREATED: {
       on: {
-        TRANSFER: {
-          target: "created",
-          actions: "action_TRANSFER"
+        transfer: {
+          target: "CREATED",
+          actions: "action_transfer"
         },
-        DISCOUNT: {
-          target: "discounted",
-          actions: "action_DISCOUNT"
+        discount: {
+          target: "DISCOUNTED",
+          actions: "action_discount"
         },
-        EXPIRE: {
-          target: "expired",
-          actions: "action_EXPIRE"
+        expire: {
+          target: "EXPIRED",
+          actions: "action_expire"
         },
-        CLEAR: {
-          target: "cleared",
-          actions: "action_CLEAR"
+        clear: {
+          target: "CLEARED",
+          actions: "action_clear"
         },
-        CLOSE: {
-          target: "closed",
-          actions: "action_CLOSE"
+        close: {
+          target: "CLOSED",
+          actions: "action_close"
         }
       }
     },
-    discounted: {
+    DISCOUNTED: {
       on: {
-        EXPIRE: {
-          target: "expired",
-          actions: "action_EXPIRE"
+        expire: {
+          target: "EXPIRED",
+          actions: "action_expire"
         },
-        CLEAR: {
-          target: "cleared",
-          actions: "action_CLEAR"
+        clear: {
+          target: "CLEARED",
+          actions: "action_clear"
         },
-        CLOSE: {
-          target: "closed",
-          actions: "action_CLOSE"
+        close: {
+          target: "CLOSED",
+          actions: "action_close"
         }
       }
     },
-    expired: {
+    EXPIRED: {
       type: "final"
     },
-    cleared: {
+    CLEARED: {
       type: "final"
     },
-    closed: {
+    CLOSED: {
       type: "final"
     }
   }
 }, {
   actions: {
-    action_CREATE: statectx.action_CREATE,
-    action_DISCOUNT: statectx.action_DISCOUNT,
-    action_TRANSFER: statectx.action_TRANSFER,
-    action_EXPIRE: statectx.action_EXPIRE,
-    action_CLOSE: statectx.action_CLOSE,
-    action_CLEAR: statectx.action_CLEAR
+    action_create: statectx.action_create,
+    action_discount: statectx.action_discount,
+    action_transfer: statectx.action_transfer,
+    action_expire: statectx.action_expire,
+    action_close: statectx.action_close,
+    action_clear: statectx.action_clear
   }
 });
 }

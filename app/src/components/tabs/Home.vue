@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <b-card class="mt-3" header="ModCon: The Model-based Platforms for Smart Contract."  header-class= "lg"   header-bg-variant="light" header-text-variant="default">
+    <b-card class="mt-3" header="ModCon: The Model-based Testing Platforms for Smart Contract."  header-class= "lg"   header-bg-variant="light" header-text-variant="default">
       <b-form>
         <b-form-group id="input-group-1" label-align="left" label="Contracts(.sol):" label-for="input-select-upload"
           description="We'll never share your software asset with anyone else.">

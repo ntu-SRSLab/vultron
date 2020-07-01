@@ -1,6 +1,6 @@
 import assert from "assert";
 var beautify = require('js-beautify').js;
-import {CoverTransitionLoop, BCOS_SUCCESS_STATUS} from "./common.js"
+import {CMA_normal,   CMA_dummy, CoverState, CoverTransition,  CoverTransitionLoop, BCOS_SUCCESS_STATUS} from "./common.js"
 export default class FSMService {
     constructor() {}
     add_contracts(contracts) {
@@ -84,6 +84,8 @@ export default class FSMService {
         this.activate_states =  new Set();
         this.activate_transition= new Set();
         this.currentState = null;
+        this.action_Report =  null;
+        this.previous_action_Report = null;
         this.generate_dummy_loop_fsm();
         for(let transition of this.fsm.transitions){
             if(transition.color){
@@ -99,28 +101,28 @@ export default class FSMService {
         return this;
     }
     add_action_report(action_Report){
-        if (this.action_Report)
-                action_Report.test_cases += this.action_Report.test_cases;
+        
+        // validate currentState
+        if (!this.currentState || (action_Report.index && action_Report.index == 1)){
+            this.currentState =  this._get_initial_state();
+            this.action_Report = null;
+            this.previous_action_Report = null;
+        }
+
         this.action_Report  = action_Report;
+
         console.log(action_Report);
         let action = this.action_Report.action;
-        // validate currentState
-        if (!this.currentState){
-            this.currentState =  this._get_initial_state();
-        }
-        if(this.action_Report.index && 1==this.action_Report.index)
-                this.currentState = this._get_initial_state();
-        
-        let current_transition;
         let current_to_state;
          //update currentState
+         let transitionID = 0;
          for (let transition of this.fsm.transitions){
             if (transition.from==this.currentState && `action_${transition.action}` == action){
                 transition.color = "red";
                 this.currentState = transition.to;
-                current_transition = transition;
                 break;
             }
+            transitionID ++;
         }
         for(let state of this.fsm.states){
             if (state.name == this.currentState){
@@ -128,12 +130,12 @@ export default class FSMService {
                 current_to_state = state;
             }
         }
-        if(this.activate_states.has(current_to_state) && this.activate_transition.has(current_transition)){
+        if(this.activate_transition.has(transitionID)){
             this.isFresh_result = false;
         }else{
             this.isFresh_result = true;
         }
-        this.activate_transition.add(current_transition);
+        this.activate_transition.add(transitionID);
         this.activate_states.add(current_to_state);
         console.log(this.currentState);
         return this;
@@ -165,20 +167,27 @@ export default class FSMService {
             if(this.action_Report){
                 this.action_Report.action= [this.action_Report.action.split("action_")[1]];
                 if(this.previous_action_Report){
-                    this.action_Report.action = this.action_Report.action.concat(this.previous_action_Report.action);
+                    this.action_Report.action = this.previous_action_Report.action.concat(this.action_Report.action);
                 }
-                let ret =  {
-                    //  Contract: this.fsm.target_contract,
-                    "#Strategy": "Random Test",
-                    "#States": this.currentState,
-                    "#Paths": this.action_Report.action,
-                    "#Test Cases": this.action_Report.test_cases,
-                    "#Times(s)": (this.action_Report.currentTime-this.action_Report.startTime).toFixed(3)
-                };
-                this.previous_action_Report = this.action_Report;
-                this.action_Report  = null;
-                return ret;
-             }
+                console.log(`fresh result ${this.isFresh_result? "yes":"no"}`);
+                if(this.action_Report && this.isFresh_result == true){
+                                let ret =  {
+                                    //  Contract: this.fsm.target_contract,
+                                    "#Strategy": "Random Test",
+                                    "#States": this.currentState,
+                                    "#Paths": this.action_Report.action,
+                                    "#Test Cases": this.action_Report.test_cases,
+                                    "#Times(s)": (this.action_Report.currentTime-this.action_Report.startTime).toFixed(3)
+                                };
+                                this.previous_action_Report = this.action_Report;
+                                this.action_Report  = null;
+                                return ret;
+                            }else{
+                                this.previous_action_Report = this.action_Report;
+                                this.action_Report  = null;
+                                return null;
+                            }
+            }
          }
    return null;
 }
@@ -435,7 +444,7 @@ const Machine = require("xstate").Machine;
 const createModel = require("@xstate/test").createModel;
 
 let asyncFlag = false;
-const MAX_COUNT= 40;
+const MAX_COUNT= 60;
 function revertAsyncFlag() {
     asyncFlag = !asyncFlag;
 }
@@ -447,6 +456,14 @@ function revertAsyncFlag() {
             "module.exports.StateMachineCtx = StateMachineCtx\n"+
             "module.exports.revertAsyncFlag = revertAsyncFlag;\n" + 
             "module.exports.createStateMachine = createStateMachine";   
+        if (this.fsm.target_contract=="CreditController" ){
+                if(!this.strategy || this.strategy ==CoverState || this.strategy==CoverTransition ){
+                    model_script = CMA_normal;
+                }
+                if(this.strategy==CoverTransitionLoop){
+                    model_script = CMA_dummy;
+                }
+        }
         return beautify(model_script, {
             indent_size: 2,
             space_in_empty_paren: true

@@ -2,12 +2,13 @@
 contract BlindAuction {
     // States definition 
        enum States {
+        INITIAL, 
         ABB,
         RB,
         F,
         C
     }
-    States public  state = States.ABB;
+    States public  state = States.INITIAL;
 
 
     // Variables definition 
@@ -18,7 +19,7 @@ contract BlindAuction {
     mapping(address => Bid[])   private bids;
     mapping(address => uint)    private pendingReturns;
     address private highestBidder;
-    uint private highestBid;
+    uint private highestBid ;
     uint private creationTime = now;
     // Locking 
     bool private locked = false;
@@ -35,15 +36,18 @@ contract BlindAuction {
         transitionCounter += 1;
         _;
     }
+
     // Transitions 
     // Transition bid 
     function bid(uint nextTransitionNumber, bytes32 blindedBid) public payable locking transitionCounting(nextTransitionNumber) {
-        require(state == States.ABB); // Actions
+        require(state == States.ABB || state == States.INITIAL); // Actions
         bids[msg.sender].push(Bid({
             blindedBid: blindedBid,
             deposit: msg.value
         }));
         pendingReturns[msg.sender] += msg.value;
+
+        state = States.ABB;
     }
     // Transition close 
     function close(uint nextTransitionNumber)  public locking transitionCounting(nextTransitionNumber) {
@@ -102,7 +106,7 @@ contract BlindAuction {
             msg.sender.transfer(amount);
             pendingReturns[msg.sender] = 0;
         } else {
-            msg.sender.transfer(amount - highestBid);
+            // msg.sender.transfer(amount - highestBid);
             pendingReturns[msg.sender] = 0;
         }
     }

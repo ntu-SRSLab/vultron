@@ -5,84 +5,84 @@
      "CreditController": {"address": "0xa7b692824ac1ff30f01c325ec7498005ee13e0bc", "name": "CreditController"}
    },
    "actions": {
-     "CREATE": {"CreditController": ["createCredit"]},
-     "DISCOUNT": {"CreditController": ["discountCredit"]},
-     "TRANSFER": {"CreditController": ["transferCredit"]},
-     "EXPIRE": {"CreditController": ["expireOrClearOrCloseCredit"]},
-     "CLOSE": {"CreditController": ["expireOrClearOrCloseCredit"]},
-     "CLEAR": {"CreditController": ["expireOrClearOrCloseCredit"]}
+     "create": {"CreditController": ["createCredit"]},
+     "discount": {"CreditController": ["discountCredit"]},
+     "transfer": {"CreditController": ["transferCredit"]},
+     "expire": {"CreditController": ["expireOrClearOrCloseCredit"]},
+     "close": {"CreditController": ["expireOrClearOrCloseCredit"]},
+     "clear": {"CreditController": ["expireOrClearOrCloseCredit"]}
    },
    "states": [
      {"name": "initial", "type": "initial", "Predicate": "state == 0"},
-     {"name": "created", "type": "regular", "Predicate": "state == 1"},
-     {"name": "discounted", "type": "regular", "Predicate": "state == 2"},
-     {"name": "expired", "type": "regular", "Predicate": "state == 3"},
-     {"name": "cleared", "type": "regular", "Predicate": "state == 4"},
-     {"name": "closed", "type": "regular", "Predicate": "state == 5"}
+     {"name": "CREATED", "type": "regular", "Predicate": "state == 1"},
+     {"name": "DISCOUNTED", "type": "regular", "Predicate": "state == 2"},
+     {"name": "EXPIRED", "type": "regular", "Predicate": "state == 3"},
+     {"name": "CLEARED", "type": "regular", "Predicate": "state == 4"},
+     {"name": "CLOSED", "type": "regular", "Predicate": "state == 5"}
    ],
    "transitions": [
      {
        "from": "initial",
-       "to": "created",
-       "label": "CREATE",
-       "event": "CREATE",
-       "action": "CREATE"
+       "to": "CREATED",
+       "label": "create",
+       "event": "create",
+       "action": "create"
      },
      {
-       "from": "created",
-       "to": "created",
-       "label": "TRANSFER",
-       "event": "TRANSFER",
-       "action": "TRANSFER"
+       "from": "CREATED",
+       "to": "CREATED",
+       "label": "transfer",
+       "event": "transfer",
+       "action": "transfer"
      },
      {
-       "from": "created",
-       "to": "discounted",
-       "label": "DISCOUNT",
-       "event": "DISCOUNT",
-       "action": "DISCOUNT"
+       "from": "CREATED",
+       "to": "DISCOUNTED",
+       "label": "discount",
+       "event": "discount",
+       "action": "discount"
      },
      {
-       "from": "created",
-       "to": "expired",
-       "label": "EXPIRE",
-       "event": "EXPIRE",
-       "action": "EXPIRE"
+       "from": "CREATED",
+       "to": "EXPIRED",
+       "label": "expire",
+       "event": "expire",
+       "action": "expire"
      },
      {
-       "from": "created",
-       "to": "cleared",
-       "label": "CLEAR",
-       "event": "CLEAR",
-       "action": "CLEAR"
+       "from": "CREATED",
+       "to": "CLEARED",
+       "label": "clear",
+       "event": "clear",
+       "action": "clear"
      },
      {
-       "from": "created",
-       "to": "closed",
-       "label": "CLOSE",
-       "event": "CLOSE",
-       "action": "CLOSE"
+       "from": "CREATED",
+       "to": "CLOSED",
+       "label": "close",
+       "event": "close",
+       "action": "close"
      },
      {
-       "from": "discounted",
-       "to": "expired",
-       "label": "EXPIRE",
-       "event": "EXPIRE",
-       "action": "EXPIRE"
+       "from": "DISCOUNTED",
+       "to": "EXPIRED",
+       "label": "expire",
+       "event": "expire",
+       "action": "expire"
      },
      {
-       "from": "discounted",
-       "to": "cleared",
-       "label": "CLEAR",
-       "event": "CLEAR",
-       "action": "CLEAR"
+       "from": "DISCOUNTED",
+       "to": "CLEARED",
+       "label": "clear",
+       "event": "clear",
+       "action": "clear"
      },
      {
-       "from": "discounted",
-       "to": "closed",
-       "label": "CLOSE",
-       "event": "CLOSE",
-       "action": "CLOSE"
+       "from": "DISCOUNTED",
+       "to": "CLOSED",
+       "label": "close",
+       "event": "close",
+       "action": "close"
      }
    ]
  }

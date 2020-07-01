@@ -2,9 +2,7 @@ const assert = require("assert");
 const hex2ascii = require('hex2ascii')
 const Machine = require("xstate").Machine;
 const createModel = require("@xstate/test").createModel;
-const  EXPIRE_CREDIT = 400;
-const  CLEAR_CREDIT = 500;
-const  CLOSE_CREDIT = 600;
+
 let asyncFlag = false;
 const MAX_COUNT = 60;
 
@@ -17,7 +15,7 @@ function revertAsyncFlag() {
 
 class CreditController {
   constructor(fuzzer) {
-    this.address = "0xb20212cc2ccc1c1725dbd6e0f8f8948edc991bad";
+    this.address = "0xa7b692824ac1ff30f01c325ec7498005ee13e0bc";
     this.name = "CreditController";
     this.fuzzer = fuzzer;
   }
@@ -46,6 +44,7 @@ class CreditController {
     let fuzz = await this.fuzzer.full_fuzz_fun("CreditController", this.address, "accountIsOk");
     return fuzz;
   }
+
 
   async expireOrClearOrCloseCredit(option) {
     let fuzz = await this.fuzzer.full_fuzz_fun("CreditController", this.address, "expireOrClearOrCloseCredit", option);
@@ -102,7 +101,7 @@ class StateMachineCtx {
     return this.state;
   }
   // action_functions_mapping
-  async action_CREATE() {
+  async action_create() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -135,7 +134,7 @@ class StateMachineCtx {
     }
     return ret;
   }
-  async action_DISCOUNT() {
+  async action_discount() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -168,7 +167,7 @@ class StateMachineCtx {
     }
     return ret;
   }
-  async action_TRANSFER() {
+  async action_transfer() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -201,7 +200,7 @@ class StateMachineCtx {
     }
     return ret;
   }
-  async action_EXPIRE() {
+  async action_expire() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -224,7 +223,7 @@ class StateMachineCtx {
         console.log("current test case: ", BigInt(retexpireOrClearOrCloseCredit.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
         executeStatus += BigInt(retexpireOrClearOrCloseCredit.receipt.status.toString());
       }
-
+  
       if (count >= MAX_COUNT) {
         throw "TIMEOUT,  too many failed test cases!";
       }
@@ -234,7 +233,7 @@ class StateMachineCtx {
     }
     return ret;
   }
-  async action_CLOSE() {
+  async action_close() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -245,6 +244,7 @@ class StateMachineCtx {
       let preState = await ctx.getState();
       assert(null == preState || preState == 1 || preState == 2, "preCondition violated: current state is " + preState);
 
+    
       let retexpireOrClearOrCloseCredit = await StateMachineCtx.getInstance().CreditController.expireOrClearOrCloseCredit({static:[{index:3, value:CLOSE_CREDIT}]});
       ret.push(retexpireOrClearOrCloseCredit);
       console.log("current test case: ", BigInt(retexpireOrClearOrCloseCredit.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
@@ -267,7 +267,7 @@ class StateMachineCtx {
     }
     return ret;
   }
-  async action_CLEAR() {
+  async action_clear() {
     let ret = [];
     if (asyncFlag) {
       // bcos passed status:0
@@ -313,82 +313,82 @@ const createStateMachine = statectx => {
 
       initial: {
         on: {
-          CREATE: {
-            target: "dummy_created_initial",
-            actions: "action_CREATE"
+          create: {
+            target: "dummy_CREATED_initial",
+            actions: "action_create"
           }
         }
       },
-      created: {
+      CREATED: {
         on: {
-          TRANSFER: {
-            target: "created",
-            actions: "action_TRANSFER"
+          transfer: {
+            target: "CREATED",
+            actions: "action_transfer"
           },
-          DISCOUNT: {
-            target: "discounted",
-            actions: "action_DISCOUNT"
+          discount: {
+            target: "DISCOUNTED",
+            actions: "action_discount"
           },
-          EXPIRE: {
-            target: "expired",
-            actions: "action_EXPIRE"
+          expire: {
+            target: "EXPIRED",
+            actions: "action_expire"
           },
-          CLEAR: {
-            target: "cleared",
-            actions: "action_CLEAR"
+          clear: {
+            target: "CLEARED",
+            actions: "action_clear"
           },
-          CLOSE: {
-            target: "closed",
-            actions: "action_CLOSE"
+          close: {
+            target: "CLOSED",
+            actions: "action_close"
           }
         }
       },
-      discounted: {
+      DISCOUNTED: {
         on: {
-          EXPIRE: {
-            target: "expired",
-            actions: "action_EXPIRE"
+          expire: {
+            target: "EXPIRED",
+            actions: "action_expire"
           },
-          CLEAR: {
-            target: "cleared",
-            actions: "action_CLEAR"
+          clear: {
+            target: "CLEARED",
+            actions: "action_clear"
           },
-          CLOSE: {
-            target: "closed",
-            actions: "action_CLOSE"
+          close: {
+            target: "CLOSED",
+            actions: "action_close"
           }
         }
       },
-      expired: {
+      EXPIRED: {
         type: "final"
       },
-      cleared: {
+      CLEARED: {
         type: "final"
       },
-      closed: {
+      CLOSED: {
         type: "final"
       },
-      dummy_created_initial: {
+      dummy_CREATED_initial: {
         on: {
-          TRANSFER: {
-            target: "created",
-            actions: "action_TRANSFER"
+          transfer: {
+            target: "CREATED",
+            actions: "action_transfer"
           }
         }
       }
     }
   }, {
     actions: {
-      action_CREATE: statectx.action_CREATE,
-      action_DISCOUNT: statectx.action_DISCOUNT,
-      action_TRANSFER: statectx.action_TRANSFER,
-      action_EXPIRE: statectx.action_EXPIRE,
-      action_CLOSE: statectx.action_CLOSE,
-      action_CLEAR: statectx.action_CLEAR
+      action_create: statectx.action_create,
+      action_discount: statectx.action_discount,
+      action_transfer: statectx.action_transfer,
+      action_expire: statectx.action_expire,
+      action_close: statectx.action_close,
+      action_clear: statectx.action_clear
     }
   });
 }
 
-module.exports.StateMachineCtx = StateMachineCtx
+module.exports.StateMachineCtx = StateMachineCtx;
 module.exports.revertAsyncFlag = revertAsyncFlag;
-module.exports.createStateMachine = createStateMachine
+module.exports.createStateMachine = createStateMachine;

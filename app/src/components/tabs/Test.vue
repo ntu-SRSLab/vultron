@@ -63,7 +63,7 @@
                           value="confirmed"
                           unchecked-value="not_confirmed"
                         >
-                              Confirm the FSM above
+                              Confirm specication
                        </b-form-checkbox>
                        <b-form-checkbox
                                 id="checkbox-2"
@@ -73,10 +73,15 @@
                                 value="confirmed"
                                 unchecked-value="not_confirmed"
                               >
-                              Confirm the Model righthand
+                              Confirm model driver
                     </b-form-checkbox>
-                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantTest" @click="OnTest()">Test</b-button>
-                     <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantRandomTest" @click="OnRandomTest()">Random Test</b-button>
+                    <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantTest" @click="OnTest()">
+                             <span>{{textTestButton}}</span>
+                              <b-spinner small   v-if = "status_stop_start&&disabledRandomTest"></b-spinner>
+                      </b-button>
+                     
+                     <!-- <b-button :disabled ="disableTest"  class="ml-2   mb-2 col-sm-2"   size="md" :variant="variantRandomTest" @click="OnRandomTest()">{{textRandomTestButton}}</b-button> -->
+                     <!-- <b-spinner small   v-if = "status_stop_start&&disabledTest"></b-spinner> -->
                      <download-csv
                                     v-if = "test_results.length>0"
                                     :data   = "test_results">
@@ -85,8 +90,8 @@
                                           <!-- export table -->
                                             (.csv)
                                     </b-button>
-                                    
                       </download-csv>
+                        <b-button    v-if = "test_results.length>0" class="ml-2   mb-2 "   size="md"  variant="secondary"  @click="OnClearTable" > clear  </b-button>
             </b-form>
              <b-table outlined=true  sticky-header=true hover :items="test_results"></b-table>
           </div>
@@ -157,6 +162,7 @@
   import blindAction from '../../assets/blindAuction.json'
   import stateMachine from '../../assets/stateMachine.json'
   import betting  from '../../assets/betting-simple.json'
+  import assetTransfer  from '../../assets/assetTransfer.json'
   export default {
     name: "ModelTest",
     data: function () {
@@ -176,6 +182,14 @@
         status_randomtest: false, // if random test finished
         covering_strategy: null, // which covering strategy  is selected
         
+      disabledTest: false,
+      disabledRandomTest: false,
+
+      textTestButton: "Test",
+      textRandomTestButton: "Random Test",
+
+      status_stop_start: false,
+      
         // test case priority
         states: [
           {value: 'null', text: "null"}
@@ -192,6 +206,7 @@
           { value:  credit, text: 'credit' },
           { value:  betting, text: 'betting' },
           { value: blindAction, text: 'blindAction' },
+           { value: assetTransfer, text: 'assetTransfer' },
           { value:  stateMachine, text: 'stateMachine' },
           { value:  "Write your specication here", text: 'empty' }
         ],
@@ -275,6 +290,19 @@
                  var s = new XMLSerializer();
                  obj.lSVGInAString= s.serializeToString(xmlDoc);
       });
+
+      this.$socket.on("server-stop", data =>{
+          console.log("server stopped:", data);
+          obj.status_stop_start = false;
+          obj.isTestStart  = false;
+          if(obj.disabledRandomTest){
+                  obj.textTestButton = "Test";
+                  obj.disabledRandomTest = false;
+          }else if(obj.disabledTest) {
+                  obj.textRandomTestButton = "Random Test";
+                  obj.disabledTest = false;
+          }
+      });
     },
     methods: {
       GenerateSVGXMLString(sm_cat_json){
@@ -305,7 +333,7 @@
                     this.model =  dedent(`${this.$fsmservice.get_model_script()}`);
                     console.log(this.model);
               } catch (pError) {
-                  if(pError.indexOf("abi")!=-1){
+                  if(pError.toString().indexOf("abi")!=-1){
                         alert( "The application has not been deployed before." );
                   }
                 // alert(pError);
@@ -326,50 +354,82 @@
               this.model =  dedent(this.$fsmservice.get_model_script());
               this.status_test = false;
             } catch (pError) {
-                  if(pError.indexOf("abi")!=-1){
+                 console.error(pError);
+                  if(pError.toString().indexOf("abi")!=-1){
                         alert( "The application has not been deployed before." );
                   }
-                  console.error(pError);
+                 
             }
         }
       },
       OnTest(){
-        const client_Test = "Test_client";
-        console.log(client_Test);
-        this.$fsmservice.disable_randomTest();
-        this.$socket.emit("client",{type: client_Test,
-        data: {
-              covering_strategy: this.covering_strategy,
-              test_priority: {state: this.selected_state, transition:this.selected_transition}, 
-              target_contract:this.$fsmservice.get_fsm().target_contract, 
-              file_name: "statemachine.js", 
-              model_script: this.model
-          }
-        });
+        if(!this.disabledTest){
+              if(!this.isTestStart){
+                  const client_Test = "Test_client";
+                  console.log(client_Test);
+                  this.$fsmservice.disable_randomTest();
+                  this.$socket.emit("client",{type: client_Test,
+                  data: {
+                        covering_strategy: this.covering_strategy,
+                        test_priority: {state: this.selected_state, transition:this.selected_transition}, 
+                        target_contract:this.$fsmservice.get_fsm().target_contract, 
+                        file_name: "statemachine.js", 
+                        model_script: this.model
+                    }
+                  });
+                  this.isTestStart = true;
+                  this.disabledRandomTest = true;
+                  this.textTestButton = "Stop"
+              }else{
+                  this.$socket.emit("client-stop",{command: "stop testing!"});
+                  //  this.isTestStart  = false;
+                  // this.disabledRandomTest = false;
+                  // this.textTestButton = "Test";
+              }
+       }else{
+           alert("random testing  in progress!");
+       }
+       
     },
       OnRandomTest(){
-        const client_Test = "Test_client";
-        console.log(client_Test);
-        this.$fsmservice.enable_randomTest();
-        this.$socket.emit("client",{type: client_Test,
-        data: {
-              random_test: true, 
-              covering_strategy: this.covering_strategy,
-              test_priority: {state: this.selected_state, transition:this.selected_transition}, 
-              target_contract:this.$fsmservice.get_fsm().target_contract, 
-              file_name: "statemachine.js", 
-              model_script: this.model
-          }
-        });
+        if(!this.disabledRandomTest){
+            if(!this.isTestStart){
+                  const client_Test = "Test_client";
+                  console.log(client_Test);
+                  this.$fsmservice.enable_randomTest();
+                  this.$socket.emit("client",{type: client_Test,
+                  data: {
+                        random_test: true, 
+                        covering_strategy: this.covering_strategy,
+                        test_priority: {state: this.selected_state, transition:this.selected_transition}, 
+                        target_contract:this.$fsmservice.get_fsm().target_contract, 
+                        file_name: "statemachine.js", 
+                        model_script: this.model
+                    }
+                  });
+                  this.isTestStart = true;
+                  this.disabledTest = true;
+                  this.textRandomTestButton = "Stop";
+            }else{
+                  this.$socket.emit("client-stop",{command: "stop testing!"});
+                  // this.isTestStart  = false;
+                  // this.disabledTest = false;
+                  // this.textRandomTestButton = "Random Test";
+            }
+        }
     },
-      OnMouseOverFSM(){
+    OnClearTable(){
+      this.test_results = [];
+    },
+    OnMouseOverFSM(){
           console.log("MouseOverFSM");
           this.mouseOverFSM = true;
       },
       OnMouseOutFSM(){
          console.log("MouseLeaveFSM");
          this.mouseOverFSM = false;
-         this.OnStateMachineChange();
+         if(!this.isTestStart)
+                  this.OnStateMachineChange();
       },
       OnCoverStrategy(){
         console.log(`current strategy ${this.covering_strategy}`)

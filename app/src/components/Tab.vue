@@ -2,8 +2,10 @@
   <div>
     <b-card>
       <b-tabs v-model="tabIndex" card>
+   
         <b-tab title="HOME" :title-link-class="linkClass(0)" active><Home></Home></b-tab>
         <b-tab title="TEST" :title-link-class="linkClass(1)"><ModelTest></ModelTest></b-tab>
+         <!-- <b-tab title="SETTING" :title-link-class="linkClass(0)"></b-tab> -->
         <!-- <b-tab title="test" :title-link-class="linkClass(2)"><Test></Test></b-tab> -->
       </b-tabs>
     </b-card>
