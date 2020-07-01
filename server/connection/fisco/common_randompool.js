@@ -106,7 +106,7 @@ class AddressPool extends Pool {
         super(range, size, description);
     }
     _constant() {
-        return [UserAccount];
+        return [UserAccount, "0x680e9f394ca08fea2dffe0cad74cc4c59bd1559d", "0x680e9f394ca08fea2dffe0cad74cc4c59bd1559d", "0x680e9f394ca08fea2dffe0cad74cc4c59bd1559d"];
     }
     _random() {
         return UserAccount;

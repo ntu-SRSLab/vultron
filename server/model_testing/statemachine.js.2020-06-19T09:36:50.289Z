@@ -1,0 +1,649 @@
+const assert = require("assert");
+const hex2ascii = require('hex2ascii')
+const Machine = require("xstate").Machine;
+const createModel = require("@xstate/test").createModel;
+
+let asyncFlag = false;
+const MAX_COUNT = 60;
+
+function revertAsyncFlag() {
+asyncFlag = !asyncFlag;
+}
+
+
+// contract interface 
+
+class AssetTransfer {
+constructor(fuzzer) {
+  this.address = "0x00";
+  this.name = "AssetTransfer";
+  this.fuzzer = fuzzer;
+}
+
+async InstanceInspector() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "InstanceInspector");
+  return fuzz;
+}
+
+async InstanceOwner() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "InstanceOwner");
+  return fuzz;
+}
+
+async ModifyOffer() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "ModifyOffer");
+  return fuzz;
+}
+
+async OfferPrice() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "OfferPrice");
+  return fuzz;
+}
+
+async MarkAppraised() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "MarkAppraised");
+  return fuzz;
+}
+
+async MarkInspected() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "MarkInspected");
+  return fuzz;
+}
+
+async Accept() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "Accept");
+  return fuzz;
+}
+
+async InstanceAppraiser() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "InstanceAppraiser");
+  return fuzz;
+}
+
+async Description() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "Description");
+  return fuzz;
+}
+
+async Terminate() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "Terminate");
+  return fuzz;
+}
+
+async RescindOffer() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "RescindOffer");
+  return fuzz;
+}
+
+async InstanceBuyer() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "InstanceBuyer");
+  return fuzz;
+}
+
+async Modify() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "Modify");
+  return fuzz;
+}
+
+async Reject() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "Reject");
+  return fuzz;
+}
+
+async AcceptOffer() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "AcceptOffer");
+  return fuzz;
+}
+
+async MakeOffer() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "MakeOffer");
+  return fuzz;
+}
+
+async AskingPrice() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "AskingPrice");
+  return fuzz;
+}
+
+async State() {
+  let fuzz = await this.fuzzer.full_fuzz_fun("AssetTransfer", this.address, "State");
+  return fuzz;
+}
+
+}
+// state machine context
+class StateMachineCtx {
+constructor(fsmreplayer, fuzzer) {
+  this.AssetTransfer = new AssetTransfer(fuzzer);
+
+  this.state = {
+    "id": "FSM#5"
+  };
+  this.fuzzer = fuzzer;
+  this.fsmreplayer = fsmreplayer;
+}
+async initialize() {
+  this.AssetTransfer.address = await this.fsmreplayer.initialize();
+}
+static getInstance(fsmreplayer, fuzzer) {
+  if (!StateMachineCtx.instance)
+    StateMachineCtx.instance = new StateMachineCtx(fsmreplayer, fuzzer);
+  return StateMachineCtx.instance;
+}
+async getState() {
+  //TO DO, set what your state means and how to get the state
+  if (this.AssetTransfer.state) {
+    let ret = await this.AssetTransfer.state();
+    this.state = BigInt(ret.receipt.result.output.toString());
+  } else if (this.AssetTransfer.stage) {
+    let ret = await this.AssetTransfer.stage();
+    this.state = BigInt(ret.receipt.result.output.toString());
+  } else {
+    this.state = null;
+  }
+  console.log("state:", this.state);
+  return this.state;
+}
+// action_functions_mapping
+async action_Terminate() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 0 || preState == 1 || preState == 2 || preState == 4 || preState == 6, "preCondition violated: current state is " + preState);
+
+    let retTerminate = await StateMachineCtx.getInstance().AssetTransfer.Terminate();
+    ret.push(retTerminate);
+    console.log("current test case: ", BigInt(retTerminate.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retTerminate.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retTerminate = await StateMachineCtx.getInstance().AssetTransfer.Terminate();
+      ret.push(retTerminate);
+      console.log("current test case: ", BigInt(retTerminate.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retTerminate.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 9 || postState == 9 || postState == 9 || postState == 9 || postState == 9, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_Modify() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 0, "preCondition violated: current state is " + preState);
+
+    let retModify = await StateMachineCtx.getInstance().AssetTransfer.Modify();
+    ret.push(retModify);
+    console.log("current test case: ", BigInt(retModify.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retModify.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retModify = await StateMachineCtx.getInstance().AssetTransfer.Modify();
+      ret.push(retModify);
+      console.log("current test case: ", BigInt(retModify.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retModify.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 0, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_MakeOffer() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 0, "preCondition violated: current state is " + preState);
+
+    let retMakeOffer = await StateMachineCtx.getInstance().AssetTransfer.MakeOffer();
+    ret.push(retMakeOffer);
+    console.log("current test case: ", BigInt(retMakeOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retMakeOffer.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retMakeOffer = await StateMachineCtx.getInstance().AssetTransfer.MakeOffer();
+      ret.push(retMakeOffer);
+      console.log("current test case: ", BigInt(retMakeOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retMakeOffer.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 1, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_AcceptOffer() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 1, "preCondition violated: current state is " + preState);
+
+    let retAcceptOffer = await StateMachineCtx.getInstance().AssetTransfer.AcceptOffer();
+    ret.push(retAcceptOffer);
+    console.log("current test case: ", BigInt(retAcceptOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retAcceptOffer.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retAcceptOffer = await StateMachineCtx.getInstance().AssetTransfer.AcceptOffer();
+      ret.push(retAcceptOffer);
+      console.log("current test case: ", BigInt(retAcceptOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retAcceptOffer.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 2, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_Reject() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 1 || preState == 2 || preState == 4 || preState == 5 || preState == 6, "preCondition violated: current state is " + preState);
+
+    let retReject = await StateMachineCtx.getInstance().AssetTransfer.Reject();
+    ret.push(retReject);
+    console.log("current test case: ", BigInt(retReject.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retReject.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retReject = await StateMachineCtx.getInstance().AssetTransfer.Reject();
+      ret.push(retReject);
+      console.log("current test case: ", BigInt(retReject.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retReject.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 0 || postState == 0 || postState == 0 || postState == 0 || postState == 0, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_Accept() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 5 || preState == 5 || preState == 6 || preState == 7, "preCondition violated: current state is " + preState);
+
+    let retAccept = await StateMachineCtx.getInstance().AssetTransfer.Accept();
+    ret.push(retAccept);
+    console.log("current test case: ", BigInt(retAccept.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retAccept.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retAccept = await StateMachineCtx.getInstance().AssetTransfer.Accept();
+      ret.push(retAccept);
+      console.log("current test case: ", BigInt(retAccept.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retAccept.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 7 || postState == 6 || postState == 7 || postState == 8, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_ModifyOffer() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 1, "preCondition violated: current state is " + preState);
+
+    let retModifyOffer = await StateMachineCtx.getInstance().AssetTransfer.ModifyOffer();
+    ret.push(retModifyOffer);
+    console.log("current test case: ", BigInt(retModifyOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retModifyOffer.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retModifyOffer = await StateMachineCtx.getInstance().AssetTransfer.ModifyOffer();
+      ret.push(retModifyOffer);
+      console.log("current test case: ", BigInt(retModifyOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retModifyOffer.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 1, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_RescindOffer() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 1 || preState == 2 || preState == 4 || preState == 5 || preState == 7, "preCondition violated: current state is " + preState);
+
+    let retRescindOffer = await StateMachineCtx.getInstance().AssetTransfer.RescindOffer();
+    ret.push(retRescindOffer);
+    console.log("current test case: ", BigInt(retRescindOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retRescindOffer.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retRescindOffer = await StateMachineCtx.getInstance().AssetTransfer.RescindOffer();
+      ret.push(retRescindOffer);
+      console.log("current test case: ", BigInt(retRescindOffer.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retRescindOffer.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 0 || postState == 0 || postState == 0 || postState == 0 || postState == 0, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_MarkAppraised() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 2, "preCondition violated: current state is " + preState);
+
+    let retMarkAppraised = await StateMachineCtx.getInstance().AssetTransfer.MarkAppraised();
+    ret.push(retMarkAppraised);
+    console.log("current test case: ", BigInt(retMarkAppraised.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retMarkAppraised.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retMarkAppraised = await StateMachineCtx.getInstance().AssetTransfer.MarkAppraised();
+      ret.push(retMarkAppraised);
+      console.log("current test case: ", BigInt(retMarkAppraised.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retMarkAppraised.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 4, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+async action_MarkInspected() {
+  let ret = [];
+  if (asyncFlag) {
+    // bcos passed status:0
+    let executeStatus = BigInt(0);
+    let ctx = StateMachineCtx.getInstance();
+    let count = 0;
+    // PreCondition. 
+    let preState = await ctx.getState();
+    assert(null == preState || preState == 2 || preState == 4, "preCondition violated: current state is " + preState);
+
+    let retMarkInspected = await StateMachineCtx.getInstance().AssetTransfer.MarkInspected();
+    ret.push(retMarkInspected);
+    console.log("current test case: ", BigInt(retMarkInspected.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+    executeStatus += BigInt(retMarkInspected.receipt.status.toString());
+    while (executeStatus != 0 && count < MAX_COUNT) {
+      count++;
+      executeStatus = BigInt(0);
+      let retMarkInspected = await StateMachineCtx.getInstance().AssetTransfer.MarkInspected();
+      ret.push(retMarkInspected);
+      console.log("current test case: ", BigInt(retMarkInspected.receipt.status.toString()) == BigInt(0) ? "passed" : "failed");
+      executeStatus += BigInt(retMarkInspected.receipt.status.toString());
+    }
+
+    if (count >= MAX_COUNT) {
+      throw "TIMEOUT,  too many failed test cases!";
+    }
+    let postState = await ctx.getState();
+    assert(null == postState || postState == 3 || postState == 5, "postCondition violated: current state is " + postState);
+    // PostCondition. 
+  }
+  return ret;
+}
+}
+// state machine 
+const createStateMachine = statectx => {
+return Machine({
+  id: "FSM#5",
+  initial: "Active",
+  context: {
+    ctx: statectx
+  },
+  states: {
+
+    Active: {
+      on: {
+        Terminate: {
+          target: "Terminated",
+          actions: "action_Terminate"
+        },
+        MakeOffer: {
+          target: "OfferPlaced",
+          actions: "action_MakeOffer"
+        },
+        Modify: {
+          target: "Active",
+          actions: "action_Modify"
+        }
+      }
+    },
+    OfferPlaced: {
+      on: {
+        AcceptOffer: {
+          target: "PendingInspection",
+          actions: "action_AcceptOffer"
+        },
+        Reject: {
+          target: "Active",
+          actions: "action_Reject"
+        },
+        Terminate: {
+          target: "Terminated",
+          actions: "action_Terminate"
+        },
+        RescindOffer: {
+          target: "Active",
+          actions: "action_RescindOffer"
+        },
+        ModifyOffer: {
+          target: "OfferPlaced",
+          actions: "action_ModifyOffer"
+        }
+      }
+    },
+    PendingInspection: {
+      on: {
+        Reject: {
+          target: "Active",
+          actions: "action_Reject"
+        },
+        Terminate: {
+          target: "Terminated",
+          actions: "action_Terminate"
+        },
+        RescindOffer: {
+          target: "Active",
+          actions: "action_RescindOffer"
+        },
+        MarkInspected: {
+          target: "Inspected",
+          actions: "action_MarkInspected"
+        },
+        MarkAppraised: {
+          target: "Appraised",
+          actions: "action_MarkAppraised"
+        }
+      }
+    },
+    Inspected: {
+      type: "final"
+    },
+    Appraised: {
+      on: {
+        Reject: {
+          target: "Active",
+          actions: "action_Reject"
+        },
+        Terminate: {
+          target: "Terminated",
+          actions: "action_Terminate"
+        },
+        RescindOffer: {
+          target: "Active",
+          actions: "action_RescindOffer"
+        },
+        MarkInspected: {
+          target: "NotionalAcceptance",
+          actions: "action_MarkInspected"
+        }
+      }
+    },
+    NotionalAcceptance: {
+      on: {
+        Accept: {
+          target: "SellerAccepted",
+          actions: "action_Accept"
+        },
+        Reject: {
+          target: "Active",
+          actions: "action_Reject"
+        },
+        Accept: {
+          target: "BuyerAccepted",
+          actions: "action_Accept"
+        },
+        RescindOffer: {
+          target: "Active",
+          actions: "action_RescindOffer"
+        }
+      }
+    },
+    BuyerAccepted: {
+      on: {
+        Accept: {
+          target: "SellerAccepted",
+          actions: "action_Accept"
+        },
+        Reject: {
+          target: "Active",
+          actions: "action_Reject"
+        },
+        Terminate: {
+          target: "Terminated",
+          actions: "action_Terminate"
+        }
+      }
+    },
+    SellerAccepted: {
+      on: {
+        Accept: {
+          target: "Accepted",
+          actions: "action_Accept"
+        },
+        RescindOffer: {
+          target: "Active",
+          actions: "action_RescindOffer"
+        }
+      }
+    },
+    Accepted: {
+      type: "final"
+    },
+    Terminated: {
+      type: "final"
+    }
+  }
+}, {
+  actions: {
+    action_Terminate: statectx.action_Terminate,
+    action_Modify: statectx.action_Modify,
+    action_MakeOffer: statectx.action_MakeOffer,
+    action_AcceptOffer: statectx.action_AcceptOffer,
+    action_Reject: statectx.action_Reject,
+    action_Accept: statectx.action_Accept,
+    action_ModifyOffer: statectx.action_ModifyOffer,
+    action_RescindOffer: statectx.action_RescindOffer,
+    action_MarkAppraised: statectx.action_MarkAppraised,
+    action_MarkInspected: statectx.action_MarkInspected
+  }
+});
+}
+
+module.exports.StateMachineCtx = StateMachineCtx
+module.exports.revertAsyncFlag = revertAsyncFlag;
+module.exports.createStateMachine = createStateMachine
