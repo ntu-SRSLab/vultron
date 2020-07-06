@@ -11,7 +11,8 @@
  *     gasPrice: 10000000000,
  *   },
  */
-
+var Web3 = require("truffle-web3");
+var net = require("net");
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
@@ -30,9 +31,14 @@ module.exports = {
         from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
 	    },
 	    SCFuzzer: {
-        host: "127.0.0.1",
-	      port: 8546,
-	      network_id: "*",
+        // host: "127.0.0.1",
+	      // port: 8546,
+        provider: function() {
+            // return new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
+            return new Web3.providers.IpcProvider('/home/liuye/Projects/ModCon/ethereum/aleth-ethereum/Ethereum/geth.ipc', net);
+        },
+        network_id: "*",
+        gas: 460000,
 	    }
     },
   

@@ -3,6 +3,7 @@ const request = require("request");
 const path = require('path');
 
 const Web3 = require('web3');
+const truffleWeb3=require("truffle-web3");
 //const AbiCoder = require('web3-eth-abi');
 
 const Promise = require("bluebird");
@@ -119,29 +120,22 @@ function unlockAccount(){
 }
 
 function setProvider(httpRpcAddr){
-  Provider = new Web3.providers.HttpProvider(httpRpcAddr);
-  web3 = new Web3(new Web3.providers.HttpProvider(httpRpcAddr));
+  // Using the IPC provider in node.js
+  var net = require('net');
+  Provider = new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
+  web3 = new Web3(Provider);
+  Provider = new truffleWeb3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
+  // Provider = new Web3.providers.HttpProvider(httpRpcAddr);
+  // web3 = new Web3(new Web3.providers.HttpProvider(httpRpcAddr));
   assert(web3);
 }
 
 async function get_instance(artifact_path){
   // console.log(artifact_path);
   let artifact = require(path.relative(__dirname, artifact_path));
-  //let network_id = Object.keys(artifact["networks"])[0];
-  // let conf = {
-  //   contract_name:artifact["contractName"],
-  //   abi:  artifact["abi"],                     // Array; required.  Application binary interface.
-  //   unlinked_binary: artifact["bytecode"],       // String; optional. Binary without resolve library links.
-  //   address: artifact["networks"][network_id]["address"],               // String; optional. Deployed address of contract.
-  //   network_id: parseInt(network_id),            // String; optional. ID of network being saved within abstraction.
-  //   default_network: parseInt(network_id)       // String; optional. ID of default network this abstraction should use.
-  // };
-  //console.log(artifact);
   let MyContract = truffle_contract(artifact);
-  //console.log(MyContract);
   MyContract.setProvider(Provider);
   let instance = await MyContract.deployed();
-  //console.log("instance: " + instance);
   return instance;
 }
 
@@ -175,6 +169,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
                                              g_attack_artifact.deployedBytecode,
                                              g_attack_artifact.deployedSourceMap,
                                              g_attack_artifact.source);
+  // console.log(g_attackIns_map);
   g_targetIns_map = await tracer.buildInsMap(g_target_artifact.sourcePath,
                                              g_target_artifact.deployedBytecode,
                                              g_target_artifact.deployedSourceMap,
@@ -249,9 +244,7 @@ async function seed() {
 
 /// it will be executed after each transaction is executed
 async function fuzz(txHash, ins_trace) {
-  const getTransaction = Promise.promisify(web3.eth.getTransaction);
-
-  if (g_attackContract === undefined) {
+   if (g_attackContract === undefined) {
     throw "Attack contract is not loaded!";
   }
   if (g_targetContract === undefined) {
@@ -319,6 +312,7 @@ async function fuzz(txHash, ins_trace) {
       }
       catch (e) {
         console.log(e);
+        console.trace("Show the error inside fuzz function");
       }
       finally{
         mutex.unlock();
@@ -362,50 +356,6 @@ async function find() {
     bookkeepingVar: g_bookKeepingAbi.name
   };
 }
-
-// async function reset() {
-//   if (g_targetContract === undefined) {
-//     throw "Target contract is not loaded!";
-//   }
-//   if (g_attackContract === undefined) {
-//     throw "Attack contract is not loaded!";
-//   }
-//   // await resetBookKeeping();
-//   await redeploy();
-//   return "Contracts are reset!";
-// }
-
-// ///Redeploy contract
-// async function redeploy(){
-//   console.log("redeploy......");
-//   g_targetContract = await g_targetContract.new({
-//         from: g_account_list[0],
-//         gas: 1500000,
-//         value: web3.utils.toWei("5", "ether")
-//      });
-//   g_attackContract = await g_attackContract.new(g_targetContract.address,{
-//       from: g_account_list[0],
-//       gas: 1500000,
-//       value: web3.utils.toWei("5", "ether")
-//      });
-//   console.log(g_targetContract.address);
-// }
-
-// /// for debugging
-// async function print_callSequence(calls_list){
-//   for(let calls of calls_list){
-//     console.log(calls);
-//   }
-// }
-
-/// reset bookkeeping variable
-// async function resetBookKeeping() {
-//   for (let account of g_account_list) {
-//     g_targetContract.methods._vultron_reset(account).call();
-//   }
-//   g_targetContract.methods._vultron_reset(g_attackContract.address).call();
-// }
-
 
 /// find the bookkeeping variable
 async function findBookKeepingAbi(abis) {
@@ -485,25 +435,16 @@ async function findCandSequence(target_abis, attack_abis){
 
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
+  // console.log(`g_bookKeepingAbi:  ${JSON.stringify(g_bookKeepingAbi)}`);
+  assert(bookkeepingVar);
   if(bookkeepingVar == undefined){
     return BigInt(0);
   }
   let balance = BigInt(0);
   // console.log(bookkeepingVar);
   let encode = web3.eth.abi.encodeFunctionCall(bookkeepingVar, [acc_address]);
-  const ethCall = Promise.promisify(web3.eth.call);
-  /// this is previous version
-  // await web3.eth.call({
-  //   to: g_targetContract.address,
-  //   data: encode},
-  //   function(err, result) {
-  //     if (!err) {
-  //       if (abiCoder.utils.isHex(result)){
-  //         balance += abiCoder.utils.toBN(result);
-  //       }
-  //     }
-  //   });
-  let bal = await ethCall({
+
+  let bal = await web3.eth.call({
     to: g_targetContract.address,
     data: encode});
   balance += web3.utils.toBN(bal);
@@ -547,6 +488,7 @@ const writeExploit = (callSequen) => {
 
 /// execute the call and generate the transaction
 async function exec_callFun(call, callSequen_cur){
+  assert(g_bookKeepingAbi, "g_bookKeepingAbi is undefined");
   /// used to identify the first statement is attack or target contract
   // const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
   
@@ -559,76 +501,61 @@ async function exec_callFun(call, callSequen_cur){
   //console.log(attack_bal_acc_bf);
   //console.log(call.abi.name, call.param);
   console.log(call);
-
   try{
-    if(call.to == g_targetContract.address){
-      await g_targetContract[call.abi.name](...call.param,
-                                            {from: call.from,
-                                             gas: call.gas});
-    }else{
-      await g_attackContract[call.abi.name](...call.param,
-                                            {from: call.from,
-                                             gas: call.gas});
-    }
-  }catch(e){
-    console.log(e);
-  }
-  
-  /// use to get the input of sent transaction
-  /// compare to the received transaction in fuzz module
-  // console.log("send: " + abiCoder.encodeFunctionCall(call.abi, call.param));
+     let receipt =  await web3.eth.sendTransaction({
+        from: call.from,
+        to: call.to,
+        gas: call.gas,
+        data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+      });
+      console.log(receipt);
+   }catch(err){
+       console.error(err);
+   }
 
-  // let tx_hash;
   // try{
-  //   // tx_hash = await sendTransaction({ from: call.from,
-  //   //                                    to: call.to, 
-  //   //                                    gas: call.gas,                               
-  //   //                                    data: abiCoder.encodeFunctionCall(call.abi, call.param)
-  //   //                                  });
-  //   await web3.eth.sendTransaction({ from: call.from,
-  //                                    to: call.to, 
-  //                                    gas: call.gas,                               
-  //                                    data: abiCoder.encodeFunctionCall(call.abi, call.param)
-  //                                  },
-  //                                  function(error, hash) {                                                                     
-  //                                    if (!error) {
-  //                                     tx_hash = hash;
-  //                                    }
-  //                                    else{
-  //                                      console.log(error);
-  //                                     }
-
-
-
-  //                                 });
+  //   if(call.to == g_targetContract.address){
+ 
+  //     await g_targetContract[call.abi.name](...call.param,
+  //                                           {from: call.from,
+  //                                            gas: call.gas});
+  //   }else{
+  //     await g_attackContract[call.abi.name](...call.param,
+  //                                           {from: call.from,
+  //                                            gas: call.gas});
+  //   }
   // }catch(e){
+  //   console.trace();
   //   console.log(e);
   // }
+  
 
   let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
   let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
   let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
   let target_bal_sum_af = await getBookSum();
-
-  console.log("target balance ether/booking before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
-  console.log("target after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
-  console.log("attack ether balance after-before:" + attack_bal_af.toString() + "###" + attack_bal_bf.toString());
-  console.log("attack booking balance before - after: " + attack_bal_acc_bf + "###" + attack_bal_acc_af);
+  console.log("target: ether###booking");
+  console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+  console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+  console.log("attack: (after-before)  ether ");
+  console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+  console.log("attack:  (before-after) booking ");
+  console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
 
   if(g_bookKeepingAbi != undefined){
     try{ 
-      // if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
-      //  console.log("Integer overflow....");
-      //  throw "Balance invariant is not held....";        
-      // }
-      // if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
-      //  console.log("Balance invariant is not held....");
-      //  throw "Balance invariant is not held....";
-      // }
-      // if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
-      //  console.log("Transaction invariant is not held....");
-      //  throw "Transaction invariant is not held....";
-      // }
+      if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
+       console.log("Integer overflow....");
+       throw "Balance invariant is not held....";        
+      }
+      if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
+       console.log("Balance invariant is not held....");
+       throw "Balance invariant is not held....";
+      }
+      if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
+       console.log("Transaction invariant is not held....");
+       throw "Transaction invariant is not held....";
+      }
     }
     catch(e){
       console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
@@ -1161,7 +1088,9 @@ async function modify_input_point(lastCall_exec, num) {
 
 async function gen_callGasMax(){
   var gas_limit = uintToString(gasMax);
-  return gas_limit;
+  // return gas_limit;
+  let block = await web3.eth.getBlock("latest");
+   return Math.floor(Math.floor(4*block.gasLimit/5));
 }
 
 
@@ -1766,6 +1695,7 @@ function print_callSequen(callSequen){
 }
 
 async function exec_sequence_call(){
+  try{
   /// we can finish the fuzzing anytime
   if(g_fuzzing_finish){
     return;
@@ -1813,6 +1743,10 @@ async function exec_sequence_call(){
       g_callSequen_start = true;
     }
   } 
+}catch(err){
+  console.trace();
+  console.error(err);
+}
 }
 
 async function generateFunctionInputs_donate(abi) {
@@ -1912,18 +1846,18 @@ module.exports.test_deployed = function(artifact_path){
 };
 
 module.exports.single_timeout = function(port){
-  setInterval(function () { 
-    // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
+  // setInterval(function () { 
+  //   // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
     
-    if((Date.now() - g_fuzz_start_time) > FUZZ_TIME_SCALE){
-      console.log("Done.")
-      request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-      });
-      return;
-    }
-  }, 1000);  
+  //   if((Date.now() - g_fuzz_start_time) > FUZZ_TIME_SCALE){
+  //     console.log("Done.")
+  //     request(`http://localhost:${port}/bootstrap`, (error, res, body) => {
+  //       if (error) {
+  //         console.error(error);
+  //         return;
+  //       }
+  //     });
+  //     return;
+  //   }
+  // }, 1000);  
 };

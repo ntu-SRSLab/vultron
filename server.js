@@ -222,6 +222,7 @@ app.post('/load', upload.array('contract', 4), (req, res) => {
 app.post('/fuzz', bodyParser.json(), (req, res) => {
   // mutex.lock(async function() {
   console.log("**** POST /fuzz ****");
+  console.log(req.body);
   var txHash = req.body.hash;
   var trace = req.body.trace;
   /// cannot filter the hash here,
@@ -230,6 +231,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
     .then((answer) => {
       res.send(answer);
     }).catch((e) => {
+      console.trace();
       res.send(e);
     });   
   // });
