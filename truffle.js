@@ -34,8 +34,8 @@ module.exports = {
         // host: "127.0.0.1",
 	      // port: 8546,
         provider: function() {
-            // return new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
-            return new Web3.providers.IpcProvider('/home/liuye/Projects/ModCon/ethereum/aleth-ethereum/Ethereum/geth.ipc', net);
+            return new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
+            // return new Web3.providers.IpcProvider('/home/liuye/Projects/ModCon/ethereum/aleth-ethereum/Ethereum/geth.ipc', net);
         },
         network_id: "*",
         gas: 460000,

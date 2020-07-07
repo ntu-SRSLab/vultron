@@ -45,7 +45,7 @@ let g_staticDep_attack;
 let g_staticDep_target;
 
 /// the gas amount
-const gasMax = 8000000000;
+const gasMax = 4000000;
 /// dynamci array
 const dyn_array_min = 1;
 const dyn_array_max = 5;
@@ -202,9 +202,62 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   };
 }
 
-
+let attack_bal_bf ;
+let attack_bal_acc_bf  ;
+let target_bal_bf ;
+let target_bal_sum_bf;
 /// the seed for dynamic fuzzing
 async function seed() {
+  attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
+  attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
+  target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
+  target_bal_sum_bf = await getBookSum();
+ let verifyOracle = async function(){
+   while(true){
+        let i=0;
+        while(i++<1000){}
+        let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
+        let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
+        let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
+        let target_bal_sum_af = await getBookSum();
+        if(g_bookKeepingAbi != undefined){
+        try{ 
+            if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
+            console.log("Integer overflow....");
+            throw "Balance invariant is not held....";        
+            }
+            if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
+            console.log("Balance invariant is not held....");
+            throw "Balance invariant is not held....";
+            }
+            if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
+            console.log("Transaction invariant is not held....");
+            throw "Transaction invariant is not held....";
+            }
+          }
+          catch(e){
+            console.log("target: ether###booking");
+            console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+            console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+            console.log("attack: (after-before)  ether ");
+            console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+            console.log("attack:  (before-after) booking ");
+            console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
+            console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+            console.log(g_callSequen_cur);
+            console.log(("using", Date.now() - g_fuzz_start_time)/1000, " seconds");
+            g_fuzzing_finish = true;
+            return "Oracles are violated!";
+          }
+        }
+        attack_bal_bf = attack_bal_af;
+        attack_bal_acc_bf = attack_bal_acc_af;
+        target_bal_bf = target_bal_af;
+        target_bal_sum_bf = target_bal_sum_af;
+  }
+}
+verifyOracle().then(console.log);
+  g_fuzz_start_time  = Date.now();
   if (g_targetContract === undefined) {
     throw "Target contract is not deployed!";
   }
@@ -250,7 +303,6 @@ async function fuzz(txHash, ins_trace) {
   if (g_targetContract === undefined) {
     throw "Target contract is not loaded!";
   }
-
   mutex.lock(async function() {
     /// different transaction hash code, it is a string
     if(!g_pre_txHash_set.has(txHash)){
@@ -295,8 +347,6 @@ async function fuzz(txHash, ins_trace) {
         g_sequen_depen_set = await tracer.buildDynDep(g_sequen_stmt_trace,
                                                       g_staticDep_attack,
                                                       g_staticDep_target);
-
-
 
         /// before executing next transaction, we first mutate the just executed transaction
         if(g_data_feedback){
@@ -487,84 +537,76 @@ const writeExploit = (callSequen) => {
 }
 
 /// execute the call and generate the transaction
-async function exec_callFun(call, callSequen_cur){
+async function exec_callFun(call,  callSequen_cur){
   assert(g_bookKeepingAbi, "g_bookKeepingAbi is undefined");
-  /// used to identify the first statement is attack or target contract
-  // const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
-  
   g_callFun_cur = call;
-  let attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
-  let attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
-  let target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
-  let target_bal_sum_bf = await getBookSum();
-
-  //console.log(attack_bal_acc_bf);
-  //console.log(call.abi.name, call.param);
   console.log(call);
-  try{
-     let receipt =  await web3.eth.sendTransaction({
-        from: call.from,
-        to: call.to,
-        gas: call.gas,
-        data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
-      });
-      console.log(receipt);
-   }catch(err){
-       console.error(err);
-   }
-
+  web3.eth.sendTransaction({
+    from: call.from,
+    to: call.to,
+    gas: call.gas,
+    data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+  })
+  .on("transactionHash", function(hash){
+    console.log("sent a transaction: ", hash);
+  })
+  .on("receipt", function(receipt){
+    console.log("receipt of a transaction: ", receipt)
+  })
+  .on("error",console.error);
   // try{
-  //   if(call.to == g_targetContract.address){
- 
-  //     await g_targetContract[call.abi.name](...call.param,
-  //                                           {from: call.from,
-  //                                            gas: call.gas});
-  //   }else{
-  //     await g_attackContract[call.abi.name](...call.param,
-  //                                           {from: call.from,
-  //                                            gas: call.gas});
-  //   }
-  // }catch(e){
-  //   console.trace();
-  //   console.log(e);
+  //    let receipt =  await web3.eth.sendTransaction({
+  //       from: call.from,
+  //       to: call.to,
+  //       gas: call.gas,
+  //       data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+  //     });
+  //     console.log(receipt);
+  //  }catch(err){
+  //      console.error(err);
+  //  }
+  // let verifyOracle = async function(){
+  //       let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
+  //       let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
+  //       let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
+  //       let target_bal_sum_af = await getBookSum();
+  //       console.log("target: ether###booking");
+  //       console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+  //       console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+  //       console.log("attack: (after-before)  ether ");
+  //       console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+  //       console.log("attack:  (before-after) booking ");
+  //       console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
+      
+  //       if(g_bookKeepingAbi != undefined){
+  //         try{ 
+  //           if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
+  //           console.log("Integer overflow....");
+  //           throw "Balance invariant is not held....";        
+  //           }
+  //           if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
+  //           console.log("Balance invariant is not held....");
+  //           throw "Balance invariant is not held....";
+  //           }
+  //           if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
+  //           console.log("Transaction invariant is not held....");
+  //           throw "Transaction invariant is not held....";
+  //           }
+  //         }
+  //         catch(e){
+  //           console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+  //           console.log(callSequen_cur);
+  //           console.log(("using", Date.now() - g_fuzz_start_time)/1000, " seconds");
+  //           g_fuzzing_finish = true;
+  //           return "Oracles are violated!";
+  //         }
+  //       }
+  //       attack_bal_bf = attack_bal_af;
+  //       attack_bal_acc_bf = attack_bal_acc_af;
+  //       target_bal_bf = target_bal_af;
+  //       target_bal_sum_bf = target_bal_sum_af;
   // }
-  
-
-  let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
-  let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
-  let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
-  let target_bal_sum_af = await getBookSum();
-  console.log("target: ether###booking");
-  console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
-  console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
-  console.log("attack: (after-before)  ether ");
-  console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
-  console.log("attack:  (before-after) booking ");
-  console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
-
-  if(g_bookKeepingAbi != undefined){
-    try{ 
-      if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
-       console.log("Integer overflow....");
-       throw "Balance invariant is not held....";        
-      }
-      if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
-       console.log("Balance invariant is not held....");
-       throw "Balance invariant is not held....";
-      }
-      if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
-       console.log("Transaction invariant is not held....");
-       throw "Transaction invariant is not held....";
-      }
-    }
-    catch(e){
-      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-      console.log(callSequen_cur);
-      console.log(Date.now() - g_fuzz_start_time);
-      g_fuzzing_finish = true;
-      return "Oracles are violated!";
-    }
-  }
+  // verifyOracle().then(console.log);
 }
 
 async function exec_callPayFun(call, cand_bookkeeping){
@@ -1090,7 +1132,7 @@ async function gen_callGasMax(){
   var gas_limit = uintToString(gasMax);
   // return gas_limit;
   let block = await web3.eth.getBlock("latest");
-   return Math.floor(Math.floor(4*block.gasLimit/5));
+   return Math.floor(Math.min(gasMax, Math.floor(2*block.gasLimit/5)));
 }
 
 
