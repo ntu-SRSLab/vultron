@@ -1,11 +1,9 @@
-const contract = require('truffle-contract');
+
 const request = require("request");
 const fs = require("fs");
-
 const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
-const Web3 = require('web3');
 const fuzzer = require('./connection/ethereum/fuzzer.js');
 const fisco_fuzzer = require('./connection/fisco/fuzzer.js');
 
@@ -261,12 +259,6 @@ app.get('/bootstrap', (req, RES) => {
                   g_bootstrap_build_attack);
       RES.send(g_bootstrap_build_target + "\n" + g_bootstrap_build_attack);
     });
-    // request(`http://localhost:${port}/find`, (error, res, body) => {
-    //     if (error) {
-    //       console.error(error);
-    //       return;
-    //     }
-    // });
   });
 });
 
@@ -293,9 +285,9 @@ function parse_cmd() {
 }
 
 parse_cmd();
-fuzzer.setProvider(httpRpcAddr);
+let ipcprovider = path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
+fuzzer.setIPCProvider(ipcprovider);
 fuzzer.unlockAccount();
-
 app.listen(port, () => {
   console.log("Express Listening at http://localhost:" + port);
 });

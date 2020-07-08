@@ -1,11 +1,9 @@
 #! /local/bin/babel-node
-const request = require("request");
 const path = require('path');
 const net = require("net");
 const Web3 = require('web3');
 const TruffleWeb3=require("truffle-web3");
-//const AbiCoder = require('web3-eth-abi');
-
+const async = require("async");
 const Promise = require("bluebird");
 const truffle_contract = require('@truffle/contract');
 const assert = require('assert');
@@ -14,7 +12,6 @@ const fs = require('fs');
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
-const async = require('async');
 
 var g_data_feedback = false;
 
