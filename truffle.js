@@ -12,7 +12,12 @@
  *   },
  */
 var Web3 = require("truffle-web3");
+var shell = require("shelljs");
+var  path = require("path")
 var net = require("net");
+let workdir = shell.pwd();
+console.log(`workdir: ${workdir}`);
+var ipcpath= path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
@@ -31,11 +36,8 @@ module.exports = {
         from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
 	    },
 	    SCFuzzer: {
-        // host: "127.0.0.1",
-	      // port: 8546,
         provider: function() {
-            return new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
-            // return new Web3.providers.IpcProvider('/home/liuye/Projects/ModCon/ethereum/aleth-ethereum/Ethereum/geth.ipc', net);
+            return new Web3.providers.IpcProvider(ipcpath, net);
         },
         network_id: "*",
         gas: 460000,

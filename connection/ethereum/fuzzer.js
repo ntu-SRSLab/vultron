@@ -1,13 +1,13 @@
 #! /local/bin/babel-node
 const request = require("request");
 const path = require('path');
-
+const net = require("net");
 const Web3 = require('web3');
-const truffleWeb3=require("truffle-web3");
+const TruffleWeb3=require("truffle-web3");
 //const AbiCoder = require('web3-eth-abi');
 
 const Promise = require("bluebird");
-const truffle_contract = require('truffle-contract');
+const truffle_contract = require('@truffle/contract');
 const assert = require('assert');
 const tracer = require('../EVM2Code');
 const fs = require('fs');
@@ -119,19 +119,14 @@ function unlockAccount(){
   });
 }
 
-function setProvider(httpRpcAddr){
-  // Using the IPC provider in node.js
-  var net = require('net');
-  Provider = new Web3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
+function setIPCProvider(ipcprovider){
+  Provider =new Web3.providers.IpcProvider(ipcprovider, net);
   web3 = new Web3(Provider);
-  Provider = new truffleWeb3.providers.IpcProvider('/home/liuye/Projects/AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc', net);
-  // Provider = new Web3.providers.HttpProvider(httpRpcAddr);
-  // web3 = new Web3(new Web3.providers.HttpProvider(httpRpcAddr));
+  Provider =new TruffleWeb3.providers.IpcProvider(ipcprovider, net);
   assert(web3);
 }
 
 async function get_instance(artifact_path){
-  // console.log(artifact_path);
   let artifact = require(path.relative(__dirname, artifact_path));
   let MyContract = truffle_contract(artifact);
   MyContract.setProvider(Provider);
@@ -146,11 +141,9 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_attack_artifact = require(path.relative(__dirname, attackPath));
   g_target_artifact = require(path.relative(__dirname, targetPath));
   
-  /// add the attack contract address
+  
   g_account_list.push(g_attackContract.address);
-  /// find bookkeeping variable
   g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
-  /// all the possible abi, then we use to synthesize the call sequence
   g_cand_sequence = [];
   await findCandSequence(g_targetContract.abi, g_attackContract.abi);
 
@@ -169,7 +162,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
                                              g_attack_artifact.deployedBytecode,
                                              g_attack_artifact.deployedSourceMap,
                                              g_attack_artifact.source);
-  // console.log(g_attackIns_map);
+
   g_targetIns_map = await tracer.buildInsMap(g_target_artifact.sourcePath,
                                              g_target_artifact.deployedBytecode,
                                              g_target_artifact.deployedSourceMap,
@@ -187,11 +180,6 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_send_call_set = await tracer.buildMoneySet(targetSolPath);
   g_send_call_found = await tracer.buildRelevantDepen(g_staticDep_target, g_send_call_set);
   console.log(g_send_call_found);
-
-  // /// clear the exploit script
-  // if(fs.existsSync(g_exploit_path)){
-  //   fs.unlinkSync(g_exploit_path);
-  // }
 
   return {
    accounts: g_account_list,
@@ -1874,7 +1862,7 @@ module.exports.seed = seed;
 module.exports.load = load;
 module.exports.find = find;
 // module.exports.reset = reset;
-module.exports.setProvider = setProvider;
+module.exports.setIPCProvider = setIPCProvider;
 module.exports.unlockAccount = unlockAccount;
 
 module.exports.setStart_time = function(start_time){

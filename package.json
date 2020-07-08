@@ -26,7 +26,8 @@
 		"start": "node index.js"
 	},
 	"dependencies": {
-		"async": "^2.6.3",
+		"@truffle/contract": "^4.2.11",
+		"async": "^3.2.0",
 		"body-parser": "^1.19.0",
 		"ejs": "^2.7.1",
 		"express": "^4.17.1",
@@ -35,10 +36,9 @@
 		"multer": "^1.4.2",
 		"net": "^1.0.2",
 		"power-assert": "^1.6.1",
+		"shelljs": "^0.8.4",
 		"sleep": "^6.2.0",
 		"truffle": "^5.0.42",
-		"truffle-contract": "^4.0.31",
-		"truffle-contract-modcon": "npm:truffle-contract@^3.0.7",
 		"truffle-web3": "npm:web3@^0.20.7",
 		"web3": "^1.2.9",
 		"web3-eth-abi": "^1.2.2",

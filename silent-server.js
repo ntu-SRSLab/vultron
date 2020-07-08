@@ -1,11 +1,12 @@
 const path = require('path'); 
-const fs = require("fs");
 const express = require('express');
 const app = express();
 const port = 3000 || process.env.PORT;
 const fuzzer = require('./connection/ethereum/fuzzer.js');
 const bodyParser = require('body-parser');
 const sleep = require("sleep");
+const async = require("async");
+const shell = require("shelljs");
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
     limit: '50mb',
@@ -51,9 +52,8 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
         });
 });
 
-// default RPC address
-let httpRpcAddr = "http://127.0.0.1:8546";
-fuzzer.setProvider(httpRpcAddr);
+let ipcprovider = path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
+fuzzer.setIPCProvider(ipcprovider);
 fuzzer.unlockAccount();
 
 app.listen(port, () => {
@@ -69,4 +69,4 @@ test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".s
     }).catch(err=>{
         console.error(err);
         console.trace("show testing error");
-    })
+})
