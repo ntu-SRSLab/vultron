@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/MultiplicatorX4.sol";
+import "./MultiplicatorX4.sol";
 
 contract Attack_MultiplicatorX41 {
 

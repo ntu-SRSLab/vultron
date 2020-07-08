@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/FreeEth.sol";
+import "./FreeEth.sol";
 
 contract Attack_FreeEth2 {
 

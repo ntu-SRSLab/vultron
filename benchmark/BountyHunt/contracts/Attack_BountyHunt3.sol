@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/BountyHunt.sol";
+import "./BountyHunt.sol";
 
 contract Attack_BountyHunt3 {
 
