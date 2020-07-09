@@ -130,9 +130,10 @@ async function get_instance(artifact_path){
   let instance = await MyContract.deployed();
   return instance;
 }
-
+let MyEmitter;
 /// load some static information for the dynamic analysis. e.g., fuzzing
-async function load(targetPath, attackPath, targetSolPath, attackSolPath){
+async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolPath){
+  MyEmitter = myEmitter;
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
   g_attack_artifact = require(path.relative(__dirname, attackPath));
@@ -178,6 +179,7 @@ async function load(targetPath, attackPath, targetSolPath, attackSolPath){
   g_send_call_found = await tracer.buildRelevantDepen(g_staticDep_target, g_send_call_set);
   console.log(g_send_call_found);
 
+
   return {
    accounts: g_account_list,
    attack_adds: g_attackContract.address,
@@ -193,6 +195,14 @@ let target_bal_bf ;
 let target_bal_sum_bf;
 /// the seed for dynamic fuzzing
 async function seed() {
+  g_fuzzing_finish = false;
+  g_fuzz_start_time  = Date.now();
+  if (g_targetContract === undefined) {
+    throw "Target contract is not deployed!";
+  }
+  if (g_attackContract === undefined) {
+    throw "Attack contract is not deployed!";
+  }
   attack_bal_bf = await web3.eth.getBalance(g_attackContract.address);
   attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
   target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
@@ -232,6 +242,7 @@ async function seed() {
             console.log(g_callSequen_cur);
             console.log(("using", Date.now() - g_fuzz_start_time)/1000, " seconds");
             g_fuzzing_finish = true;
+            MyEmitter.emit("eventTestBenchmark");
             return "Oracles are violated!";
           }
         }
@@ -242,13 +253,7 @@ async function seed() {
   }
 }
 verifyOracle().then(console.log);
-  g_fuzz_start_time  = Date.now();
-  if (g_targetContract === undefined) {
-    throw "Target contract is not deployed!";
-  }
-  if (g_attackContract === undefined) {
-    throw "Attack contract is not deployed!";
-  }
+
   // we only generate a call sequence
   let callFun_list;
   if(g_data_feedback){
@@ -1861,7 +1866,7 @@ module.exports.find = find;
 // module.exports.reset = reset;
 module.exports.setIPCProvider = setIPCProvider;
 module.exports.unlockAccount = unlockAccount;
-
+module.exports.g_fuzzing_finish = g_fuzzing_finish;
 module.exports.setStart_time = function(start_time){
   g_fuzz_start_time = start_time; 
 };

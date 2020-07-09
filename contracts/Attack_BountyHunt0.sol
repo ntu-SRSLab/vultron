@@ -1,7 +1,7 @@
 pragma solidity ^0.4.19;
 
-// import "/home/liuye/Projects/Vultron/contracts/BountyHunt.sol";
 import "./BountyHunt.sol";
+
 contract Attack_BountyHunt0 {
 
   BountyHunt public target_contract;

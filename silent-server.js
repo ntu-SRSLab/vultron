@@ -7,6 +7,8 @@ const bodyParser = require('body-parser');
 const sleep = require("sleep");
 const async = require("async");
 const shell = require("shelljs");
+const { exit } = require('process');
+const { exec } = require('child_process');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
     limit: '50mb',
@@ -22,33 +24,92 @@ app.use(bodyParser.json({
 app.set('view engine', 'ejs');
 
 
+
+let benchmarks = shell.ls("./benchmark");
+const EventEmitter = require('events');
+class MyEmitter extends EventEmitter {}
+const myEmitter = new MyEmitter();
+let  benchmark_index = 0;
+let  attack_index = 0;
+let source_target;
+let source_attacks=[];
 async function test(source_target, source_attack, build_target,build_attack) {
-    sleep.sleep(10);
-    let answer = await fuzzer.load(build_target, build_attack, source_target, source_attack);
+    console.log(source_target, source_attack );
+    // sleep.sleep(10);
+    let answer = await fuzzer.load(myEmitter, build_target, build_attack, source_target, source_attack);
     if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
+    // console.log(answer);
     answer = await  fuzzer.seed();
     if (typeof answer.callFuns === 'undefined')
         throw "Error running seed.";
     return `${source_target}  will be tested against  ${source_attack}`;
 }
-
+myEmitter.on('eventCopyBenchmark', () => {
+    if(benchmark_index >=benchmarks.length)
+        return;
+    let benchmark = benchmarks[benchmark_index++];
+    console.log(benchmark);
+    shell.rm("-rf","./contracts");
+    shell.rm("-rf","./migrations");
+    shell.cp("-r", path.join("./benchmark", benchmark.toString(), "contracts"), "./");
+    shell.cp("-r", path.join("./benchmark", benchmark.toString(), "migrations"), "./");
+    source_target = undefined;
+    source_attacks=[];
+    let contracts = shell.ls("./contracts");
+    for (let contract of contracts){
+        if(contract.toString().indexOf("Attack_")!=-1)
+                source_attacks.push(contract.toString().split(".sol")[0]);
+        else if(contract.toString().indexOf("Migration")==-1){
+                source_target = contract.toString().split(".sol")[0];
+        }
+    }
+    console.log("target: ",source_target);
+    console.log("attack: ", source_attacks);
+    attack_index = 0;
+    myEmitter.emit("eventDeployBenchmark");
+});
+myEmitter.on('eventDeployBenchmark', ()=>{
+    exec("./utils/startTruffle.sh", {timeout:3*60*1000}, function(error, stdout, stderr) {
+        if(error)
+                console.log('error:', error);
+        if(stdout)
+                console.log('Program output:', stdout);
+        if(stderr)
+                console.log('Program stderr:', stderr);
+        myEmitter.emit("eventTestBenchmark");
+      });
+});
+myEmitter.on('eventTestBenchmark', ()=>{
+   if(attack_index >= source_attacks.length){
+        myEmitter.emit("eventCopyBenchmark");
+        return;
+   }
+   test(path.join("./contracts",source_target+".sol"), path.join("./contracts", source_attacks[attack_index]+".sol"), path.join("./build/contracts", source_target+".json"), path.join("./build/contracts", source_attacks[attack_index]+".json"))
+    .then(answer=>{
+        console.log(answer)
+    }).catch(err=>{
+        console.error(err);
+        console.trace("show testing error");
+    })
+    attack_index ++;
+});
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
-    // mutex.lock(async function() {
+    if(req.body&&req.body.address =="0x0000000000000000000000000000000000000000"){
+        console.log("catch a contract creation transaction");
+        return;
+    }
     console.log("**** POST /fuzz ****");
     console.log(req.body);
     var txHash = req.body.hash;
     var trace = req.body.trace;
-    /// cannot filter the hash here,
-    /// we must call fuzzer.fuzz, otherwise will be blocked
     fuzzer.fuzz(txHash, trace)
         .then((answer) => {
             res.send(answer);
         }).catch((e) => {
             console.error(e);
             console.trace("show fuzzing error");
-            // res.send(e);
         });
 });
 
@@ -58,15 +119,14 @@ fuzzer.unlockAccount();
 
 app.listen(port, () => {
     console.log("Express Listening at http://localhost:" + port);
+    myEmitter.emit("eventCopyBenchmark");
 });
-
-
 let source="BountyHunt";
 let attack = "Attack_BountyHunt0";
-test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"))
-    .then(answer=>{
-        console.log(answer)
-    }).catch(err=>{
-        console.error(err);
-        console.trace("show testing error");
-})
+// test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"))
+//     .then(answer=>{
+//         console.log(answer)
+//     }).catch(err=>{
+//         console.error(err);
+//         console.trace("show testing error");
+// })
