@@ -33,6 +33,7 @@ let  benchmark_index = 0;
 let  attack_index = 0;
 let source_target;
 let source_attacks=[];
+let  canStartFuzz = false;
 async function test(source_target, source_attack, build_target,build_attack) {
     console.log(source_target, source_attack );
     // sleep.sleep(10);
@@ -82,9 +83,11 @@ myEmitter.on('eventDeployBenchmark', ()=>{
 });
 myEmitter.on('eventTestBenchmark', ()=>{
    if(attack_index >= source_attacks.length){
+        canStartFuzz = false;
         myEmitter.emit("eventCopyBenchmark");
         return;
    }
+   canStartFuzz = true;
    test(path.join("./contracts",source_target+".sol"), path.join("./contracts", source_attacks[attack_index]+".sol"), path.join("./build/contracts", source_target+".json"), path.join("./build/contracts", source_attacks[attack_index]+".json"))
     .then(answer=>{
         console.log(answer)
@@ -96,10 +99,12 @@ myEmitter.on('eventTestBenchmark', ()=>{
 });
 
 app.post('/fuzz', bodyParser.json(), (req, res) => {
-    if(req.body&&req.body.address =="0x0000000000000000000000000000000000000000"){
+    if(req.body&&req.body.address =="0x0000000000000000000000000000000000000000" ){
         console.log("catch a contract creation transaction");
         return;
     }
+    if(!canStartFuzz)
+            return ;
     console.log("**** POST /fuzz ****");
     console.log(req.body);
     var txHash = req.body.hash;
