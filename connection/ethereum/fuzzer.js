@@ -133,6 +133,35 @@ async function get_instance(artifact_path){
 let MyEmitter;
 /// load some static information for the dynamic analysis. e.g., fuzzing
 async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolPath){
+  /// the call sequence to be executed
+  g_callSequen_list = [];
+  /// another new call seqeunce
+  g_callSequen_start = false;
+  /// the current index in g_callSequen_cur, it corresponds to "g_lastCall_exec"
+  g_callIndex_cur = 0;
+  /// the executed call sequence
+  g_callSequen_cur = [];
+  /// the trace of a transaction
+  g_trans_stmt_trace = [];
+  /// the trace of a call sequence
+  g_sequen_stmt_trace = [];
+  /// the key is i^th call in sequence, the value is read/write variable
+  g_stmt_read_map = new Map();
+  g_stmt_write_map = new Map();
+  /// the set of dynamic dependencies in a call sequence
+  g_sequen_depen_set = new Set();
+  /// the set of all dynamic dependencies in this contract until now
+  g_contra_depen_set = new Set();
+  /// the hash of previous transactions
+  g_pre_txHash_set = new Set();
+  /// the current call that is executed
+  g_callFun_cur = undefined;
+  /// the candidate abi that can be used to start transaction
+  g_cand_sequence = [];
+  g_send_call_set = new Set();
+  /// whether it has static control dependencies or write variable
+   g_send_call_found = undefined;
+
   MyEmitter = myEmitter;
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
