@@ -1760,6 +1760,7 @@ async function exec_sequence_call(){
     }
     else{
       g_fuzzing_finish = true;
+      MyEmitter.emit("eventTestBenchmark");
       return;
     }
   }
