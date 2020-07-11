@@ -4,10 +4,9 @@ const app = express();
 const port = 3000 || process.env.PORT;
 const fuzzer = require('./connection/ethereum/fuzzer.js');
 const bodyParser = require('body-parser');
+const assert = require("assert");
 const sleep = require("sleep");
-const async = require("async");
 const shell = require("shelljs");
-const { exit } = require('process');
 const { exec } = require('child_process');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
@@ -103,8 +102,6 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
         console.log("catch a contract creation transaction");
         return;
     }
-    if(!canStartFuzz)
-            return ;
     console.log("**** POST /fuzz ****");
     console.log(req.body);
     var txHash = req.body.hash;
@@ -121,17 +118,23 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
 let ipcprovider = path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
 fuzzer.setIPCProvider(ipcprovider);
 fuzzer.unlockAccount();
-
-app.listen(port, () => {
-    console.log("Express Listening at http://localhost:" + port);
-    myEmitter.emit("eventCopyBenchmark");
-});
 let source="BountyHunt";
 let attack = "Attack_BountyHunt0";
-// test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"))
-//     .then(answer=>{
-//         console.log(answer)
-//     }).catch(err=>{
-//         console.error(err);
-//         console.trace("show testing error");
-// })
+function parse_cmd() {
+    let args = process.argv.slice(2, process.argv.length);
+    assert(args.length ==2, `there must be two arguments like: {target} {attack} --- where target and attack are contract names.`)
+    source = args[0];
+    attack = args[1];   
+}
+parse_cmd();
+app.listen(port, () => {
+    console.log("Express Listening at http://localhost:" + port);
+    // myEmitter.emit("eventCopyBenchmark");
+    test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"))
+    .then(answer=>{
+        console.log(answer)
+    }).catch(err=>{
+        console.error(err);
+        console.trace("show testing error");
+   });
+});
