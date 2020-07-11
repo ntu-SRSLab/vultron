@@ -43,8 +43,9 @@ do
             else 
                     echo "deploy failed"
             fi
-            echo "cslliuye" | sudo -S kill -9 $(pgrep node)
-            echo "cslliuye" | sudo -S kill -9 $(pgrep startTruffle)
+            echo $1 | sudo -S kill -9 $(pgrep node)
+            echo $1 | sudo -S kill -9 $(pgrep truffle)
 	    sleep 10
+
     done
 done
