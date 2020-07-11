@@ -476,7 +476,7 @@ async function findCandSequence(target_abis, attack_abis){
 /// get the balance of given address in the bookkeeping variable
 async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
   // console.log(`g_bookKeepingAbi:  ${JSON.stringify(g_bookKeepingAbi)}`);
-  assert(bookkeepingVar);
+  // assert(bookkeepingVar);
   if(bookkeepingVar == undefined){
     return BigInt(0);
   }
