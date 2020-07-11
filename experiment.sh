@@ -46,6 +46,7 @@ do
                     echo "deploy failed"
             fi
             echo "123" | sudo -S kill -9 $(pgrep node)
-            echo "123" | sudo -S kill -9 $(pgrep truffle)
+            echo "123" | sudo -S kill -9 $(pgrep startTruffle)
+            sleep 10
     done
 done
