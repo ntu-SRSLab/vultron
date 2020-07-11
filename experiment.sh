@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-echo "cslliuye" | sudo -S kill -9 $(pgrep node)
-echo "cslliuye" | sudo -S kill -9 $(pgrep truffle)
 DEPLOY_TIMEOUT=2m
 TESTING_TIMEOUT=5m
 mkdir  -p experimentlog
@@ -46,7 +44,7 @@ do
                     echo "deploy failed"
             fi
             echo "cslliuye" | sudo -S kill -9 $(pgrep node)
-            echo "cslliuye" | sudo -S kill -9 $(pgrep truffle)
+            echo "cslliuye" | sudo -S kill -9 $(pgrep startTruffle)
 	    sleep 10
     done
 done
