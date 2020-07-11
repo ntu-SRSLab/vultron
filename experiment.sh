@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-echo "123" | sudo -S kill -9 $(pgrep node)
-echo "123" | sudo -S kill -9 $(pgrep truffle)
 DEPLOY_TIMEOUT=2m
 TESTING_TIMEOUT=5m
 mkdir  -p experimentlog
@@ -45,8 +43,10 @@ do
             else 
                     echo "deploy failed"
             fi
-            echo "123" | sudo -S kill -9 $(pgrep node)
-            echo "123" | sudo -S kill -9 $(pgrep startTruffle)
-            sleep 10
+
+            echo $1 | sudo -S kill -9 $(pgrep node)
+            echo $1 | sudo -S kill -9 $(pgrep truffle)
+	    sleep 10
+
     done
 done
