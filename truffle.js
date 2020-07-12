@@ -13,7 +13,7 @@
  */
 var Web3 = require("truffle-web3");
 var shell = require("shelljs");
-var  path = require("path")
+var path = require("path")
 var net = require("net");
 let workdir = shell.pwd();
 console.log(`workdir: ${workdir}`);
@@ -33,11 +33,11 @@ module.exports = {
 	      host: "172.18.0.1",
 	      port: 8545,
 	      network_id: "1900",
-        from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
+              from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
 	    },
 	    SCFuzzer: {
-        provider: function() {
-            return new Web3.providers.IpcProvider(ipcpath, net);
+       		 provider: function() {
+	            return new Web3.providers.IpcProvider(ipcpath, net);
         },
         network_id: "*",
         gas: 460000,

@@ -83,7 +83,7 @@ myEmitter.on('eventDeployBenchmark', ()=>{
 myEmitter.on('eventTestBenchmark', ()=>{
    if(attack_index >= source_attacks.length){
         canStartFuzz = false;
-//        myEmitter.emit("eventCopyBenchmark");
+        // myEmitter.emit("eventCopyBenchmark");
         return;
    }
    canStartFuzz = true;
