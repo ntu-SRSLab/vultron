@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-DEPLOY_TIMEOUT=2m
-TESTING_TIMEOUT=3m
+DEPLOY_TIMEOUT=1m
+TESTING_TIMEOUT=2m
 mkdir  -p experimentlog
 rm -rf build
 nohup node unlockAccount.js &
@@ -30,6 +30,9 @@ do
     echo $benchmark" is the current benchmark! "
     echo $source 
     echo ${attacks[@]}
+    for i in {1..8}
+    do 
+	    echo "run#$i:"
     for attack in ${attacks[@]}:
     do
 	    echo $benchmark" will be deployed to private network."
@@ -66,6 +69,6 @@ do
              	echo $1 | sudo -S kill -9 $(pgrep startTruffle)
     	    fi
 	    sleep 10
-
+    done
     done
 done
