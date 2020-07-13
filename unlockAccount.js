@@ -9,11 +9,11 @@ var ipcpath= path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/boo
 var web3 = new Web3(new Web3.providers.IpcProvider(ipcpath, net));
 assert(web3);
 async function unlockAccount(){
-    console.log(await web3.eth.personal.defaultAccount);
-    let block = await web3.eth.getBlock("latest");
-    console.log(block);
+    // console.log(await web3.eth.personal.defaultAccount);
+    // let block = await web3.eth.getBlock("latest");
+    // console.log(block);
     let accounts =  await web3.eth.getAccounts();
-    console.log(accounts);
+    console.log(accounts[0]);
     let ret = await web3.eth.personal.unlockAccount(accounts[0], "123456", 200 * 60 * 60)
     // console.log(ret);
     if(ret){
