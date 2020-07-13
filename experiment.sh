@@ -3,6 +3,9 @@
 DEPLOY_TIMEOUT=2m
 TESTING_TIMEOUT=3m
 mkdir  -p experimentlog
+rm -rf build
+nohup node unlockAccount.js &
+sleep 20
 for  benchmark in $(ls ./benchmark)
 do
     rm -rf  experimentlog/$benchmark
