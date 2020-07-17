@@ -13,7 +13,7 @@ const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
 
-var g_data_feedback = false;
+var g_data_feedback = true;
 
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
@@ -215,7 +215,14 @@ async function seed() {
         let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
         let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
         let target_bal_sum_af = await getBookSum();
-        if(g_bookKeepingAbi != undefined){
+        // console.log("target: ether###booking");
+        // console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+        // console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+        // console.log("attack: (after-before)  ether ");
+        // console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+        // console.log("attack:  (before-after) booking ");
+        // console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
+        // if(g_bookKeepingAbi != undefined){
         try{ 
             if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
             console.log("Integer overflow....");
@@ -245,7 +252,7 @@ async function seed() {
             MyEmitter.emit("eventTestBenchmark");
             return "Oracles are violated!";
           }
-        }
+        // }
         attack_bal_bf = attack_bal_af;
         attack_bal_acc_bf = attack_bal_acc_af;
         target_bal_bf = target_bal_af;
@@ -534,7 +541,7 @@ async function exec_callFun(call,  callSequen_cur){
   web3.eth.sendTransaction({
     from: call.from,
     to: call.to,
-    gas: call.gas,
+    // gas: call.gas,
     data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
   })
   .on("transactionHash", function(hash){
@@ -574,6 +581,9 @@ async function exec_callFun(call,  callSequen_cur){
   //           console.log("Integer overflow....");
   //           throw "Balance invariant is not held....";        
   //           }
+  //           // for the target contract, there are two items recording ether-related information.
+  //           //      balance:  how much ether the contract account has.
+  //           //      bookkeeping: how much ether  forwarding to the contract account  external account (normal/contract) has.
   //           if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
   //           console.log("Balance invariant is not held....");
   //           throw "Balance invariant is not held....";
@@ -1161,7 +1171,8 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   }
   let target_bal_sum = await getBookSum();
   dynamic_state_list.push(target_bal_sum);
-  dynamic_state_list.sort(sortNumber);
+  // dynamic_state_list.sort(sortNumber);
+  dynamic_state_list.sort();
 
   console.log("contract state: ");
   console.log(dynamic_state_list);

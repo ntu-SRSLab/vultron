@@ -103,7 +103,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
         return;
     }
     console.log("**** POST /fuzz ****");
-    console.log(req.body);
+    // console.log(req.body);
     var txHash = req.body.hash;
     var trace = req.body.trace;
     fuzzer.fuzz(txHash, trace)

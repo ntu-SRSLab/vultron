@@ -36,11 +36,11 @@ module.exports = {
               from:"0x2B71cc952C8e3dFe97A696CF5C5b29F8a07dE3D8"
 	    },
 	    SCFuzzer: {
-       		 provider: function() {
+       	provider: function() {
 	            return new Web3.providers.IpcProvider(ipcpath, net);
         },
         network_id: "*",
-        gas: 460000,
+        gas: 660000,
 	    }
     },
   
