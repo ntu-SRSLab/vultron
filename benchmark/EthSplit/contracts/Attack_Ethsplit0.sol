@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./Ethsplit.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/Ethsplit.sol";
 
 contract Attack_Ethsplit0 {
 

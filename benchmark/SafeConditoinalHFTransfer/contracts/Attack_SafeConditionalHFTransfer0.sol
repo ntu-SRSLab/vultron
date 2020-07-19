@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./SafeConditionalHFTransfer.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/SafeConditionalHFTransfer.sol";
 
 contract Attack_SafeConditionalHFTransfer0 {
 

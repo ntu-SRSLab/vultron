@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./TokenBank.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/TokenBank.sol";
 
 contract Attack_TokenBank2 {
 

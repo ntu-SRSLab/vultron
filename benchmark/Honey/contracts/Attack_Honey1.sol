@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./Honey.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/Honey.sol";
 
 contract Attack_Honey1 {
 

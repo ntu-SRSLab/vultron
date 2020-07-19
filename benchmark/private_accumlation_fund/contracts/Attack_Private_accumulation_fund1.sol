@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./Private_accumulation_fund.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/Private_accumulation_fund.sol";
 
 contract Attack_Private_accumulation_fund0 {
 

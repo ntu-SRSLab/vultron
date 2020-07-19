@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./TranferInTwoPart.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/TranferInTwoPart.sol";
 
 contract Attack_TranferInTwoPart0 {
 
