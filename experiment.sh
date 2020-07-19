@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-DEPLOY_TIMEOUT=1m
-TESTING_TIMEOUT=2m
+DEPLOY_TIMEOUT=30
+TESTING_TIMEOUT=1m
 mkdir  -p experimentlog
 rm -rf build
 nohup node unlockAccount.js &
@@ -41,6 +41,12 @@ do
 	    # if deploy not done, wait another deploy timeout
             if [[  $(grep "Saving artifacts..." experimentlog/$benchmark/deploy.log | wc -l) -lt 2 ]]; then
             	sleep $DEPLOY_TIMEOUT
+            	if [[  $(grep "Saving artifacts..." experimentlog/$benchmark/deploy.log | wc -l) -lt 2 ]]; then
+            		sleep $DEPLOY_TIMEOUT
+            		if [[  $(grep "Saving artifacts..." experimentlog/$benchmark/deploy.log | wc -l) -lt 2 ]]; then
+            			sleep $DEPLOY_TIMEOUT
+	    		fi
+	    	fi
 	    fi
             if [[  $(grep "Saving artifacts..." experimentlog/$benchmark/deploy.log | wc -l) -eq 2 ]]; then
                     echo $benchmark" deploy successfully."
@@ -50,6 +56,12 @@ do
 		    # if cannot found violation error at the time, wait anothother testing_timeout.
                     if [[  $(grep "seconds" experimentlog/$benchmark/$attack.log | wc -l) -eq 0 ]]; then
                      	sleep $TESTING_TIMEOUT
+                    	if [[  $(grep "seconds" experimentlog/$benchmark/$attack.log | wc -l) -eq 0 ]]; then
+                     		sleep $TESTING_TIMEOUT
+                    		if [[  $(grep "seconds" experimentlog/$benchmark/$attack.log | wc -l) -eq 0 ]]; then
+                     			sleep $TESTING_TIMEOUT
+		    		fi
+		    	fi
 		    fi
 		    # collect results, whether there is violation error or not.
                     if [[  $(grep "seconds" experimentlog/$benchmark/$attack.log | wc -l) -eq 1 ]]; then

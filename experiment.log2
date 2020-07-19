@@ -1,0 +1,378 @@
+nohup: ignoring input
+workdir: /home/liuye/ContraMaster/vultron
+0x00eeD452f13E237Af8089E372c588382990A2dF0
+Default account unlocked.
+BountyHunt is the current benchmark! 
+BountyHunt.sol
+Attack_BountyHunt0.sol Attack_BountyHunt1.sol Attack_BountyHunt2.sol Attack_BountyHunt3.sol
+run#1:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+4.997 seconds
+***************************
+./experiment.sh: line 36: 31172 Killed                  nohup node unlockAccount.js
+./experiment.sh: line 36: 32181 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+7.456 seconds
+***************************
+./experiment.sh: line 36:  1648 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt2.sol found a violation
+Balance invariant is not held....
+0.669 seconds
+***************************
+./experiment.sh: line 36:  3096 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36:  4996 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#2:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36:  9250 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+3.343 seconds
+***************************
+./experiment.sh: line 36: 13014 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36: 14239 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+1.75 seconds
+***************************
+./experiment.sh: line 36: 17474 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#3:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+4.099 seconds
+***************************
+./experiment.sh: line 36: 19053 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+4.619 seconds
+***************************
+./experiment.sh: line 36: 20403 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt2.sol found a violation
+Balance invariant is not held....
+6.971 seconds
+***************************
+./experiment.sh: line 36: 21603 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36: 22676 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#4:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+3.826 seconds
+***************************
+./experiment.sh: line 36: 25563 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+0.532 seconds
+***************************
+./experiment.sh: line 36: 26725 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36: 27871 Hangup                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+4.89 seconds
+***************************
+[sudo] password for liuye: ./experiment.sh: line 36: 30264 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#5:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+7.349 seconds
+***************************
+./experiment.sh: line 36: 31109 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+5.445 seconds
+***************************
+./experiment.sh: line 36: 32066 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt2.sol found a violation
+Balance invariant is not held....
+7.778 seconds
+***************************
+./experiment.sh: line 36:   445 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+8.445 seconds
+***************************
+./experiment.sh: line 82:  1469 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+
+Usage:
+ kill [options] <pid> [...]
+
+Options:
+ <pid> [...]            send signal to every <pid> listed
+ -<signal>, -s, --signal <signal>
+                        specify the <signal> to be sent
+ -l, --list=[<signal>]  list all signal names, or convert one to a name
+ -L, --table            list all signal names in a nice table
+
+ -h, --help     display this help and exit
+ -V, --version  output version information and exit
+
+For more details see kill(1).
+./experiment.sh: line 36:  1469 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#6:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+2.663 seconds
+***************************
+./experiment.sh: line 36:  2381 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+1.091 seconds
+***************************
+./experiment.sh: line 36:  3148 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+./experiment.sh: line 36:  4277 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+16.943 seconds
+***************************
+./experiment.sh: line 36:  6196 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#7:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+1.05 seconds
+***************************
+./experiment.sh: line 36:  6922 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+3.316 seconds
+***************************
+./experiment.sh: line 36:  7687 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt2.sol found a violation
+Balance invariant is not held....
+7.995 seconds
+***************************
+./experiment.sh: line 36:  8592 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+5.356 seconds
+***************************
+./experiment.sh: line 36:  9465 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+run#8:
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt0.sol found a violation
+Balance invariant is not held....
+4.296 seconds
+***************************
+./experiment.sh: line 36: 10290 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt1.sol found a violation
+Balance invariant is not held....
+1.259 seconds
+***************************
+./experiment.sh: line 36: 10956 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt2.sol found a violation
+Balance invariant is not held....
+3.12 seconds
+***************************
+./experiment.sh: line 36: 11630 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+BountyHunt will be deployed to private network.
+BountyHunt deploy successfully.
+BountyHunt under testing...
+collect results...
+BountyHunt's Attack_BountyHunt3.sol: found a violation
+Balance invariant is not held....
+4.169 seconds
+***************************
+./experiment.sh: line 36: 12587 Killed                  nohup node silent-server.js $source $attack > experimentlog/$benchmark/$attack.log 2>&1
+CreditDepositBank is the current benchmark! 
+CreditDepositBank.sol
+Attack_CreditDepositBank0.sol Attack_CreditDepositBank1.sol Attack_CreditDepositBank2.sol Attack_CreditDepositBank3.sol Attack_CreditDepositBank4.sol
+run#1:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+run#2:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+run#3:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+run#4:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+run#5:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+run#6:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+
+Usage:
+ kill [options] <pid> [...]
+
+Options:
+ <pid> [...]            send signal to every <pid> listed
+ -<signal>, -s, --signal <signal>
+                        specify the <signal> to be sent
+ -l, --list=[<signal>]  list all signal names, or convert one to a name
+ -L, --table            list all signal names in a nice table
+
+ -h, --help     display this help and exit
+ -V, --version  output version information and exit
+
+For more details see kill(1).
+run#7:
+CreditDepositBank will be deployed to private network.
+CreditDepositBank deployment failure.
+CreditDepositBank will be deployed to private network.
