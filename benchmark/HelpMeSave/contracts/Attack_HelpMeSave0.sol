@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./HelpMeSave.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/HelpMeSave.sol";
 
 contract Attack_HelpMeSave0 {
 

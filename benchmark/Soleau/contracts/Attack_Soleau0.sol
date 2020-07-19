@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./Soleau.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/Soleau.sol";
 
 contract Attack_Soleau0 {
 

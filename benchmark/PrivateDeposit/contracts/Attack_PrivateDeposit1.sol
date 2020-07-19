@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./PrivateDeposit.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/PrivateDeposit.sol";
 
 contract Attack_PrivateDeposit1 {
 

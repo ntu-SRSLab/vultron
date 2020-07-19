@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./CreditDepositBank.sol";
+import "/home/hjwang/Tools/ContraMaster/contracts/CreditDepositBank.sol";
 
 contract Attack_CreditDepositBank2 {
 
