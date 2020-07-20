@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/SimpleCoinFlipGame.sol";
+import "./SimpleCoinFlipGame.sol";
 
 contract Attack_SimpleCoinFlipGame2 {
 

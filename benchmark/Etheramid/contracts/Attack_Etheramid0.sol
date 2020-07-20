@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/Etheramid.sol";
+import "./Etheramid.sol";
 
 contract Attack_Etheramid0 {
 

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/SimpleLotto.sol";
+import "./SimpleLotto.sol";
 
 contract Attack_SimpleLotto1 {
 

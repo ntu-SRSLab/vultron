@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 DEPLOY_TIMEOUT=30
-TESTING_TIMEOUT=1m
+TESTING_TIMEOUT=30
 mkdir  -p experimentlog
 rm -rf build
 nohup node unlockAccount.js &
@@ -80,7 +80,7 @@ do
 	    if [[ $(pgrep startTruffle| wc -l) -gt 0 ]]; then
              	echo $1 | sudo -S kill -9 $(pgrep startTruffle)
     	    fi
-	    sleep 10
+	    sleep 3
     done
     done
 done

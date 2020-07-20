@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/MyToken.sol";
+import "./MyToken.sol";
 
 contract Attack_MyToken0 {
 
