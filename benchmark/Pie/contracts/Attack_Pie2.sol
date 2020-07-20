@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/Pie.sol";
+import "./Pie.sol";
 
 contract Attack_Pie2 {
 
