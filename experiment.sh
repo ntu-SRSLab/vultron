@@ -1,13 +1,14 @@
 #!/bin/bash
 #
 DEPLOY_TIMEOUT=30
-TESTING_TIMEOUT=30
+TESTING_TIMEOUT=2m
 mkdir  -p experimentlog
 rm -rf build
 nohup node unlockAccount.js &
 sleep 20
 for  benchmark in $(ls ./benchmark)
 do
+    count=0
     rm -rf  experimentlog/$benchmark
     mkdir -p experimentlog/$benchmark
     # copy benchmark to workdir
@@ -32,6 +33,10 @@ do
     echo ${attacks[@]}
     for i in {1..8}
     do 
+	    if [[ $count -ge 8  ]]; then
+		    break
+            fi 
+
 	    echo "run#$i:"
     for attack in ${attacks[@]}:
     do
@@ -70,6 +75,7 @@ do
                                     echo $(grep "invariant" experimentlog/$benchmark/$attack.log)
                                     echo $(grep "seconds" experimentlog/$benchmark/$attack.log)
                                     echo "***************************"
+				    count=$((count+1))
                     fi
             else 
                     echo $benchmark" deployment failure."

@@ -22,7 +22,7 @@ contract SimpleLotto {
     
     event Sent(address from, address to, int amount);
     
-    function play(address receiver, uint amount) returns (uint){
+    function play(address receiver, uint amount) payable returns (uint){
         playCount++;
         playCount1++;
         Sent(owner, receiver, playCount);

@@ -9,7 +9,7 @@ contract SimpleCoinFlipGame {
     // uint public lastMsgGas;
     // uint public lastRandomNumber;
 
-    function flipTheCoinAndWin() {
+    function flipTheCoinAndWin() payable {
         var randomNumber = (uint(sha3(msg.gas)) + uint(coinsFlipped)) % 10;
         
         // lastMsgValue = msg.value;

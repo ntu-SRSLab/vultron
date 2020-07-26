@@ -12,8 +12,10 @@ const fs = require('fs');
 const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
-
-var g_data_feedback = true;
+//ContraMaster
+//var g_data_feedback = true;
+//ContraAFL
+var g_data_feedback = false;
 
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
@@ -541,7 +543,7 @@ async function exec_callFun(call,  callSequen_cur){
   web3.eth.sendTransaction({
     from: call.from,
     to: call.to,
-    // gas: call.gas,
+    gas: call.gas,
     data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
   })
   .on("transactionHash", function(hash){
