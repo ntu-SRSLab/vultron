@@ -543,7 +543,7 @@ async function exec_callFun(call,  callSequen_cur){
   web3.eth.sendTransaction({
     from: call.from,
     to: call.to,
-    gas: call.gas,
+//    gas: call.gas,
     data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
   })
   .on("transactionHash", function(hash){
