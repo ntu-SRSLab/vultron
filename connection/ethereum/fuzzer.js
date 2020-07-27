@@ -555,6 +555,7 @@ async function exec_callFun(call, callSequen_cur) {
   //assert(g_bookKeepingAbi, "g_bookKeepingAbi is undefined");
   g_callFun_cur = call;
   console.log(call);
+
   web3.eth.sendTransaction({
       from: call.from,
       to: call.to,
