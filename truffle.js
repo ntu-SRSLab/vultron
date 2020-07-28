@@ -40,11 +40,7 @@ module.exports = {
 	            return new Web3.providers.IpcProvider(ipcpath, net);
         },
         network_id: "*",
-<<<<<<< HEAD
         gas: 860000,
-=======
-        gas: 460000,
->>>>>>> contraAFL one to one
 	    }
     },
   
