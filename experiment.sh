@@ -89,4 +89,10 @@ do
 	    sleep 3
     done
     done
+    echo $1 | sudo -S kill -9 $(pgrep runAleth.sh) ;
+    echo $1 | sudo -S kill -9 $(pgrep aleth) ;
+    (cd ../AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum && ./runAleth.sh cslliuye > aleth.log 2>&1 &)
+    sleep 20
+    nohup node unlockAccount.js &
+    sleep 20
 done
