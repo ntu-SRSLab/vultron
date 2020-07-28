@@ -708,7 +708,7 @@ async function seed_callSequence() {
             }
           }
           if(abi_index < 0){
-            break;
+            continue;
           }
           var abi_pair = g_cand_sequence[abi_index];
           added_set.add(abi_index);
