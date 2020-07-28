@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 DEPLOY_TIMEOUT=30
-TESTING_TIMEOUT=2m
+TESTING_TIMEOUT=30
 mkdir  -p experimentlog
 rm -rf build
 nohup node unlockAccount.js &
