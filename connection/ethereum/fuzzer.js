@@ -685,6 +685,7 @@ async function seed_callSequence() {
   }else if(gSeedLenPolicy==RandomLenSeedPolicy){
     sequence_len = randomNum(1, Math.min(g_cand_sequence.length, sequence_maxLen));
   }
+  console.log("seed sequence len: ", sequence_len);
   if(gSeedOrderPolicy == RandomOrderSeedPolicy){
         var sequence_index = 0;
         while (sequence_index < sequence_len){
