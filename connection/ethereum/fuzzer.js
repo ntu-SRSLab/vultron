@@ -13,12 +13,22 @@ const locks = require('locks');
 // mutex
 const mutex = locks.createMutex();
 //ContraMaster
-//var g_data_feedback = true;
+var g_data_feedback = true;
 //ContraAFL
-var g_data_feedback = false;
+// var g_data_feedback = false;
 
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
+
+const RandomLenSeedPolicy =0;
+const Fix2LenSeedPolicy=1;
+const ZeroLenSeedPolicy=2;
+
+const RandomOrderSeedPolicy=0;
+const NormalOrderSeedPolicy=1;
+
+const gSeedLenPolicy= RandomLenSeedPolicy;
+const gSeedOrderPolicy = NormalOrderSeedPolicy;
 
 /// json file
 let g_target_artifact;
@@ -666,8 +676,64 @@ async function seed_callSequence() {
   /// the set of call that has been selected
   var added_set = new Set();
 
-  /// for select
-  // var sequence_len = g_cand_sequence.length;
+  /// the length of seed;
+  var sequence_len;
+  if (gSeedLenPolicy==ZeroLenSeedPolicy){
+      sequence_len = 0;
+  }else if(gSeedLenPolicy==Fix2LenSeedPolicy){
+    sequence_len = 2;
+  }else if(gSeedLenPolicy==RandomLenSeedPolicy){
+    sequence_len = randomNum(1, Math.min(g_cand_sequence.length, sequence_maxLen));
+  }
+  if(gSeedOrderPolicy == RandomOrderSeedPolicy){
+        var sequence_index = 0;
+        while (sequence_index < sequence_len){
+          /// 0 <= call_index < g_cand_sequence.length
+          var abi_index = randomNum(0, g_cand_sequence.length);
+          /// we select the function in call_sequence without duplicates
+          var abi_index_orig = abi_index;
+          while(added_set.has(abi_index)){
+            if(abi_index >= g_cand_sequence.length){
+              break;
+            }
+            abi_index = abi_index +1;
+          }
+          if(abi_index >= g_cand_sequence.length){
+            abi_index = abi_index_orig -1;
+            while(added_set.has(abi_index)){
+              if(abi_index < 0){
+                break;
+              }
+              abi_index = abi_index -1;
+            }
+          }
+          if(abi_index < 0){
+            break;
+          }
+          var abi_pair = g_cand_sequence[abi_index];
+          added_set.add(abi_index);
+          var callFun = await gen_callFun(abi_pair);
+          call_sequence.push(callFun);
+      
+          sequence_index += 1;
+        }
+  }else if(gSeedOrderPolicy == NormalOrderSeedPolicy){
+    // select index of g_cand_sequence as seed sequence start,  the succeeding indexed abi functions would be put into the seed sequence until filling the sequence fully.
+    var abi_index = randomNum(0, g_cand_sequence.length);
+    var sequence_index = 0;
+    while (sequence_index < sequence_len){
+      if(abi_index >= g_cand_sequence.length){
+            abi_index = 0;
+      }
+      var abi_pair = g_cand_sequence[abi_index];
+      var callFun = await gen_callFun(abi_pair);
+      call_sequence.push(callFun);
+      sequence_index += 1;
+      abi_index +=1;
+    }
+  }
+/*
+ // var sequence_len = g_cand_sequence.length;
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
   while (sequence_index < sequence_len){
@@ -699,9 +765,8 @@ async function seed_callSequence() {
     call_sequence.push(callFun);
 
     sequence_index += 1;
-  }
+  }*/
   /// we only generate a call sequence
-  // console.log(call_sequence);
   return call_sequence;
 }
 
@@ -1788,7 +1853,11 @@ async function exec_sequence_call(){
     if(g_callIndex_cur == g_callSequen_cur.length){
       g_callSequen_start = true;
     }
-  } 
+  }
+  // handle zero-len seed sequence, where a zero ether transfer from main account to targetContractAccount
+  else if(g_callSequen_cur.length ==0){
+    await web3.eth.sendTransaction({from:g_account_list[0],  to: g_targetContract.address, value:0});
+  }
 }catch(err){
   console.trace();
   console.error(err);
