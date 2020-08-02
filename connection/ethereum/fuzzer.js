@@ -722,7 +722,8 @@ async function seed_callSequence() {
 
                   if (gSeedParamPolicy == ZeroParamSeedPolicy) {
                     for (let i = 0; i < callFun.param.length; i++) {
-                      callFun.param[i] = "0x0";
+                      if (callFun.abi.inputs[i].type.indexOf("int")!=-1 &&callFun.abi.inputs[i].type.indexOf("[") ==-1 )
+                                callFun.param[i] = "0x0";
                     }
                   }
                   call_sequence.push(callFun);
