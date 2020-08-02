@@ -110,6 +110,12 @@ execute_experiment(){
                                                 echo $Password | sudo -S kill -9 $(pgrep startTruffle)
                                 fi
                                 sleep 3
+                                echo $Password | sudo -S kill -9 $(pgrep runAleth.sh) ;
+                                echo $Password | sudo -S kill -9 $(pgrep aleth) ;
+                                (cd ../AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum && ./runAleth.sh cslliuye > aleth.log 2>&1 &)
+                                sleep 20
+                                nohup node unlockAccount.js &
+                                sleep 20
                         done
                 done
 }
