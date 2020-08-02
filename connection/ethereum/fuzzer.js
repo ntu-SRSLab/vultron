@@ -21,8 +21,8 @@ var g_data_feedback = true;
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
 
-const Fixed1LenSeedPolicy = 0;
-const Fixed2LenSeedPolicy = 1;
+const Fixed1LenSeedPolicy = 1;
+const Fixed2LenSeedPolicy = 2;
 const RandomLenSeedPolicy = 2;
 const FullLenSeedPolicy = 3;
 
@@ -689,7 +689,7 @@ async function seed_callSequence() {
             } else if (gSeedLenPolicy == RandomLenSeedPolicy) {
               sequence_len = randomNum(1, Math.min(g_cand_sequence.length, sequence_maxLen));
             } else if (gSeedLenPolicy == FullLenSeedPolicy) {
-              sequence_len = FullLenSeedPolicy;
+              sequence_len =  g_cand_sequence.length;
             }
             console.log("seed sequence len: ", sequence_len);
             var sequence_index = 0;
