@@ -10,9 +10,9 @@ FullLenSeedPolicy=3
 ZeroParamSeedPolicy=0
 RandomParamSeedPolicy=1
 
-DEPLOY_TIMEOUT=1m
-TESTING_TIMEOUT=10
-Maximum_TIMEMOUT=2m
+DEPLOY_TIMEOUT=60
+TESTING_TIMEOUT=15
+Maximum_TIMEMOUT=120
 
 execute_experiment(){
                 curSeedLenPolicy=$1
