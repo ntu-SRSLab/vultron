@@ -2,16 +2,16 @@
 #
 Password=$1
 
-Fixed1LenSeedPolicy=0
-Fixed2LenSeedPolicy=1
-#RandomLenSeedPolicy=2
-FullLenSeedPolicy=3
+Fixed1LenSeedPolicy=1
+Fixed2LenSeedPolicy=2
+RandomLenSeedPolicy=3
+FullLenSeedPolicy=4
 
 ZeroParamSeedPolicy=0
 RandomParamSeedPolicy=1
 
 DEPLOY_TIMEOUT=60
-TESTING_TIMEOUT=15
+TESTING_TIMEOUT=10
 Maximum_TIMEMOUT=120
 
 execute_experiment(){
@@ -113,6 +113,7 @@ execute_experiment(){
                         done
                 done
 }
+
 echo "strategy: Fixed1LenSeedPolicy-ZeroParamSeedPolicy"
 execute_experiment  $Fixed1LenSeedPolicy $ZeroParamSeedPolicy
 echo  "done"
@@ -125,4 +126,18 @@ echo "done"
 echo "strategy: Fixed2LenSeedPolicy-RandomParamSeedPolicy"
 execute_experiment  $Fixed2LenSeedPolicy  $RandomParamSeedPolicy
 echo "done"
+
+echo "strategy: RandomLenSeedPolicy-ZeroParamSeedPolicy"
+execute_experiment  $RandomLenSeedPolicy $ZeroParamSeedPolicy
+echo  "done"
+echo "strategy: RandomLenSeedPolicy-RandomParamSeedPolicy"
+execute_experiment  $RandomLenSeedPolicy  $RandomParamSeedPolicy
+echo  "done"
+echo "strategy: FullLenSeedPolicy-ZeroParamSeedPolicy"
+execute_experiment  $FullLenSeedPolicy  $ZeroParamSeedPolicy
+echo "done"
+echo "strategy: FullLenSeedPolicy-RandomParamSeedPolicy"
+execute_experiment  $FullLenSeedPolicy  $RandomParamSeedPolicy
+echo "done"
+
 

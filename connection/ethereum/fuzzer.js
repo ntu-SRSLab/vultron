@@ -23,8 +23,8 @@ const g_exploit_path = "./exploit.txt";
 
 const Fixed1LenSeedPolicy = 1;
 const Fixed2LenSeedPolicy = 2;
-const RandomLenSeedPolicy = 2;
-const FullLenSeedPolicy = 3;
+const RandomLenSeedPolicy = 3;
+const FullLenSeedPolicy = 4;
 
 
 
