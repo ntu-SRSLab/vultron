@@ -1,8 +1,9 @@
 #! /local/bin/babel-node
+
 const path = require('path');
 const net = require("net");
 const Web3 = require('web3');
-const TruffleWeb3=require("truffle-web3");
+const TruffleWeb3 = require("truffle-web3");
 const async = require("async");
 const Promise = require("bluebird");
 const truffle_contract = require('@truffle/contract');
@@ -20,15 +21,19 @@ var g_data_feedback = true;
 /// the file that used to keep exploit script
 const g_exploit_path = "./exploit.txt";
 
-const RandomLenSeedPolicy =0;
-const Fix2LenSeedPolicy=1;
-const ZeroLenSeedPolicy=2;
+const Fixed1LenSeedPolicy = 0;
+const Fixed2LenSeedPolicy = 1;
+const RandomLenSeedPolicy = 2;
+const FullLenSeedPolicy = 3;
 
-const RandomOrderSeedPolicy=0;
-const NormalOrderSeedPolicy=1;
 
-const gSeedLenPolicy= RandomLenSeedPolicy;
-const gSeedOrderPolicy = NormalOrderSeedPolicy;
+
+const ZeroParamSeedPolicy = 0;
+const RandomParamSeedPolicy = 1;
+
+let gSeedLenPolicy = RandomLenSeedPolicy;
+let gSeedParamPolicy = RandomParamSeedPolicy;
+let isSeed = true;
 
 /// json file
 let g_target_artifact;
@@ -103,10 +108,10 @@ let g_send_call_set;
 /// whether it has static control dependencies or write variable
 let g_send_call_found;
 
-let  g_fuzz_start_time = 0;
+let g_fuzz_start_time = 0;
 const FUZZ_TIME_SCALE = 10 * 60 * 1000;
 
-function unlockAccount(){
+function unlockAccount() {
   /// it is initialized by the blockchain, 
   /// for example, /home/hjwang/Tools/SCFuzzer/test_geth/data/keystore
   var g_from_account;
@@ -128,14 +133,14 @@ function unlockAccount(){
   });
 }
 
-function setIPCProvider(ipcprovider){
-  Provider =new Web3.providers.IpcProvider(ipcprovider, net);
+function setIPCProvider(ipcprovider) {
+  Provider = new Web3.providers.IpcProvider(ipcprovider, net);
   web3 = new Web3(Provider);
-  Provider =new TruffleWeb3.providers.IpcProvider(ipcprovider, net);
+  Provider = new TruffleWeb3.providers.IpcProvider(ipcprovider, net);
   assert(web3);
 }
 
-async function get_instance(artifact_path){
+async function get_instance(artifact_path) {
   let artifact = require(path.relative(__dirname, artifact_path));
   let MyContract = truffle_contract(artifact);
   MyContract.setProvider(Provider);
@@ -144,14 +149,18 @@ async function get_instance(artifact_path){
 }
 let MyEmitter;
 /// load some static information for the dynamic analysis. e.g., fuzzing
-async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolPath){
+async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolPath, seedLenStrategy, seedParamStrategy) {
+
+  gSeedLenPolicy = seedLenStrategy;
+  gSeedParamPolicy = seedParamStrategy;
+
   MyEmitter = myEmitter;
   g_attackContract = await get_instance(attackPath);
   g_targetContract = await get_instance(targetPath);
   g_attack_artifact = require(path.relative(__dirname, attackPath));
   g_target_artifact = require(path.relative(__dirname, targetPath));
-  
-  
+
+
   g_account_list.push(g_attackContract.address);
   g_bookKeepingAbi = await findBookKeepingAbi(g_targetContract.abi);
   g_cand_sequence = [];
@@ -159,24 +168,24 @@ async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolP
 
   /// the set of statements, which may be used for computing experimental results
   g_attackStmt_set = await tracer.buildStmtSet(g_attack_artifact.sourcePath,
-                                               g_attack_artifact.deployedSourceMap,
-                                               g_attack_artifact.source);
+    g_attack_artifact.deployedSourceMap,
+    g_attack_artifact.source);
   g_targetStmt_set = await tracer.buildStmtSet(g_target_artifact.sourcePath,
-                                               g_target_artifact.deployedSourceMap,
-                                               g_target_artifact.source);     
-  
+    g_target_artifact.deployedSourceMap,
+    g_target_artifact.source);
+
   /// the map that the instruction corresponds to the statement 
   /// the form: [ '239JUMPI', 'Attack_SimpleDAO0.sol:1' ]
   /// where 239 is the offset, JUMPI is the instruction
   g_attackIns_map = await tracer.buildInsMap(g_attack_artifact.sourcePath,
-                                             g_attack_artifact.deployedBytecode,
-                                             g_attack_artifact.deployedSourceMap,
-                                             g_attack_artifact.source);
+    g_attack_artifact.deployedBytecode,
+    g_attack_artifact.deployedSourceMap,
+    g_attack_artifact.source);
 
   g_targetIns_map = await tracer.buildInsMap(g_target_artifact.sourcePath,
-                                             g_target_artifact.deployedBytecode,
-                                             g_target_artifact.deployedSourceMap,
-                                             g_target_artifact.source);
+    g_target_artifact.deployedBytecode,
+    g_target_artifact.deployedSourceMap,
+    g_target_artifact.source);
 
   /// the static dependencies
   /// The form:
@@ -193,22 +202,22 @@ async function load(myEmitter, targetPath, attackPath, targetSolPath, attackSolP
 
 
   return {
-   accounts: g_account_list,
-   attack_adds: g_attackContract.address,
-   target_adds: g_targetContract.address,
-   attack_abi: g_attackContract.abi,
-   target_abi: g_targetContract.abi
+    accounts: g_account_list,
+    attack_adds: g_attackContract.address,
+    target_adds: g_targetContract.address,
+    attack_abi: g_attackContract.abi,
+    target_abi: g_targetContract.abi
   };
 }
 
-let attack_bal_bf ;
-let attack_bal_acc_bf  ;
-let target_bal_bf ;
+let attack_bal_bf;
+let attack_bal_acc_bf;
+let target_bal_bf;
 let target_bal_sum_bf;
 /// the seed for dynamic fuzzing
 async function seed() {
   g_fuzzing_finish = false;
-  g_fuzz_start_time  = Date.now();
+  g_fuzz_start_time = Date.now();
   if (g_targetContract === undefined) {
     throw "Target contract is not deployed!";
   }
@@ -219,80 +228,76 @@ async function seed() {
   attack_bal_acc_bf = await getBookBalance(g_attackContract.address);
   target_bal_bf = await web3.eth.getBalance(g_targetContract.address);
   target_bal_sum_bf = await getBookSum();
- let verifyOracle = async function(){
-   while(true){
-        let i=0;
-        while(i++<1000){}
-        let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
-        let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
-        let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
-        let target_bal_sum_af = await getBookSum();
-        // console.log("target: ether###booking");
-        // console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
-        // console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
-        // console.log("attack: (after-before)  ether ");
-        // console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
-        // console.log("attack:  (before-after) booking ");
-        // console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
-        // if(g_bookKeepingAbi != undefined){
-        try{ 
-            if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
-            console.log("Integer overflow....");
-            throw "Balance invariant is not held....";        
-            }
-            if((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))){
-            console.log("Balance invariant is not held....");
-            throw "Balance invariant is not held....";
-            }
-            if((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))){
-            console.log("Transaction invariant is not held....");
-            throw "Transaction invariant is not held....";
-            }
-          }
-          catch(e){
-            console.log("target: ether###booking");
-            console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
-            console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
-            console.log("attack: (after-before)  ether ");
-            console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
-            console.log("attack:  (before-after) booking ");
-            console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
-            console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-            console.log(g_callSequen_cur);
-            console.log(("using", Date.now() - g_fuzz_start_time)/1000, " seconds");
-            g_fuzzing_finish = true;
-            MyEmitter.emit("eventTestBenchmark");
-            return "Oracles are violated!";
-          }
-        // }
-        attack_bal_bf = attack_bal_af;
-        attack_bal_acc_bf = attack_bal_acc_af;
-        target_bal_bf = target_bal_af;
-        target_bal_sum_bf = target_bal_sum_af;
+  let verifyOracle = async function () {
+    while (true) {
+      let i = 0;
+      while (i++ < 1000) {}
+      let attack_bal_af = await web3.eth.getBalance(g_attackContract.address);
+      let attack_bal_acc_af = await getBookBalance(g_attackContract.address);
+      let target_bal_af = await web3.eth.getBalance(g_targetContract.address);
+      let target_bal_sum_af = await getBookSum();
+      // console.log("target: ether###booking");
+      // console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+      // console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+      // console.log("attack: (after-before)  ether ");
+      // console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+      // console.log("attack:  (before-after) booking ");
+      // console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
+      // if(g_bookKeepingAbi != undefined){
+      try {
+        if (BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)) {
+          console.log("Integer overflow. Balance invariant is not held....");
+          throw "Balance invariant is not held....";
+        }
+        if ((BigInt(uintToString(target_bal_bf)) - BigInt(target_bal_sum_bf)) != (BigInt(uintToString(target_bal_af)) - BigInt(target_bal_sum_af))) {
+          console.log("Balance invariant is not held....");
+          throw "Balance invariant is not held....";
+        }
+        if ((BigInt(uintToString(attack_bal_af)) - BigInt(uintToString(attack_bal_bf))) != (BigInt(attack_bal_acc_bf) - BigInt(attack_bal_acc_af))) {
+          console.log("Transaction invariant is not held....");
+          throw "Transaction invariant is not held....";
+        }
+      } catch (e) {
+        console.log("target: ether###booking");
+        console.log("before:" + target_bal_bf.toString() + "###" + target_bal_sum_bf);
+        console.log("after: " + target_bal_af.toString() + "###" + target_bal_sum_af);
+        console.log("attack: (after-before)  ether ");
+        console.log(attack_bal_af.toString() + "###" + attack_bal_bf.toString());
+        console.log("attack:  (before-after) booking ");
+        console.log(attack_bal_acc_bf + "###" + attack_bal_acc_af);
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        console.log(g_callSequen_cur);
+        console.log(("using", Date.now() - g_fuzz_start_time) / 1000, " seconds");
+        g_fuzzing_finish = true;
+        MyEmitter.emit("eventTestBenchmark");
+        return "Oracles are violated!";
+      }
+      // }
+      attack_bal_bf = attack_bal_af;
+      attack_bal_acc_bf = attack_bal_acc_af;
+      target_bal_bf = target_bal_af;
+      target_bal_sum_bf = target_bal_sum_af;
+    }
   }
-}
-verifyOracle().then(console.log);
+  verifyOracle().then(console.log);
 
   // we only generate a call sequence
   let callFun_list;
-  if(g_data_feedback){
+  if (g_data_feedback) {
     callFun_list = await seed_callSequence();
-  }
-  else{
+  } else {
     callFun_list = await seed_callSequence_withoutData();
   }
   // Execute the seed call sequence
-  mutex.lock(async function() {
-    try{
+  mutex.lock(async function () {
+    try {
       /// the call sequence to be executed
       g_callSequen_list.push(callFun_list);
       g_callSequen_start = true;
       await exec_sequence_call();
-    }
-    catch (e) {
+    } catch (e) {
       console.log(e);
-    }
-    finally{
+    } finally {
       mutex.unlock();
     }
   });
@@ -306,34 +311,34 @@ verifyOracle().then(console.log);
 
 /// it will be executed after each transaction is executed
 async function fuzz(txHash, ins_trace) {
-   if (g_attackContract === undefined) {
+  if (g_attackContract === undefined) {
     throw "Attack contract is not loaded!";
   }
   if (g_targetContract === undefined) {
     throw "Target contract is not loaded!";
   }
-  mutex.lock(async function() {
+  mutex.lock(async function () {
     /// different transaction hash code, it is a string
-    if(!g_pre_txHash_set.has(txHash)){
+    if (!g_pre_txHash_set.has(txHash)) {
       /// store current txHash as previous txHash
       g_pre_txHash_set.add(txHash);
-      try{
+      try {
         /// this is used to get the input of transaction 
         // let transObj = await getTransaction(txHash);
         // console.log("receive: "+ transObj.input);
-     
+
         /// when attack_target == 0, it is on attack contract
         /// when attack_target == 1, it is on target contract
         var attack_target = 0;
         /// ins_trace is the instrcution trace
         /// g_stmt_trace is list of line nunmber trace
-        if(g_callFun_cur.to == g_targetContract.address){
+        if (g_callFun_cur.to == g_targetContract.address) {
           attack_target = 1;
         }
         g_trans_stmt_trace = await tracer.buildTraceMap(ins_trace,
-                                                        g_attackIns_map,
-                                                        g_targetIns_map,
-                                                        attack_target);
+          g_attackIns_map,
+          g_targetIns_map,
+          attack_target);
 
         // for(var stmt_trace of g_trans_stmt_trace){
         //   if(g_send_call_found.has(stmt_trace)){
@@ -345,39 +350,36 @@ async function fuzz(txHash, ins_trace) {
         /// the read/write variable in this transaction
         /// we use it to switch the order of sequence
         var WR_set = await tracer.buildWRSet(g_trans_stmt_trace,
-                                             g_staticDep_attack,
-                                             g_staticDep_target);
-        g_stmt_write_map[g_callIndex_cur -1] = WR_set[0];
-        g_stmt_read_map[g_callIndex_cur -1] = WR_set[1];
+          g_staticDep_attack,
+          g_staticDep_target);
+        g_stmt_write_map[g_callIndex_cur - 1] = WR_set[0];
+        g_stmt_read_map[g_callIndex_cur - 1] = WR_set[1];
 
         /// concate the transaction tract into sequence trace
         g_sequen_stmt_trace = g_sequen_stmt_trace.concat(g_trans_stmt_trace);
         /// the dynamic dependencies in the g_stmt_trace
         g_sequen_depen_set = await tracer.buildDynDep(g_sequen_stmt_trace,
-                                                      g_staticDep_attack,
-                                                      g_staticDep_target);
+          g_staticDep_attack,
+          g_staticDep_target);
 
         /// before executing next transaction, we first mutate the just executed transaction
-        if(g_data_feedback){
+        if (g_data_feedback) {
           await determine_funMutation();
           await determine_sequenMutation();
-        }
-        else{
+        } else {
           await determine_funMutation_withoutData();
         }
 
         /// execute a function call
         await exec_sequence_call();
-      }
-      catch (e) {
+      } catch (e) {
         console.log(e);
         console.trace("Show the error inside fuzz function");
-      }
-      finally{
+      } finally {
         mutex.unlock();
       }
     }
-  });     
+  });
 }
 
 async function find() {
@@ -403,8 +405,7 @@ async function find() {
       console.log("exec...." + g_bookKeepingAbi);
       if (g_bookKeepingAbi) break;
     }
-  }
-  catch (e) {
+  } catch (e) {
     console.log(e);
   }
 
@@ -420,8 +421,8 @@ async function find() {
 async function findBookKeepingAbi(abis) {
   for (let abi of abis) {
     if (abi.type === 'function' && abi.constant &&
-        abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
-        abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
+      abi.inputs.length === 1 && abi.inputs[0].type === 'address' &&
+      abi.outputs.length === 1 && abi.outputs[0].type === 'uint256') {
       return abi;
     }
   }
@@ -430,73 +431,73 @@ async function findBookKeepingAbi(abis) {
 }
 
 /// add all the functions into the g_cand_sequence, then use g_cand_sequence to generate the call sequence
-async function findCandSequence(target_abis, attack_abis){
+async function findCandSequence(target_abis, attack_abis) {
   /// the switch to decide whether we add the functions in target/attack contracts into to g_cand_sequence
   var attack_switch = true;
   var target_switch = true;
 
-  if(attack_switch){
-    await attack_abis.forEach(function(abi) {
-      if (abi.type === 'function' && abi.constant == false){
+  if (attack_switch) {
+    await attack_abis.forEach(function (abi) {
+      if (abi.type === 'function' && abi.constant == false) {
         let notsupport = false;
 
         let input_index = 0;
         let input_len = abi.inputs.length;
-        while(input_index < input_len){
+        while (input_index < input_len) {
           var input = abi.inputs[input_index];
           /// at present, we only support the types of "address", "uint*", and "int*"
-          if(input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0){
+          if (input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0) {
             notsupport = true;
             break;
           }
           input_index += 1;
         }
         /// change to all functions, because we use 0 as parameters
-        if(!notsupport || notsupport){
-          if(abi.name.indexOf("terminate") == -1){
+        if (!notsupport || notsupport) {
+          if (abi.name.indexOf("terminate") == -1) {
             var abi_pair = [abi, g_attackContract.address]
             g_cand_sequence.push(abi_pair);
           }
         }
       }
-    }); 
+    });
   }
 
-  if(target_switch){
-    await target_abis.forEach(function(abi) {
+  if (target_switch) {
+    await target_abis.forEach(function (abi) {
       /// if abi.constant is true, it would not change state variables
       /// thus, it may not be a transaction if we call it
-      if (abi.type === 'function' && abi.constant == false){
+      if (abi.type === 'function' && abi.constant == false) {
         let notsupport = false;
 
         let input_len = abi.inputs.length;
         let input_index = 0;
-        while(input_index < input_len){
+        while (input_index < input_len) {
           var input = abi.inputs[input_index];
           /// at present, we only support the types of "address", "uint*", and "int*"
-          if(input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0){
+          if (input.type.indexOf('address') !== 0 && input.type.indexOf('uint') !== 0 && input.type.indexOf('int') !== 0) {
             notsupport = true;
             break;
           }
           input_index += 1;
         }
         /// change to all functions, because we use 0 as parameters
-        if(!notsupport || notsupport){
-          if(abi.name.indexOf("terminate") == -1){
+        if (!notsupport || notsupport) {
+          if (abi.name.indexOf("terminate") == -1) {
             var abi_pair = [abi, g_targetContract.address]
             g_cand_sequence.push(abi_pair);
           }
         }
       }
-    }); 
+    });
   }
 }
 
 /// get the balance of given address in the bookkeeping variable
-async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
+async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi) {
   // console.log(`g_bookKeepingAbi:  ${JSON.stringify(g_bookKeepingAbi)}`);
   // assert(bookkeepingVar);
-  if(bookkeepingVar == undefined){
+  if (bookkeepingVar == undefined) {
     return BigInt(0);
   }
   let balance = BigInt(0);
@@ -505,14 +506,15 @@ async function getBookBalance(acc_address, bookkeepingVar = g_bookKeepingAbi){
 
   let bal = await web3.eth.call({
     to: g_targetContract.address,
-    data: encode});
+    data: encode
+  });
   balance += web3.utils.toBN(bal);
   return BigInt(balance);
 }
 
 /// get the sum of bookkeeping variable
 async function getBookSum(bookkeepingVar = g_bookKeepingAbi) {
-  if(bookkeepingVar == undefined){
+  if (bookkeepingVar == undefined) {
     return BigInt(0);
   }
   let sum = BigInt(0);
@@ -525,11 +527,14 @@ async function getBookSum(bookkeepingVar = g_bookKeepingAbi) {
 }
 
 // get the sum of each bookkeeping variable candidate
-async function getAllBooksSum (cand_bookkeeping) {
+async function getAllBooksSum(cand_bookkeeping) {
   var books_sum = [];
   for (book_var of cand_bookkeeping) {
     var sum = await getBookSum(book_var);
-    books_sum.push({ name: book_var.name, value: sum });
+    books_sum.push({
+      name: book_var.name,
+      value: sum
+    });
   }
   return books_sum;
 }
@@ -538,7 +543,7 @@ async function getAllBooksSum (cand_bookkeeping) {
 const writeExploit = (callSequen) => {
   var call_str = "";
   call_str = call_str + (Date.now() - g_fuzz_start_time) + ": ";
-  for(var call of callSequen){
+  for (var call of callSequen) {
     call_str = call_str + "#" + call.abi.name;
   }
   call_str += "\n";
@@ -546,23 +551,23 @@ const writeExploit = (callSequen) => {
 }
 
 /// execute the call and generate the transaction
-async function exec_callFun(call,  callSequen_cur){
+async function exec_callFun(call, callSequen_cur) {
   //assert(g_bookKeepingAbi, "g_bookKeepingAbi is undefined");
   g_callFun_cur = call;
   console.log(call);
   web3.eth.sendTransaction({
-    from: call.from,
-    to: call.to,
-//    gas: call.gas,
-    data:   web3.eth.abi.encodeFunctionCall(call.abi, call.param)
-  })
-  .on("transactionHash", function(hash){
-    console.log("sent a transaction: ", hash);
-  })
-  .on("receipt", function(receipt){
-    console.log("receipt of a transaction: ", receipt)
-  })
-  .on("error",console.error);
+      from: call.from,
+      to: call.to,
+      //    gas: call.gas,
+      data: web3.eth.abi.encodeFunctionCall(call.abi, call.param)
+    })
+    .on("transactionHash", function (hash) {
+      console.log("sent a transaction: ", hash);
+    })
+    .on("receipt", function (receipt) {
+      console.log("receipt of a transaction: ", receipt)
+    })
+    .on("error", console.error);
   // try{
   //    let receipt =  await web3.eth.sendTransaction({
   //       from: call.from,
@@ -586,7 +591,7 @@ async function exec_callFun(call,  callSequen_cur){
   //       console.log( attack_bal_af.toString() + "###" + attack_bal_bf.toString());
   //       console.log("attack:  (before-after) booking ");
   //       console.log( attack_bal_acc_bf + "###" + attack_bal_acc_af);
-      
+
   //       if(g_bookKeepingAbi != undefined){
   //         try{ 
   //           if(BigInt(target_bal_sum_bf) > BigInt(target_bal_sum_af)){
@@ -621,7 +626,7 @@ async function exec_callFun(call,  callSequen_cur){
   // verifyOracle().then(console.log);
 }
 
-async function exec_callPayFun(call, cand_bookkeeping){
+async function exec_callPayFun(call, cand_bookkeeping) {
   const sendTransaction = Promise.promisify(web3.eth.sendTransaction);
 
   g_callFun_cur = call;
@@ -639,7 +644,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
     };
 
     if (call.param) {
-      transactionConfig['data'] =  web3.eth.abi.encodeFunctionCall(call.abi, call.param);
+      transactionConfig['data'] = web3.eth.abi.encodeFunctionCall(call.abi, call.param);
     }
     tx_hash = await sendTransaction(transactionConfig);
     // await web3.eth.sendTransaction(
@@ -652,7 +657,7 @@ async function exec_callPayFun(call, cand_bookkeeping){
     //     }
     //   }
     // );
-  } catch(e) {
+  } catch (e) {
     console.log(e);
   }
 
@@ -660,10 +665,9 @@ async function exec_callPayFun(call, cand_bookkeeping){
   for (book_var_af of target_bal_sum_af) {
     var book_var_bf = target_bal_sum_bf.find(obj => (obj.name === book_var_af.name));
 
-    if (BigInt(book_var_af.value) - BigInt(book_var_bf.value) == BigInt(tx_value))
-    {
+    if (BigInt(book_var_af.value) - BigInt(book_var_bf.value) == BigInt(tx_value)) {
       g_bookKeepingAbi = cand_bookkeeping.find(obj => (obj.name === book_var_af.name));
-      console.log('\nThe bookkeeping variable \'' + g_bookKeepingAbi.name +'\' is found');
+      console.log('\nThe bookkeeping variable \'' + g_bookKeepingAbi.name + '\' is found');
       return;
     }
   }
@@ -672,67 +676,61 @@ async function exec_callPayFun(call, cand_bookkeeping){
 
 /// synthesize the initial call sequence
 async function seed_callSequence() {
-  var call_sequence = [];
-  /// the set of call that has been selected
-  var added_set = new Set();
+            var call_sequence = [];
+            /// the set of call that has been selected
+            var added_set = new Set();
 
-  /// the length of seed;
-  var sequence_len;
-  if (gSeedLenPolicy==ZeroLenSeedPolicy){
-      sequence_len = 0;
-  }else if(gSeedLenPolicy==Fix2LenSeedPolicy){
-    sequence_len = 2;
-  }else if(gSeedLenPolicy==RandomLenSeedPolicy){
-    sequence_len = randomNum(1, Math.min(g_cand_sequence.length, sequence_maxLen));
-  }
-  console.log("seed sequence len: ", sequence_len);
-  if(gSeedOrderPolicy == RandomOrderSeedPolicy){
-        var sequence_index = 0;
-        while (sequence_index < sequence_len){
-          /// 0 <= call_index < g_cand_sequence.length
-          var abi_index = randomNum(0, g_cand_sequence.length);
-          /// we select the function in call_sequence without duplicates
-          var abi_index_orig = abi_index;
-          while(added_set.has(abi_index)){
-            if(abi_index >= g_cand_sequence.length){
-              break;
+            /// the length of seed;
+            var sequence_len;
+            if (gSeedLenPolicy == Fixed1LenSeedPolicy) {
+              sequence_len = Fixed1LenSeedPolicy;
+            } else if (gSeedLenPolicy == Fixed2LenSeedPolicy) {
+              sequence_len = Fixed2LenSeedPolicy;
+            } else if (gSeedLenPolicy == RandomLenSeedPolicy) {
+              sequence_len = randomNum(1, Math.min(g_cand_sequence.length, sequence_maxLen));
+            } else if (gSeedLenPolicy == FullLenSeedPolicy) {
+              sequence_len = FullLenSeedPolicy;
             }
-            abi_index = abi_index +1;
-          }
-          if(abi_index >= g_cand_sequence.length){
-            abi_index = abi_index_orig -1;
-            while(added_set.has(abi_index)){
-              if(abi_index < 0){
-                break;
-              }
-              abi_index = abi_index -1;
+            console.log("seed sequence len: ", sequence_len);
+            var sequence_index = 0;
+            while (sequence_index < sequence_len) {
+                  /// 0 <= call_index < g_cand_sequence.length
+                  var abi_index = randomNum(0, g_cand_sequence.length);
+                  /// we select the function in call_sequence without duplicates
+                  var abi_index_orig = abi_index;
+                  while (added_set.has(abi_index)) {
+                    if (abi_index >= g_cand_sequence.length) {
+                      break;
+                    }
+                    abi_index = abi_index + 1;
+                  }
+                  if (abi_index >= g_cand_sequence.length) {
+                    abi_index = abi_index_orig - 1;
+                    while (added_set.has(abi_index)) {
+                      if (abi_index < 0) {
+                        break;
+                      }
+                      abi_index = abi_index - 1;
+                    }
+                  }
+                  if (abi_index < 0) {
+                    continue;
+                  }
+                  var abi_pair = g_cand_sequence[abi_index];
+                  added_set.add(abi_index);
+                  var callFun = await gen_callFun(abi_pair);
+
+                  if (gSeedParamPolicy == ZeroParamSeedPolicy) {
+                    for (let i = 0; i < callFun.param.length; i++) {
+                      callFun.param[i] = "0x0";
+                    }
+                  }
+                  call_sequence.push(callFun);
+
+                  sequence_index += 1;
             }
-          }
-          if(abi_index < 0){
-            continue;
-          }
-          var abi_pair = g_cand_sequence[abi_index];
-          added_set.add(abi_index);
-          var callFun = await gen_callFun(abi_pair);
-          call_sequence.push(callFun);
-      
-          sequence_index += 1;
-        }
-  }else if(gSeedOrderPolicy == NormalOrderSeedPolicy){
-    // select index of g_cand_sequence as seed sequence start,  the succeeding indexed abi functions would be put into the seed sequence until filling the sequence fully.
-    var abi_index = randomNum(0, g_cand_sequence.length);
-    var sequence_index = 0;
-    while (sequence_index < sequence_len){
-      if(abi_index >= g_cand_sequence.length){
-            abi_index = 0;
-      }
-      var abi_pair = g_cand_sequence[abi_index];
-      var callFun = await gen_callFun(abi_pair);
-      call_sequence.push(callFun);
-      sequence_index += 1;
-      abi_index +=1;
-    }
-  }
+            return call_sequence;
+}
 /*
  // var sequence_len = g_cand_sequence.length;
   var sequence_len = randomNum(1, sequence_maxLen);
@@ -767,58 +765,54 @@ async function seed_callSequence() {
 
     sequence_index += 1;
   }*/
-  /// we only generate a call sequence
-  return call_sequence;
-}
+/// we only generate a call sequence
+// return call_sequence;
+// }
 
 /// min <= r < max
-function randomNum(min, max){
-  if(min >= max){
+function randomNum(min, max) {
+  if (min >= max) {
     return Math.floor(min);
-  }
-  else{
+  } else {
     let range = max - min;
     let rand = Math.random();
     let num = min + Math.floor(rand * range);
-    return num; 
+    return num;
   }
 }
 
-function sortNumber(a,b)
-{
+function sortNumber(a, b) {
   return a - b;
 }
 
 /// generate an account address
 /// if it is primitive type, e.g., address, we use the attack contract address
-function gen_address(adds_type){
+function gen_address(adds_type) {
   /// returns -1, if the value to search for never occurs
-  if(adds_type.indexOf('[') == -1){
+  if (adds_type.indexOf('[') == -1) {
     /// primitive type
     let account = g_attackContract.address
     return account;
-  }
-  else if(adds_type.indexOf('[]') != -1){
+  } else if (adds_type.indexOf('[]') != -1) {
     /// dynamic array
     let adds_list = [];
     let adds_index = 0;
     let adds_num = randomNum(dyn_array_min, dyn_array_max);
-    while(adds_index < adds_num){
+    while (adds_index < adds_num) {
       let account_index = randomNum(0, g_account_list.length);
       let account = g_account_list[account_index];
       adds_list.push(account);
       adds_index += 1;
     }
     return adds_list;
-  }
-  else{
+  } else {
     /// static array
     let adds_list = [];
     let left_index = adds_type.indexOf('[');
     let right_index = adds_type.indexOf(']');
-    let adds_num = parseInt(adds_type.slice(left_index +1, right_index), 10);
+    let adds_num = parseInt(adds_type.slice(left_index + 1, right_index), 10);
     let adds_index = 0;
-    while(adds_index < adds_num){
+    while (adds_index < adds_num) {
       let account_index = randomNum(0, g_account_list.length);
       let account = g_account_list[account_index];
       adds_list.push(account);
@@ -829,21 +823,20 @@ function gen_address(adds_type){
 }
 
 /// conver scientific number to string
-function uintToString(num){
+function uintToString(num) {
   let num_str = "" + num;
   let index = num_str.indexOf("+");
   /// it is a scientific number
-  if(index != -1){
+  if (index != -1) {
     let result = num_str[0];
     /// donot need BigInt, because it is not very big
-    let power_len = parseInt(num_str.slice(index +1), 10);
+    let power_len = parseInt(num_str.slice(index + 1), 10);
     let power_index = 0;
-    while(power_index < power_len){
+    while (power_index < power_len) {
       /// num_str[index-1:] is 'e+...'
-      if((power_index +2) < (index -1)){
-        result += num_str[power_index +2];
-      }
-      else{
+      if ((power_index + 2) < (index - 1)) {
+        result += num_str[power_index + 2];
+      } else {
         result += '0';
       }
       power_index += 1;
@@ -852,8 +845,7 @@ function uintToString(num){
     var hex_result = big_result.toString(16);
     var hex_result = "0x" + hex_result;
     return hex_result;
-  }
-  else{
+  } else {
     var big_result = BigInt(num_str);
     var hex_result = big_result.toString(16);
     var hex_result = "0x" + hex_result;
@@ -862,148 +854,141 @@ function uintToString(num){
 }
 
 /// generate the maximum uint number
-function gen_uintMax(uint_type){
+function gen_uintMax(uint_type) {
   /// get rid of uint in e.g., 'uint256'
   let num_left = 4;
   /// maybe it is an array, e,g., 'uint256[]'
   let num_right = uint_type.indexOf('[');
-  if(num_right == -1){
+  if (num_right == -1) {
     /// it is primitive unit, not an array
     num_right = uint_type.length;
-  } 
+  }
   /// the number of bytes
   let byte_num;
-  if(num_left < num_right){
+  if (num_left < num_right) {
     byte_num = parseInt(uint_type.slice(num_left, num_right), 10) / 8;
-  }
-  else{
+  } else {
     /// uint is equivelant to uint256
     byte_num = 32;
   }
 
   let num_str = '0x';
   let byte_index = 0;
-  while(byte_index < byte_num){
+  while (byte_index < byte_num) {
     num_str += 'ff';
     byte_index += 1;
   }
   /// don't use BigInt, because it is used in late, BigInt only be used with BigInt
   var unum_max = parseInt(num_str);
-  return unum_max; 
+  return unum_max;
 }
 
 /// generate the maximum int number
-function gen_intMax(int_type){
+function gen_intMax(int_type) {
   /// get rid of int in e.g., 'int256'
   let num_left = 4;
   /// maybe it is an array, e,g., 'uint256[]'
   let num_right = int_type.indexOf('[');
-  if(num_right == -1){
+  if (num_right == -1) {
     /// it is primitive int, not an array
     num_right = int_type.length;
-  } 
+  }
   /// the number of bytes
   let byte_num;
-  if(num_left < num_right){
+  if (num_left < num_right) {
     byte_num = parseInt(int_type.slice(num_left, num_right), 10) / 8;
-  }
-  else{
+  } else {
     byte_num = 32;
   }
   /// the first bit is sign (+, -) bit
   let num_str = '0x7f';
   /// start from 1, because the first byte has been appended
   let byte_index = 1;
-  while(byte_index < byte_num){
+  while (byte_index < byte_num) {
     num_str += 'ff';
     byte_index += 1;
   }
   /// don't use BigInt, because it is used in late, BigInt only be used with BigInt
   var num_max = parseInt(num_str);
-  return num_max; 
+  return num_max;
 }
 
 /// generate the maximum int number
-function gen_intMin(int_type){
+function gen_intMin(int_type) {
   /// get rid of uint in e.g., 'uint256'
   let num_left = 4;
   /// maybe it is an array, e,g., 'uint256[]'
   let num_right = int_type.indexOf('[');
-  if(num_right == -1){
+  if (num_right == -1) {
     /// it is primitive int, not an array
     num_right = int_type.length;
-  } 
+  }
   /// the number of bytes
   let byte_num;
-  if(num_left < num_right){
+  if (num_left < num_right) {
     byte_num = parseInt(int_type.slice(num_left, num_right), 10) / 8;
-  }
-  else{
+  } else {
     byte_num = 32;
   }
 
   let num_str = '-0x7f';
   /// start from 1, because the first byte has been appended
   let byte_index = 1;
-  while(byte_index < byte_num){
+  while (byte_index < byte_num) {
     num_str += 'ff';
     byte_index += 1;
   }
   /// don't use BigInt, because it is used in late, BigInt only be used with BigInt
   var num_min = parseInt(num_str);
-  return num_min; 
+  return num_min;
 }
 
 /// generate an singed integer
 /// num_min and num_max may not be defined, e.g., undefined
-function gen_int(int_type, num_min, num_max){
+function gen_int(int_type, num_min, num_max) {
   var intMin = gen_intMin(int_type);
-  if(num_min === undefined){
+  if (num_min === undefined) {
     /// num_min is undefined, we use the default minimum value
-    num_min = intMin; 
-  }
-  else{
-    if(intMin > num_max){
+    num_min = intMin;
+  } else {
+    if (intMin > num_max) {
       num_min = intMin;
     }
-  }   
-  var intMax = gen_intMax(int_type);
-  if(num_max === undefined){
-    /// num_max is undefined, we use the default maximum value
-    num_max = intMax; 
   }
-  else{
-    if(intMax < num_max){
+  var intMax = gen_intMax(int_type);
+  if (num_max === undefined) {
+    /// num_max is undefined, we use the default maximum value
+    num_max = intMax;
+  } else {
+    if (intMax < num_max) {
       num_max = intMax;
     }
-  } 
-  if(int_type.indexOf('[') == -1){
+  }
+  if (int_type.indexOf('[') == -1) {
     /// primitive type
     let value_int = randomNum(num_min, num_max);
     let value = uintToString(value_int);
     return value;
-  }
-  else if(int_type.indexOf('[]') != -1){
+  } else if (int_type.indexOf('[]') != -1) {
     /// dynamic array
     let value_list = [];
     let value_num = randomNum(dyn_array_min, dyn_array_max);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(num_min, num_max);
-      let value = uintToString(value_int);;      
+      let value = uintToString(value_int);;
       value_list.push(value);
       value_index += 1;
     }
     return value_list;
-  }
-  else{
+  } else {
     /// static array
     let value_list = [];
     let left_index = uint_type.indexOf('[');
     let right_index = uint_type.indexOf(']');
-    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_num = parseInt(uint_type.slice(left_index + 1, right_index), 10);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(num_min, num_max);
       let value = uintToString(value_int);
       value_list.push(value);
@@ -1016,52 +1001,48 @@ function gen_int(int_type, num_min, num_max){
 /// generate an unsigned integer
 /// unum_min is defined, in most case it is 0
 /// unum_max may not be defined, e.g., undefined
-function gen_uint(uint_type, unum_min, unum_max){
+function gen_uint(uint_type, unum_min, unum_max) {
   var uintMax = gen_uintMax(uint_type);
-  if(unum_min == undefined){
+  if (unum_min == undefined) {
     unum_min = uintMax;
-  }
-  else{
-    if(unum_min < 0){
+  } else {
+    if (unum_min < 0) {
       unum_min = 0;
     }
   }
-  if(unum_max == undefined){
+  if (unum_max == undefined) {
     /// unum_max is undefined, we use the default maximum value
-    unum_max = uintMax; 
-  }
-  else{
-    if(uintMax < unum_max){
+    unum_max = uintMax;
+  } else {
+    if (uintMax < unum_max) {
       unum_max = uintMax;
     }
-  } 
-  if(uint_type.indexOf('[') == -1){
+  }
+  if (uint_type.indexOf('[') == -1) {
     /// primitive type
     let value_int = randomNum(unum_min, unum_max);
     let value = uintToString(value_int);
     return value;
-  }
-  else if(uint_type.indexOf('[]') != -1){
+  } else if (uint_type.indexOf('[]') != -1) {
     /// dynamic array
     let value_list = [];
     let value_num = randomNum(dyn_array_min, dyn_array_max);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(unum_min, unum_max);
-      let value = uintToString(value_int);;      
+      let value = uintToString(value_int);;
       value_list.push(value);
       value_index += 1;
     }
     return value_list;
-  }
-  else{
+  } else {
     /// static array
     let value_list = [];
     let left_index = uint_type.indexOf('[');
     let right_index = uint_type.indexOf(']');
-    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_num = parseInt(uint_type.slice(left_index + 1, right_index), 10);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(unum_min, unum_max);
       let value = uintToString(value_int);
       value_list.push(value);
@@ -1075,23 +1056,20 @@ function gen_uint(uint_type, unum_min, unum_max){
 /// unum_min is defined, in most case it is 0
 /// unum_max may not be defined, e.g., undefined
 async function gen_callInput(abi, unum_min, unum_max, num_min, num_max) {
-  let param_list = [];  
-  await abi.inputs.forEach(function(param) {
+  let param_list = [];
+  await abi.inputs.forEach(function (param) {
     if (param.type.indexOf('address') == 0) {
       let adds_param = gen_address(param.type);
       param_list.push(adds_param);
-    }
-    else if (param.type.indexOf('uint') == 0){
+    } else if (param.type.indexOf('uint') == 0) {
       /// uint type, its minimu is '0'
       let uint_param = gen_uint(param.type, unum_min, unum_max);
       param_list.push(uint_param);
-    }
-    else if(param.type.indexOf('int') == 0){
+    } else if (param.type.indexOf('int') == 0) {
       /// int type
       let int_param = gen_int(param.type, num_min, num_max);
       param_list.push(int_param);
-    }
-    else {      
+    } else {
       // default parameter
       console.log("not support data type...");
       param_list.push(0);
@@ -1103,38 +1081,35 @@ async function gen_callInput(abi, unum_min, unum_max, num_min, num_max) {
 /// generate a call function based on the existing call
 /// we mutate the input on the lastCall_exec
 async function modify_input_range(lastCall_exec, num_min, num_max) {
-  let param_list = []; 
-  let param_changed = false; 
+  let param_list = [];
+  let param_changed = false;
 
   let input_index = 0;
   let input_len = lastCall_exec.abi.inputs.length;
   /// we mutate all inputs that satisfy conditions
-  while(input_index < input_len){
+  while (input_index < input_len) {
     let param = lastCall_exec.abi.inputs[input_index];
-    if (param.type.indexOf('uint') == 0){
-      if(num_min >= 0){
+    if (param.type.indexOf('uint') == 0) {
+      if (num_min >= 0) {
         let uint_param = gen_uint(param.type, num_min, num_max);
         param_list.push(uint_param);
         param_changed = true;
-      }
-      else{
+      } else {
         // use the original input
-        param_list.push(lastCall_exec.param[input_index]);        
+        param_list.push(lastCall_exec.param[input_index]);
       }
-    }
-    else if(param.type.indexOf('int') == 0){
+    } else if (param.type.indexOf('int') == 0) {
       let int_param = gen_int(param.type, num_min, num_max);
       param_list.push(int_param);
       param_changed = true;
-    }
-    else {      
+    } else {
       // use the original input
       param_list.push(lastCall_exec.param[input_index]);
-    }    
+    }
     input_index += 1;
   }
 
-  if(param_changed){
+  if (param_changed) {
     let callFun = {
       from: lastCall_exec.from,
       to: lastCall_exec.to,
@@ -1143,44 +1118,40 @@ async function modify_input_range(lastCall_exec, num_min, num_max) {
       param: param_list
     }
     return callFun;
-  }
-  else{
+  } else {
     return undefined;
   }
 }
 
 async function modify_input_point(lastCall_exec, num) {
-  let param_list = []; 
-  let param_changed = false; 
+  let param_list = [];
+  let param_changed = false;
   let input_len = lastCall_exec.abi.inputs.length;
   let input_index = 0;
-  while(input_index < input_len){
+  while (input_index < input_len) {
     let param = lastCall_exec.abi.inputs[input_index];
-    if (param.type.indexOf('uint') == 0){
-      if(num == undefined || num >= 0){
+    if (param.type.indexOf('uint') == 0) {
+      if (num == undefined || num >= 0) {
         /// it generate the num number
         let uint_param = gen_uint(param.type, num, num);
         param_list.push(uint_param);
         param_changed = true;
-      }
-      else{
+      } else {
         // use hte original input
         param_list.push(lastCall_exec.param[input_index]);
       }
-    }
-    else if(param.type.indexOf('int') == 0){
+    } else if (param.type.indexOf('int') == 0) {
       let int_param = gen_int(param.type, num, num);
       param_list.push(int_param);
       param_changed = true;
-    }
-    else {      
+    } else {
       // use hte original input
       param_list.push(lastCall_exec.param[input_index]);
-    }    
+    }
     input_index += 1;
   }
 
-  if(param_changed){
+  if (param_changed) {
     let callFun = {
       from: lastCall_exec.from,
       to: lastCall_exec.to,
@@ -1189,18 +1160,17 @@ async function modify_input_point(lastCall_exec, num) {
       param: param_list
     }
     return callFun;
-  }
-  else{
+  } else {
     return undefined;
   }
 }
 
 
-async function gen_callGasMax(){
+async function gen_callGasMax() {
   var gas_limit = uintToString(gasMax);
   // return gas_limit;
   let block = await web3.eth.getBlock("latest");
-   return Math.floor(Math.min(gasMax, Math.floor(2*block.gasLimit/5)));
+  return Math.floor(Math.min(gasMax, Math.floor(2 * block.gasLimit / 5)));
 }
 
 
@@ -1224,7 +1194,7 @@ async function gen_callFun(abi_pair) {
 }
 
 /// mutate the uint based on previous balances
-async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
+async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index) {
   let bal_callSequen_list = [];
 
   /// add the dynamic contract states into "dynamic_state_list" and sort it by increasement
@@ -1233,7 +1203,7 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   dynamic_state_list.push(BigInt(uintToString(attack_bal)));
   let target_bal = await web3.eth.getBalance(g_targetContract.address);
   dynamic_state_list.push(BigInt(uintToString(target_bal)));
-  for (let account of g_account_list) { 
+  for (let account of g_account_list) {
     let account_bal = await getBookBalance(account);
     dynamic_state_list.push(account_bal);
   }
@@ -1245,29 +1215,27 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
   console.log("contract state: ");
   console.log(dynamic_state_list);
 
-  let exec_index = 0;  
+  let exec_index = 0;
   let dyn_state_len = dynamic_state_list.length;
   /// we use "<=", because we also generate value greater than the last element
-  while(exec_index <= dyn_state_len){
+  while (exec_index <= dyn_state_len) {
     let unum_min, unum_max;
-    
+
     /// we generate the range where we produce a number
-    if(exec_index == 0){
+    if (exec_index == 0) {
       unum_min = 0;
+    } else {
+      unum_min = parseInt(dynamic_state_list[exec_index - 1]);
     }
-    else{
-      unum_min = parseInt(dynamic_state_list[exec_index -1]);
-    }
-    if(exec_index == dyn_state_len){
+    if (exec_index == dyn_state_len) {
       unum_max = undefined;
-    }
-    else{
+    } else {
       unum_max = parseInt(dynamic_state_list[exec_index]);
-    }   
+    }
 
     /// mutate lastCall_exec and generate the new calls
     let callFun = await modify_input_range(lastCall_exec, unum_min, unum_max);
-    if(callFun !== undefined){
+    if (callFun !== undefined) {
       /// clone the call sequence
       let bal_callSequen = callSequen_cur.slice();
       /// replace the given function
@@ -1275,7 +1243,7 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
       bal_callSequen_list.push(bal_callSequen);
     }
     callFun = await modify_input_point(lastCall_exec, unum_max);
-    if(callFun !== undefined){
+    if (callFun !== undefined) {
       /// clone the call sequence
       let bal_callSequen = callSequen_cur.slice();
       /// replace the given function
@@ -1284,11 +1252,11 @@ async function mutate_balance(lastCall_exec, callSequen_cur, lastCall_index){
     }
     exec_index += 1;
   }
-  return bal_callSequen_list;  
+  return bal_callSequen_list;
 }
 
 /// In addition to mutation based on balance, we alos randomely generate some values
-async function mutate_uint(lastCall_exec, callSequen_cur, lastCall_index){
+async function mutate_uint(lastCall_exec, callSequen_cur, lastCall_index) {
   let uint_callSequen_list = [];
 
   /// the list used to mutate
@@ -1302,13 +1270,13 @@ async function mutate_uint(lastCall_exec, callSequen_cur, lastCall_index){
 
   let uint_range_len = uint_range_list.length;
   /// we start from 1, because we generate value in the range
-  let exec_index = 1;  
-  while(exec_index < uint_range_len){
-    let unum_min = parseInt(uint_range_list[exec_index -1]);
+  let exec_index = 1;
+  while (exec_index < uint_range_len) {
+    let unum_min = parseInt(uint_range_list[exec_index - 1]);
     let unum_max = parseInt(uint_range_list[exec_index]);
     /// mutate lastCall_exec and generate the new calls
     let callFun = await modify_input_range(lastCall_exec, unum_min, unum_max);
-    if(callFun !== undefined){
+    if (callFun !== undefined) {
       /// clone the call sequence
       let uint_callSequen = callSequen_cur.slice();
       /// replace the given function
@@ -1317,12 +1285,12 @@ async function mutate_uint(lastCall_exec, callSequen_cur, lastCall_index){
     }
     exec_index += 1;
   }
-  return uint_callSequen_list; 
+  return uint_callSequen_list;
 }
 
 
 /// In addition to mutation based on balance, we alos randomely generate some values
-async function mutate_int(lastCall_exec, callSequen_cur, lastCall_index){
+async function mutate_int(lastCall_exec, callSequen_cur, lastCall_index) {
   let int_callSequen_list = [];
 
   /// the list used to mutate
@@ -1338,13 +1306,13 @@ async function mutate_int(lastCall_exec, callSequen_cur, lastCall_index){
 
   let int_range_len = int_range_list.length;
   /// we start from 1, because we generate value in the range
-  let exec_index = 1;  
-  while(exec_index < int_range_len){
-    let num_min = parseInt(int_range_list[exec_index -1]);
+  let exec_index = 1;
+  while (exec_index < int_range_len) {
+    let num_min = parseInt(int_range_list[exec_index - 1]);
     let num_max = parseInt(int_range_list[exec_index]);
     /// mutate lastCall_exec and generate the new calls
     let callFun = await modify_input_range(lastCall_exec, num_min, num_max);
-    if(callFun !== undefined){
+    if (callFun !== undefined) {
       /// clone the call sequence
       let int_callSequen = callSequen_cur.slice();
       /// replace the given function
@@ -1353,33 +1321,33 @@ async function mutate_int(lastCall_exec, callSequen_cur, lastCall_index){
     }
     exec_index += 1;
   }
-  return int_callSequen_list; 
+  return int_callSequen_list;
 }
 
 async function mutate_callFun(lastCall_exec, callSequen_cur, lastCall_index) {
   let callSequen_new_list = [];
   /// mutate the input based on the contract states
   let bal_callSequen_list = await mutate_balance(lastCall_exec, callSequen_cur, lastCall_index);
-  for(let bal_callSequen of bal_callSequen_list){
+  for (let bal_callSequen of bal_callSequen_list) {
     callSequen_new_list.push(bal_callSequen);
   }
   /// In addition to mutation based on balance, we alos randomely generate some values
   let uint_callSequen_list = await mutate_uint(lastCall_exec, callSequen_cur, lastCall_index);
-  for(let uint_callSequen of uint_callSequen_list){
+  for (let uint_callSequen of uint_callSequen_list) {
     callSequen_new_list.push(uint_callSequen);
-  }  
+  }
   /// In addition to mutation based on balance, we alos randomely generate some values
   let int_callSequen_list = await mutate_int(lastCall_exec, callSequen_cur, lastCall_index);
-  for(let int_callSequen of int_callSequen_list){
+  for (let int_callSequen of int_callSequen_list) {
     callSequen_new_list.push(int_callSequen);
-  }  
+  }
   console.log("mutate input: " + callSequen_new_list.length);
   print_callSequen_list(callSequen_new_list);
   return callSequen_new_list;
 }
 
 /// we switch the order of call sequence
-async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur){
+async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur) {
   var callSequen_new = callSequen_cur.slice();
   var call_switch = callSequen_new[call_index];
   callSequen_new[call_index] = callSequen_new[callIndex_cur];
@@ -1388,7 +1356,7 @@ async function mutate_callOrder(callSequen_cur, call_index, callIndex_cur){
 }
 
 /// we switch the order for the added call 
-async function mutate_callOrder_add(callSequen_cur, call_index, callIndex_cur){
+async function mutate_callOrder_add(callSequen_cur, call_index, callIndex_cur) {
   /// we don't need to slice the callSequen_cur, because we doesn't keep the original
   var call_switch = callSequen_cur[call_index];
   callSequen_cur[call_index] = callSequen_cur[callIndex_cur];
@@ -1397,17 +1365,17 @@ async function mutate_callOrder_add(callSequen_cur, call_index, callIndex_cur){
 }
 
 /// we add a function into call sequence
-async function mutate_callSequen(callSequen_cur){
+async function mutate_callSequen(callSequen_cur) {
   var callSequen_new = callSequen_cur.slice();
 
   /// identify which candidate call has been added
   var added_set = new Set();
   var cand_call_index = 0;
   var cand_call_len = g_cand_sequence.length;
-  while(cand_call_index < cand_call_len){
+  while (cand_call_index < cand_call_len) {
     var cand_call = g_cand_sequence[cand_call_index][0];
-    for(var call_new of callSequen_new){
-      if(cand_call.name == call_new.abi.name){
+    for (var call_new of callSequen_new) {
+      if (cand_call.name == call_new.abi.name) {
         added_set.add(cand_call_index);
       }
     }
@@ -1418,22 +1386,22 @@ async function mutate_callSequen(callSequen_cur){
   var abi_index = randomNum(0, g_cand_sequence.length);
   /// we select the function in call_sequence without duplicates
   var abi_index_orig = abi_index;
-  while(added_set.has(abi_index)){
-    if(abi_index >= g_cand_sequence.length){
+  while (added_set.has(abi_index)) {
+    if (abi_index >= g_cand_sequence.length) {
       break;
     }
-    abi_index = abi_index +1;
+    abi_index = abi_index + 1;
   }
-  if(abi_index >= g_cand_sequence.length){
-    abi_index = abi_index_orig -1;
-    while(added_set.has(abi_index)){
-      if(abi_index < 0){
+  if (abi_index >= g_cand_sequence.length) {
+    abi_index = abi_index_orig - 1;
+    while (added_set.has(abi_index)) {
+      if (abi_index < 0) {
         break;
       }
-      abi_index = abi_index -1;
+      abi_index = abi_index - 1;
     }
   }
-  if(abi_index < 0){
+  if (abi_index < 0) {
     return undefined;
   }
 
@@ -1442,59 +1410,55 @@ async function mutate_callSequen(callSequen_cur){
   callSequen_new.push(callFun);
 
   var insert_index = randomNum(0, callSequen_new.length);
-  callSequen_new = mutate_callOrder_add(callSequen_new, insert_index, callSequen_new.length -1)
+  callSequen_new = mutate_callOrder_add(callSequen_new, insert_index, callSequen_new.length - 1)
   return callSequen_new;
 }
 
 
-function gen_int_withoutData(int_type, num_min, num_max){
+function gen_int_withoutData(int_type, num_min, num_max) {
   var intMin = gen_intMin(int_type);
-  if(num_min === undefined){
+  if (num_min === undefined) {
     /// num_min is undefined, we use the default minimum value
-    num_min = intMin; 
-  }
-  else{
-    if(intMin > num_max){
+    num_min = intMin;
+  } else {
+    if (intMin > num_max) {
       num_min = intMin;
     }
-  }   
-  var intMax = gen_intMax(int_type);
-  if(num_max === undefined){
-    /// num_max is undefined, we use the default maximum value
-    num_max = intMax/10; 
   }
-  else{
-    if(intMax < num_max){
-      num_max = intMax/10;
+  var intMax = gen_intMax(int_type);
+  if (num_max === undefined) {
+    /// num_max is undefined, we use the default maximum value
+    num_max = intMax / 10;
+  } else {
+    if (intMax < num_max) {
+      num_max = intMax / 10;
     }
-  } 
-  if(int_type.indexOf('[') == -1){
+  }
+  if (int_type.indexOf('[') == -1) {
     /// primitive type
     let value_int = randomNum(num_min, num_max);
     let value = uintToString(value_int);
     return value;
-  }
-  else if(int_type.indexOf('[]') != -1){
+  } else if (int_type.indexOf('[]') != -1) {
     /// dynamic array
     let value_list = [];
     let value_num = randomNum(dyn_array_min, dyn_array_max);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(num_min, num_max);
-      let value = uintToString(value_int);;      
+      let value = uintToString(value_int);;
       value_list.push(value);
       value_index += 1;
     }
     return value_list;
-  }
-  else{
+  } else {
     /// static array
     let value_list = [];
     let left_index = uint_type.indexOf('[');
     let right_index = uint_type.indexOf(']');
-    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_num = parseInt(uint_type.slice(left_index + 1, right_index), 10);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(num_min, num_max);
       let value = uintToString(value_int);
       value_list.push(value);
@@ -1507,52 +1471,48 @@ function gen_int_withoutData(int_type, num_min, num_max){
 /// generate an unsigned integer
 /// unum_min is defined, in most case it is 0
 /// unum_max may not be defined, e.g., undefined
-function gen_uint_withoutData(uint_type, unum_min, unum_max){
+function gen_uint_withoutData(uint_type, unum_min, unum_max) {
   var uintMax = gen_uintMax(uint_type);
-  if(unum_min == undefined){
-    unum_min = uintMax/1000;
-  }
-  else{
-    if(unum_min < 0){
+  if (unum_min == undefined) {
+    unum_min = uintMax / 1000;
+  } else {
+    if (unum_min < 0) {
       unum_min = 0;
     }
   }
-  if(unum_max == undefined){
+  if (unum_max == undefined) {
     /// unum_max is undefined, we use the default maximum value
-    unum_max = uintMax/1000; 
-  }
-  else{
-    if(uintMax < unum_max){
-      unum_max = uintMax/1000;
+    unum_max = uintMax / 1000;
+  } else {
+    if (uintMax < unum_max) {
+      unum_max = uintMax / 1000;
     }
-  } 
-  if(uint_type.indexOf('[') == -1){
+  }
+  if (uint_type.indexOf('[') == -1) {
     /// primitive type
     let value_int = randomNum(unum_min, unum_max);
     let value = uintToString(value_int);
     return value;
-  }
-  else if(uint_type.indexOf('[]') != -1){
+  } else if (uint_type.indexOf('[]') != -1) {
     /// dynamic array
     let value_list = [];
     let value_num = randomNum(dyn_array_min, dyn_array_max);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(unum_min, unum_max);
-      let value = uintToString(value_int);;      
+      let value = uintToString(value_int);;
       value_list.push(value);
       value_index += 1;
     }
     return value_list;
-  }
-  else{
+  } else {
     /// static array
     let value_list = [];
     let left_index = uint_type.indexOf('[');
     let right_index = uint_type.indexOf(']');
-    let value_num = parseInt(uint_type.slice(left_index +1, right_index), 10);
+    let value_num = parseInt(uint_type.slice(left_index + 1, right_index), 10);
     let value_index = 0;
-    while(value_index < value_num){
+    while (value_index < value_num) {
       let value_int = randomNum(unum_min, unum_max);
       let value = uintToString(value_int);
       value_list.push(value);
@@ -1564,23 +1524,20 @@ function gen_uint_withoutData(uint_type, unum_min, unum_max){
 
 
 async function gen_callInput_withoutData(abi, unum_min, unum_max, num_min, num_max) {
-  let param_list = [];  
-  await abi.inputs.forEach(function(param) {
+  let param_list = [];
+  await abi.inputs.forEach(function (param) {
     if (param.type.indexOf('address') == 0) {
       let adds_param = gen_address(param.type);
       param_list.push(adds_param);
-    }
-    else if (param.type.indexOf('uint') == 0){
+    } else if (param.type.indexOf('uint') == 0) {
       /// uint type, its minimu is '0'
       let uint_param = gen_uint_withoutData(param.type, unum_min, unum_max);
       param_list.push(uint_param);
-    }
-    else if(param.type.indexOf('int') == 0){
+    } else if (param.type.indexOf('int') == 0) {
       /// int type
       let int_param = gen_int_withoutData(param.type, num_min, num_max);
       param_list.push(int_param);
-    }
-    else {      
+    } else {
       // default parameter
       console.log("not support data type...");
       param_list.push(0);
@@ -1617,27 +1574,27 @@ async function seed_callSequence_withoutData() {
   // var sequence_len = g_cand_sequence.length;
   var sequence_len = randomNum(1, sequence_maxLen);
   var sequence_index = 0;
-  while (sequence_index < sequence_len){
+  while (sequence_index < sequence_len) {
     /// 0 <= call_index < g_cand_sequence.length
     var abi_index = randomNum(0, g_cand_sequence.length);
     /// we select the function in call_sequence without duplicates
     var abi_index_orig = abi_index;
-    while(added_set.has(abi_index)){
-      if(abi_index >= g_cand_sequence.length){
+    while (added_set.has(abi_index)) {
+      if (abi_index >= g_cand_sequence.length) {
         break;
       }
-      abi_index = abi_index +1;
+      abi_index = abi_index + 1;
     }
-    if(abi_index >= g_cand_sequence.length){
-      abi_index = abi_index_orig -1;
-      while(added_set.has(abi_index)){
-        if(abi_index < 0){
+    if (abi_index >= g_cand_sequence.length) {
+      abi_index = abi_index_orig - 1;
+      while (added_set.has(abi_index)) {
+        if (abi_index < 0) {
           break;
         }
-        abi_index = abi_index -1;
+        abi_index = abi_index - 1;
       }
     }
-    if(abi_index < 0){
+    if (abi_index < 0) {
       break;
     }
     var abi_pair = g_cand_sequence[abi_index];
@@ -1656,7 +1613,7 @@ async function seed_callSequence_withoutData() {
 
 
 /// we add a function into call sequence
-async function mutate_callSequen_withoutData(callSequen_cur){
+async function mutate_callSequen_withoutData(callSequen_cur) {
   var callSequen_new = callSequen_cur.slice();
 
   /// 0 <= call_index < g_cand_sequence.length
@@ -1700,25 +1657,24 @@ async function mutate_callFun_withoutData(lastCall_exec, callSequen_cur, lastCal
 }
 
 /// use to mutate input of a function
-async function determine_funMutation_withoutData(){
+async function determine_funMutation_withoutData() {
   var depen_new_found = false;
-  for(var sequen_depen of g_sequen_depen_set){
-    if(!g_contra_depen_set.has(sequen_depen)){
+  for (var sequen_depen of g_sequen_depen_set) {
+    if (!g_contra_depen_set.has(sequen_depen)) {
       g_contra_depen_set.add(sequen_depen);
       depen_new_found = true;
     }
   }
 
-  if(depen_new_found){
+  if (depen_new_found) {
     /// mutate the input of last call
-    let callSequen_new_list = await mutate_callFun_withoutData(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur -1);
-    for(let callSequen_new of callSequen_new_list){
+    let callSequen_new_list = await mutate_callFun_withoutData(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur - 1);
+    for (let callSequen_new of callSequen_new_list) {
       g_callSequen_list.push(callSequen_new);
-    }  
-  }
-  else{
+    }
+  } else {
     callSequen_new = await mutate_callSequen_withoutData(g_callSequen_cur);
-    if(callSequen_new !== undefined){
+    if (callSequen_new !== undefined) {
       g_callSequen_list.push(callSequen_new);
     }
     // let parameters = await gen_callInput(g_lastCall_exec.abi, 0, undefined, undefined, undefined);
@@ -1737,41 +1693,41 @@ async function determine_funMutation_withoutData(){
 
 
 /// use to mutate input of a function
-async function determine_funMutation(){
+async function determine_funMutation() {
   var depen_new_found = false;
-  for(var sequen_depen of g_sequen_depen_set){
-    if(!g_contra_depen_set.has(sequen_depen)){
+  for (var sequen_depen of g_sequen_depen_set) {
+    if (!g_contra_depen_set.has(sequen_depen)) {
       g_contra_depen_set.add(sequen_depen);
       depen_new_found = true;
     }
   }
 
-  if(depen_new_found){
+  if (depen_new_found) {
     /// mutate the input of last call
-    let callSequen_new_list = await mutate_callFun(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur -1);
-    for(let callSequen_new of callSequen_new_list){
+    let callSequen_new_list = await mutate_callFun(g_lastCall_exec, g_callSequen_cur, g_callIndex_cur - 1);
+    for (let callSequen_new of callSequen_new_list) {
       g_callSequen_list.push(callSequen_new);
-    }  
+    }
   }
 }
 
 /// used to mutate the order of call sequence
-async function determine_sequenMutation(){
+async function determine_sequenMutation() {
   var call_index = 0;
   /// whether we switch the order of call sequence
-  var write_set_cur = g_stmt_write_map[g_callIndex_cur -1];
-  while(call_index < g_callIndex_cur -1){
+  var write_set_cur = g_stmt_write_map[g_callIndex_cur - 1];
+  while (call_index < g_callIndex_cur - 1) {
     var switch_order = false;
     var trans_read_set = g_stmt_read_map[call_index];
-    for(var read_var of trans_read_set){
-      if(write_set_cur.has(read_var)){
+    for (var read_var of trans_read_set) {
+      if (write_set_cur.has(read_var)) {
         switch_order = true;
         break;
       }
     }
     /// we switch the order of sequence
-    if(switch_order){
-      let callSequen_new = await mutate_callOrder(g_callSequen_cur, call_index, g_callIndex_cur -1);
+    if (switch_order) {
+      let callSequen_new = await mutate_callOrder(g_callSequen_cur, call_index, g_callIndex_cur - 1);
       g_callSequen_list.push(callSequen_new);
     }
     call_index += 1;
@@ -1779,95 +1735,98 @@ async function determine_sequenMutation(){
 
   /// we add more call function into this sequence
   /// we only do it when previous call sequence has been finished
-  if(g_callSequen_start){
+  if (g_callSequen_start) {
     callSequen_new = await mutate_callSequen(g_callSequen_cur);
-    if(callSequen_new !== undefined){
+    if (callSequen_new !== undefined) {
       g_callSequen_list.unshift(callSequen_new);
     }
   }
 }
 
-function print_callSequen_list(callSequen_list){
-  for(var callSequen of callSequen_list){
+function print_callSequen_list(callSequen_list) {
+  for (var callSequen of callSequen_list) {
     var call_name = "";
-    for(var call of callSequen){
+    for (var call of callSequen) {
       call_name = call_name + "#" + call.abi.name;
     }
     console.log(call_name);
   }
 }
 
-function print_callSequen(callSequen){
+function print_callSequen(callSequen) {
   var call_name = "";
-  for(var call of callSequen){
+  for (var call of callSequen) {
     call_name = call_name + "#" + call.abi.name;
   }
   console.log(call_name);
 }
 
-async function exec_sequence_call(){
-  try{
-  /// we can finish the fuzzing anytime
-  if(g_fuzzing_finish){
-    return;
-  }
-
-  /// initialization for the new call sequence
-  if(g_callSequen_start){
-    if(g_callSequen_list.length != 0){
-      /// the call sequence for the next execution
-      g_callSequen_cur = g_callSequen_list[0].slice();
-
-      console.log("executed sequence: ");
-      print_callSequen(g_callSequen_cur);
-      writeExploit(g_callSequen_cur);
-
-      /// delete the first callSequen
-      g_callSequen_list.splice(0, 1);
-      /// the current index in g_callSequen_cur
-      g_callIndex_cur = 0;
-      /// the trace of a transaction
-      g_trans_stmt_trace = [];
-      /// start another statement trace, because another call sequence
-      g_sequen_stmt_trace = [];
-      g_stmt_read_map.clear();
-      g_stmt_write_map.clear();
-      /// clear dynamic dependencies in call sequence, because we execute the new call sequence
-      g_sequen_depen_set.clear();
-      /// we did not clear g_contra_depen_set
-      g_callSequen_start = false;
-    }
-    else{
-      g_fuzzing_finish = true;
-      MyEmitter.emit("eventTestBenchmark");
+async function exec_sequence_call() {
+  try {
+    /// we can finish the fuzzing anytime
+    if (g_fuzzing_finish) {
       return;
     }
-  }
- 
-  /// execute the transaction
-  if(g_callIndex_cur < g_callSequen_cur.length){
-    var curCall = g_callSequen_cur[g_callIndex_cur];
-    await exec_callFun(curCall, g_callSequen_cur);
-    g_lastCall_exec = curCall;
-    g_callIndex_cur = g_callIndex_cur +1;
-    /// the current call sequence is executed completely
-    if(g_callIndex_cur == g_callSequen_cur.length){
-      g_callSequen_start = true;
+
+    /// initialization for the new call sequence
+    if (g_callSequen_start) {
+      if (g_callSequen_list.length != 0) {
+        /// the call sequence for the next execution
+        g_callSequen_cur = g_callSequen_list[0].slice();
+
+        console.log("executed sequence: ");
+        print_callSequen(g_callSequen_cur);
+        writeExploit(g_callSequen_cur);
+
+        /// delete the first callSequen
+        g_callSequen_list.splice(0, 1);
+        /// the current index in g_callSequen_cur
+        g_callIndex_cur = 0;
+        /// the trace of a transaction
+        g_trans_stmt_trace = [];
+        /// start another statement trace, because another call sequence
+        g_sequen_stmt_trace = [];
+        g_stmt_read_map.clear();
+        g_stmt_write_map.clear();
+        /// clear dynamic dependencies in call sequence, because we execute the new call sequence
+        g_sequen_depen_set.clear();
+        /// we did not clear g_contra_depen_set
+        g_callSequen_start = false;
+      } else {
+        g_fuzzing_finish = true;
+        MyEmitter.emit("eventTestBenchmark");
+        return;
+      }
     }
+
+    /// execute the transaction
+    if (g_callIndex_cur < g_callSequen_cur.length) {
+      var curCall = g_callSequen_cur[g_callIndex_cur];
+      await exec_callFun(curCall, g_callSequen_cur);
+      g_lastCall_exec = curCall;
+      g_callIndex_cur = g_callIndex_cur + 1;
+      /// the current call sequence is executed completely
+      if (g_callIndex_cur == g_callSequen_cur.length) {
+        g_callSequen_start = true;
+      }
+    }
+    // handle zero-len seed sequence, where a zero ether transfer from main account to targetContractAccount
+    else if (g_callSequen_cur.length == 0) {
+      await web3.eth.sendTransaction({
+        from: g_account_list[0],
+        to: g_targetContract.address,
+        value: 0
+      });
+    }
+  } catch (err) {
+    console.trace();
+    console.error(err);
   }
-  // handle zero-len seed sequence, where a zero ether transfer from main account to targetContractAccount
-  else if(g_callSequen_cur.length ==0){
-    await web3.eth.sendTransaction({from:g_account_list[0],  to: g_targetContract.address, value:0});
-  }
-}catch(err){
-  console.trace();
-  console.error(err);
-}
 }
 
 async function generateFunctionInputs_donate(abi) {
-  let parameters = [];  
-  await abi.inputs.forEach(function(param) {
+  let parameters = [];
+  await abi.inputs.forEach(function (param) {
     if (param.type == 'address') {
       // parameters.push(g_attackContract.address);
       parameters.push(g_account_list[0]);
@@ -1875,9 +1834,10 @@ async function generateFunctionInputs_donate(abi) {
       // parameters.push(web3.utils.toWei('1', 'ether'));
       parameters.push("2000000000");
     } else {
-     g_targetContract.address
-     g_targetContract.address
-    }g_targetContract.address
+      g_targetContract.address
+      g_targetContract.address
+    }
+    g_targetContract.address
   });
 
   let call = {
@@ -1894,8 +1854,8 @@ async function generateFunctionInputs_withdraw(abi) {
   if (abi.constant) return;
   if (abi.type != 'function') return;
 
-  let parameters = [];  
-  await abi.inputs.forEach(function(param) {
+  let parameters = [];
+  await abi.inputs.forEach(function (param) {
     if (param.type == 'address') {
       parameters.push(g_attackContract.address);
     } else if (param.type == 'uint256') {
@@ -1919,7 +1879,7 @@ async function generateFunctionInputs_withdraw(abi) {
 
 async function getPayableFuns(abis) {
   let cand_functions = [];
-  await abis.forEach(function(abi) {
+  await abis.forEach(function (abi) {
     /// abi.constant == true would not change state variables
     if ((abi.type === 'function' || abi.type === 'fallback') && !abi.constant && abi.payable) {
       if (!abi.inputs)
@@ -1951,20 +1911,20 @@ module.exports.find = find;
 module.exports.setIPCProvider = setIPCProvider;
 module.exports.unlockAccount = unlockAccount;
 module.exports.g_fuzzing_finish = g_fuzzing_finish;
-module.exports.setStart_time = function(start_time){
-  g_fuzz_start_time = start_time; 
+module.exports.setStart_time = function (start_time) {
+  g_fuzz_start_time = start_time;
 };
 
-module.exports.test_deployed = function(artifact_path){
+module.exports.test_deployed = function (artifact_path) {
   let artifact = require(path.relative(__dirname, artifact_path));
   let network_id = Object.keys(artifact["networks"])[0];
   return network_id != undefined;
 };
 
-module.exports.single_timeout = function(port){
+module.exports.single_timeout = function (port) {
   // setInterval(function () { 
   //   // console.log(Date.now() - g_fuzz_start_time,FUZZ_TIME_SCALE);
-    
+
   //   if((Date.now() - g_fuzz_start_time) > FUZZ_TIME_SCALE){
   //     console.log("Done.")
   //     request(`http://localhost:${port}/bootstrap`, (error, res, body) => {

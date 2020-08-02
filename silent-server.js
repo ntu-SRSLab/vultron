@@ -33,10 +33,10 @@ let  attack_index = 0;
 let source_target;
 let source_attacks=[];
 let  canStartFuzz = false;
-async function test(source_target, source_attack, build_target,build_attack) {
+async function test(source_target, source_attack, build_target,build_attack, seedLenStrategy, seedParamStrategy) {
     console.log(source_target, source_attack );
     // sleep.sleep(10);
-    let answer = await fuzzer.load(myEmitter, build_target, build_attack, source_target, source_attack);
+    let answer = await fuzzer.load(myEmitter, build_target, build_attack, source_target, source_attack, seedLenStrategy, seedParamStrategy);
     if (typeof answer.accounts === 'undefined')
         throw "Error loading contracts";
     // console.log(answer);
@@ -120,17 +120,21 @@ fuzzer.setIPCProvider(ipcprovider);
 fuzzer.unlockAccount();
 let source="BountyHunt";
 let attack = "Attack_BountyHunt0";
+let seedLenStrategy;
+let seedParamStrategy;
 function parse_cmd() {
     let args = process.argv.slice(2, process.argv.length);
-    assert(args.length ==2, `there must be two arguments like: {target} {attack} --- where target and attack are contract names.`)
-    source = args[0].split(".")[0];
-    attack = args[1].split(".")[0];
+    assert(args.length ==2, `there must be two arguments like: {target} {attack}  {SeedLenStrategy} {SeedParamStrategy}--- where target and attack are contract names.`)
+    source = args[0].split(".")[0]
+    attack = args[1].split(".")[0]
+    seedLenStrategy = Number.parseInt(args[2])
+    seedParamStrategy = Number.parseInt(args[3])
 }
 parse_cmd();
 app.listen(port, () => {
     console.log("Express Listening at http://localhost:" + port);
     // myEmitter.emit("eventCopyBenchmark");
-    test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"))
+    test(path.join("./contracts",source+".sol"), path.join("./contracts", attack+".sol"), path.join("./build/contracts", source+".json"), path.join("./build/contracts", attack+".json"), seedLenStrategy, seedParamStrategy)
     .then(answer=>{
         console.log(answer)
     }).catch(err=>{
