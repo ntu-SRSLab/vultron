@@ -124,7 +124,7 @@ let seedLenStrategy;
 let seedParamStrategy;
 function parse_cmd() {
     let args = process.argv.slice(2, process.argv.length);
-    assert(args.length ==2, `there must be two arguments like: {target} {attack}  {SeedLenStrategy} {SeedParamStrategy}--- where target and attack are contract names.`)
+    assert(args.length ==4, `there must be two arguments like: {target} {attack}  {SeedLenStrategy} {SeedParamStrategy}--- where target and attack are contract names.`)
     source = args[0].split(".")[0]
     attack = args[1].split(".")[0]
     seedLenStrategy = Number.parseInt(args[2])
