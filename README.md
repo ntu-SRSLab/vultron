@@ -34,7 +34,7 @@ git submodule update
 ### Terminal window@3
 cd vultron
 ./utils/startTruffle.sh;    # Deploy contracts to your private blockchain (this assumes a running private Ethereum blockchain)
-# Note: Here the contract deployment will hang there at your first use, you may need to go back to Terminal Window@2 for enter account password. It is "123456".)
+# Note: Here the contract deployment will hang at the first use, you may need to go back to Terminal Window@2 for enter password for unlocking account. It is "123456".)
 ```
 If everything goes well, we could use the non-gui vultron to generate test case for finding bugs.
 
