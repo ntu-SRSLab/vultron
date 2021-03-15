@@ -22,7 +22,7 @@ wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-
 ### Terminal window@1
 git clone git@github.com:ntu-SRSLab/vultron.git
 cd vultron
-git switch ContraMaster-liuye
+git switch ContraMasterForMojtaba
 npm install;                # Install dependencies
 
 ### Terminal window@2
