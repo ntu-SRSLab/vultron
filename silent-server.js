@@ -115,7 +115,7 @@ app.post('/fuzz', bodyParser.json(), (req, res) => {
         });
 });
 
-let ipcprovider = path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
+let ipcprovider = path.join(shell.pwd().toString(), "./", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
 fuzzer.setIPCProvider(ipcprovider);
 fuzzer.unlockAccount();
 let source="BountyHunt";
