@@ -17,7 +17,7 @@ var path = require("path")
 var net = require("net");
 let workdir = shell.pwd();
 console.log(`workdir: ${workdir}`);
-var ipcpath= path.join(shell.pwd().toString(), "..", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
+var ipcpath= path.join(shell.pwd().toString(), ".", 'AlethWithTraceRecorder/bootstrap-scripts/aleth-ethereum/Ethereum/geth.ipc');
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
@@ -26,7 +26,7 @@ module.exports = {
     networks: {
 	    development: {
 	      host: "127.0.0.1",
-	      port: 8545,
+	      port: 8546,
 	      network_id: "*"
 	    },
 	    fuzz: {
@@ -40,7 +40,7 @@ module.exports = {
 	            return new Web3.providers.IpcProvider(ipcpath, net);
         },
         network_id: "*",
-        gas: 860000,
+        gas: 8600000,
 	    }
     },
   
