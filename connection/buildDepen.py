@@ -48,7 +48,7 @@ for contract in slither.contracts:
 						son_str = son.source_mapping_str[son.source_mapping_str.rfind('/') +1 : ].replace('#', ':')
 						if son_str.find(':') != -1:
 							cd_list.append(son_str)						
-							cd_map[node_str] = cd_list;
+							cd_map[node_str] = cd_list
 
 # print(cd_map)
 for cd_key, cd_value_list in cd_map.items():
