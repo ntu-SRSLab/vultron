@@ -9,7 +9,7 @@ contract Soleau {
   }
   mapping (string => Record) _records;
 
-  function record(string hash) payable returns (bool success, bool already, uint theBlock) {
+  function record(string hash) payable returns (bool success, bool already, uint theBlock){
     if (msg.value < price) {
       success = false;
       msg.sender.send(msg.value); /* We're nice, we refund */

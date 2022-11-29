@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "/home/hjwang/Tools/ContraMaster/contracts/WhaleGiveaway1.sol";
+import "./WhaleGiveaway1.sol";
 
 contract Attack_WhaleGiveaway10 {
 

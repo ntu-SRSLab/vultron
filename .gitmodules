@@ -1,0 +1,3 @@
+[submodule "AlethWithTraceRecorder"]
+	path = AlethWithTraceRecorder
+	url = git@github.com:ntu-SRSLab/AlethWithTraceRecorder.git

@@ -1,32 +1,52 @@
 # Vultron: the Ultimate Smart Contract Fuzzing Framework
-
+This is non-gui version for vultron experiment.
 
 ### Running Vultron (ContraMaster)
 
 #### Dependencies
-
+* Python3
+* Python2.7
 * Node.js: 12.12.0
 * Truffle: 5.0.42
-* Go-Ethereum: 1.8+ (a customized version is required to enable the fuzzing feedback)
 
-#### Getting Started
-
+### Requirement
 ```bash
-npm install;                # Install dependencies
-./utils/startTruffle.sh;    # Deploy contracts to your private blockchain (this assumes a running private Ethereum blockchain)
-
-node server.js              # Note: if encountering password error, go to connection/fuzzer.js and replace '123456' with your account password in the function 'unlockAccount')
+###The solidity static analyzer, Slither requires Python 3.6+ and solc, the Solidity compiler.
+pip3 install slither-analyzer
+### recommended solc 0.4.25 for the benchmark cases
+wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux -O /usr/bin/solc && chmod +x /usr/bin/solc
 ```
 
-#### Usage Steps
+### Test Connection between Vultron and Ethereum Client (Aleth)
+```bash
+### Terminal window@1
+git clone git@github.com:ntu-SRSLab/vultron.git
+cd vultron
+git switch ContraMasterForMojtaba
+npm install;                # Install dependencies
 
-1. Deploy target and attack contracts to the test network.
-1. Load contract source (.sol) and compiled (.json) code via the user interface.
-1. Run seed tests (without feedback) and observe the results.
+### Terminal window@2
+cd ./vultron/AlethWithTraceRecorder
+git submodule init
+git submodule update
+./bootstrap-scripts/aleth-ethereum/runAleth.sh # Start Ethereum Client (Aleth)
 
-Vultron (ContraMaster) can also be run under the batch mode, with appropriate commandline options.
+### Terminal window@3
+cd vultron
+./utils/startTruffle.sh;    # Deploy contracts to your private blockchain (this assumes a running private Ethereum blockchain)
+# Note: Here the contract deployment will hang at the first use, you may need to go back to Terminal Window@2 for enter password for unlocking account. It is "123456".)
+```
+If everything goes well, we could use the non-gui vultron to generate test case for finding bugs.
+
+### Getting Started (Take Bounty for an example)
+
+```bash
+cd  vultron                
+node silent-server.js  BountyHunt  Attack_BountyHunt0
+```
+Here you will see a lot of transaction feedbacks on terminal screen.
 
 ### Benchmark
 
 The benchmark used in the **ContraMaster** experiments is available under ```./benchmark```.
-Both the contract source code and the migration (deployment) scripts are provided. The discovered exploits can be found in the file ```exploit_<N>.txt```.
+Both the contract source code and the migration (deployment) scripts are provided. 
