@@ -1,0 +1,376 @@
+package vm
+
+import(
+	"strconv"
+)
+
+type opFunc func(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error)
+ 
+
+func OnStop(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[STOP] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnArithmatic(op OpCode, pc *uint64){
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnRelationOp(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnIsZero(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[ISZERO] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnSignEx(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SIGNEXTEND] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnBitOp(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnSha3(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SHA3] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnAddress(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[ADDRESS] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+func OnBalance(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[BALANCE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnOrigin(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[ORIGIN] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCaller(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLER] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCallValue(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLVALUE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCallDataLoad(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLDATALOAD] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCallDataSize(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLDATASIZE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCallDataCopy(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLDATACOPY] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCodeSize(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CODESIZE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCodeCopy(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CODECOPY] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnGasPrice(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[GASPRICE] + "\n"
+	op_list = append(op_list, wstr)
+}   
+func OnExtCodeSize(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[EXTCODESIZE] + "\n"
+	op_list = append(op_list, wstr)
+}    
+func OnExtCodeCopy(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[EXTCODECOPY] + "\n"
+	op_list = append(op_list, wstr)
+}    
+func OnReturnDataSize(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[RETURNDATASIZE] + "\n"
+	op_list = append(op_list, wstr)
+}  
+func OnReturnDataCopy(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[RETURNDATACOPY] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnExtCodeHash(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[EXTCODEHASH] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnBlockHash(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[BLOCKHASH] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnCoinBase(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[COINBASE] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnTimeStamp(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[TIMESTAMP] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnNumber(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[NUMBER] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnDifficulty(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[DIFFICULTY] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnGasLimit(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[GASLIMIT] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnPop(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[POP] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnMload(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[MLOAD] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnMstore(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[MSTORE] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnStore8(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[MSTORE8] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnSload(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SLOAD] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnSstore(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SSTORE] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnJump(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[JUMP] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnJumpI(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[JUMPI] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnPC(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[PC] + "\n"
+	op_list = append(op_list, wstr)
+}   
+func OnMsize(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[MSIZE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnGas(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[GAS] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnJumpDest(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[JUMPDEST] + "\n"
+	op_list = append(op_list, wstr)
+}    
+func OnPushN(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnDupN(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnSwapN(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+} 
+func OnLogN(op OpCode, pc *uint64) {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[op] + "\n"
+	op_list = append(op_list, wstr)
+} 
+
+func OnCreate(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CREATE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCall(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALL] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnReturn(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[RETURN] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCallCode(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CALLCODE] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnDelegateCall(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[DELEGATECALL] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnCreate2(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[CREATE2] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnStaticCall(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[STATICCALL] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnRevert(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[REVERT] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnSelfDestruct(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SELFDESTRUCT] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnPush(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[PUSH] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnDup(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[DUP] + "\n"
+	op_list = append(op_list, wstr)
+}
+func OnSwap(pc *uint64)  {
+	var wstr string = strconv.FormatUint(*pc, 10) + opCodeToString[SWAP] + "\n"
+	op_list = append(op_list, wstr)
+}
+
+
+/// instrument the execution list the instruction opXXX which will be recorded and analyzed later
+func instrument_execute(op OpCode, exe_fun opFunc, pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error){
+	switch op {
+	case STOP:
+		OnStop(pc) 
+	case ADD, MUL, SUB, DIV, SDIV, MOD, SMOD, EXP:
+		OnArithmatic(op, pc)
+	case NOT, LT, GT, SLT, SGT, EQ:
+		OnRelationOp(op, pc)
+	case ISZERO:
+		OnIsZero(pc) 
+	case SIGNEXTEND:
+		OnSignEx(pc) 
+	case AND, OR, XOR, BYTE, SHL, SHR, SAR, ADDMOD, MULMOD:
+		OnBitOp(op, pc)
+	case SHA3:
+		OnSha3(pc) 
+	// 0x30 range - closure state.
+	case ADDRESS:
+		OnAddress(pc) 
+	case BALANCE:
+		OnBalance(pc) 
+	case ORIGIN:
+		OnOrigin(pc) 
+	case CALLER:
+		OnCaller(pc) 
+	case CALLVALUE:
+		OnCallValue(pc) 
+	case CALLDATALOAD:
+		OnCallDataLoad(pc) 
+	case CALLDATASIZE: 
+		OnCallDataSize(pc) 
+	case CALLDATACOPY:  
+		OnCallDataCopy(pc) 
+	case CODESIZE:      
+		OnCodeSize(pc)  
+	case CODECOPY:  
+		OnCodeCopy(pc)      
+	case GASPRICE:  
+		OnGasPrice(pc)      
+	case EXTCODESIZE:
+		OnExtCodeSize(pc)     
+	case EXTCODECOPY:  
+		OnExtCodeCopy(pc)   
+	case RETURNDATASIZE:
+		OnReturnDataSize(pc)  
+	case RETURNDATACOPY: 
+		OnReturnDataCopy(pc) 
+	case EXTCODEHASH:    
+		OnExtCodeHash(pc) 
+	// block operation
+	case BLOCKHASH: 
+		OnBlockHash(pc) 
+	case COINBASE:  
+		OnCoinBase(pc) 
+	case TIMESTAMP: 
+		OnTimeStamp(pc) 
+	case NUMBER:    
+		OnNumber(pc) 
+	case DIFFICULTY:
+		OnDifficulty(pc) 
+	case GASLIMIT:  
+		OnGasLimit(pc) 
+	// 0x50 range - 'storage' and execution.
+	case POP: 
+		OnPop(pc) 
+	case MLOAD:
+		OnMload(pc)    
+	case MSTORE: 
+		OnMstore(pc)  
+	case MSTORE8: 
+		OnStore8(pc) 
+	case SLOAD:   
+		OnSload(pc) 
+	case SSTORE: 
+		OnSstore(pc)  
+	case JUMP:    
+		OnJump(pc) 
+	case JUMPI: 
+		OnJumpI(pc)   
+	case PC:     
+		OnPC(pc)  
+	case MSIZE: 
+		OnMsize(pc)   
+	case GAS:
+		OnGas(pc)      
+	case JUMPDEST:
+		OnJumpDest(pc) 
+	// 0x60 range - push.
+	case PUSH1, PUSH2, PUSH3, PUSH4, PUSH5, PUSH6, PUSH7, PUSH8, PUSH9, PUSH10, PUSH11, PUSH12, PUSH13, PUSH14, PUSH15, PUSH16:
+		OnPushN(op, pc)
+	case PUSH17, PUSH18, PUSH19, PUSH20, PUSH21, PUSH22, PUSH23, PUSH24, PUSH25, PUSH26, PUSH27, PUSH28, PUSH29, PUSH30, PUSH31, PUSH32:	 
+		OnPushN(op, pc)
+	case DUP1, DUP2, DUP3, DUP4, DUP5, DUP6, DUP7, DUP8, DUP9, DUP10, DUP11, DUP12, DUP13, DUP14, DUP15, DUP16:
+		OnDupN(op, pc)
+	case SWAP1, SWAP2, SWAP3, SWAP4, SWAP5, SWAP6, SWAP7, SWAP8, SWAP9, SWAP10, SWAP11, SWAP12, SWAP13, SWAP14, SWAP15, SWAP16:
+		OnSwapN(op, pc)
+	case LOG0, LOG1, LOG2, LOG3, LOG4:
+		OnLogN(op, pc)
+	case CREATE:
+		OnCreate(pc) 
+	case CALL:    
+		OnCall(pc)     
+	case RETURN:
+		OnReturn(pc)        
+	case CALLCODE:
+		OnCallCode(pc)     
+	case DELEGATECALL:
+		OnDelegateCall(pc)  
+	case CREATE2:      
+		OnCreate2(pc) 
+	case STATICCALL:
+		OnStaticCall(pc)   
+	case REVERT:      
+		OnRevert(pc)  
+	case SELFDESTRUCT:
+		OnSelfDestruct(pc)  
+	case PUSH: 
+		OnPush(pc) 
+	case DUP:  
+		OnDup(pc) 
+	case SWAP: 
+		OnSwap(pc) 
+	default:
+		break
+	}
+	return exe_fun(pc, interpreter, contract, memory , stack)
+ }

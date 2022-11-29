@@ -1,0 +1,44 @@
+geth --rpc --rpccorsdomain "*" --rpcaddr "0.0.0.0" --datadir ./data --rpcapi="db,eth,net,web3,personal,web3" --networkid 1000 --nodiscover --port 16333 --rpcport 8546 --unlock '0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29' --mine js ../autoMine.js console
+
+geth attach --datadir ./data
+geth attach --datadir ./test_geth/data
+loadScript("autoMine.js")
+
+personal.newAccount("234")
+
+eth.coinbase
+
+miner.start(1)
+
+truffle console --network SCFuzzer
+
+web3.personal.unlockAccount("0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29", "123", 150000)
+
+migrate --reset
+
+AttackDAO.deployed().then(instance=>attack=instance)
+
+
+# Not Geth Console
+echo "var SimpleDAO=`solc --optimize --combined-json abi,bin,interface SimpleDAO.sol`" > dao.js
+echo "var AttackDAO=`solc --optimize --combined-json abi,bin,interface AttackDAO.sol`" > attack.js
+
+# Geth Console
+loadScript('dao.js')
+var daoContract = web3.eth.contract(JSON.parse(SimpleDAO.contracts["SimpleDAO.sol:SimpleDAO"].abi))
+var daoInitializer = {from: "0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29", data: "0x" + SimpleDAO.contracts["SimpleDAO.sol:SimpleDAO"].bin, gas: 2000000 value: web3.toWei(2, "ether")}
+personal.unlockAccount("0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29")
+var dao = daoContract.new(daoInitializer)
+
+
+web3.eth.getTransaction("0x6d3cda0df92f861d07971df0b7fe86c533f0d36b222abdcab25a03e620e463e0")
+
+
+loadScript('attack.js')
+var attackContract = web3.eth.contract(JSON.parse(AttackDAO.contracts["AttackDAO.sol:AttackDAO"].abi))
+var attackInitializer = {from: "0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29", data: "0x" + AttackDAO.contracts["AttackDAO.sol:AttackDAO"].bin, gas: 5000000, value: web3.toWei(3, "ether")}
+/// note the gas, if it is too low, maybe fail to deploy
+personal.unlockAccount("0x10c24625b7d8e6499fe8e15c0bc750cfae72ea29")
+var attack = attackContract.new(initializer) or 
+var attack = attackContract.new(dao.address, attackInitializer)
+/// parameter for contrut function
